@@ -1,0 +1,2 @@
+*.OME.tiff filter=lfs diff=lfs merge=lfs -text
+*.lsm filter=lfs diff=lfs merge=lfs -text
