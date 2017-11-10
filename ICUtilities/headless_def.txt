@@ -1,0 +1,4 @@
+/home/alexany/OPT_test_images/OPT_SRC
+/home/alexany/OPT_test_images/OPT_DST
+fluor.OME.tiff
+fluor2.OME.tiff

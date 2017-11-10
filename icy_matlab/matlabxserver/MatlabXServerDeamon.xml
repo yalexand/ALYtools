@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<root>
+<url><![CDATA[http://icy.bioimageanalysis.org/repository/getXMLPluginFile.php?pluginId=172&beta=0]]></url><name>Matlab X server</name><version>3.2.0.0</version><required_kernel_version>1.3.5.0</required_kernel_version><kernel_ver>1.3.5.0</kernel_ver><jar_url><![CDATA[http://icy.bioimageanalysis.org/repository/getJarFile.php?pluginId=172&beta=0]]></jar_url><icon_url><![CDATA[http://bioimageanalysis.org/icy/image.php?idAttach=1156]]></icon_url><image_url><![CDATA[http://bioimageanalysis.org/icy/image.php?idAttach=2009]]></image_url><description><![CDATA[Use Icy as an image viewer from Matlab.
+
+This plugin provides an improved imshow function, called icy_imshow, to replace the default Matlab viewer by Icy. It also provides some tools to display video sequences and 3D images in Icy.]]></description><classname><![CDATA[plugins.ylemontag.matlabxserver.MatlabXServerDeamon]]></classname><author><![CDATA[ylemontag - Yoann Le Montagner]]></author><changelog><![CDATA[-
+Version 3.2.0.0
+Date 2013-05-17 18:17:47
+
+Fix: icy_mask renamed in icy_roimask (there will be icy_roirectangle, icy_roiline, etc... methods in the future, to force the user to select a certain type of ROI). Also, use the class Overlay instead of Painter.
+
+-
+Version 3.1.0.0
+Date 2013-02-12 16:06:00
+
+Add: icy_mask() function, to replace the Matlab built-in function roipoly().
+
+-
+Version 3.0.0.0
+Date 2012-10-12 11:48:01
+
+Add: new communication protocol between Matlab and Icy, using the Matlab communicator plugin.
+
+-
+Version 2.5.1.0
+Date 2012-07-10 16:11:45
+
+Fix: Extraction procedure for .m files
+
+-
+Version 2.5.0.0
+Date 2012-07-10 15:39:16
+
+Add: new functions icy_rectangle and icy_line to create ROIs from Matlab.
+
+-
+Version 2.4.7.0
+Date 2012-07-03 09:49:29
+
+Fix: implement the new PluginDeamon interface.
+
+-
+Version 2.4.6.0
+Date 2012-06-27 16:29:55
+
+Fix: Same issue than version 2.4.3.
+
+-
+Version 2.4.5.0
+Date 2012-06-27 16:05:32
+
+Fix: Same issue than version 2.4.3
+
+-
+Version 2.4.4.0
+Date 2012-06-27 15:59:32
+
+Fix: ThreadUtil.sleep() instead of wait()
+
+-
+Version 2.4.3.0
+Date 2012-06-27 15:54:29
+
+Fix: same issue than version 2.4.2
+
+-
+Version 2.4.2.0
+Date 2012-06-27 15:15:55
+
+Fix: bug encountered when trying to create and bind a SocketServer to an already bound port.
+
+-
+Version 2.4.1.0
+Date 2012-06-27 15:04:21
+
+Fix: Deamon.run() becomes synchronous (does not lauch a Thread.bgRun() anymore)
+
+-
+Version 2.4.0.0
+Date 2012-06-21 13:42:28
+
+Fix: various bugs
+
+-
+Version 0.0.2.0b
+Date 2012-05-30 09:58:49
+
+Fix: all the library elements in plugins.ylemontag.matlabio.*, all the common GUI objects in plugins.ylemontag.matlabio.gui.*
+
+-
+Version 0.0.1.0b
+Date 2012-05-25 18:23:08
+
+
+
+]]></changelog><web><![CDATA[http://icy.bioimageanalysis.org/plugin/Matlab_X_server]]></web><dependencies><dependency><classname>plugins.ylemontag.matlabcommunicator.MatlabCommunicatorDeamon</classname></dependency></dependencies></root>

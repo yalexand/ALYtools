@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>ome</groupId>
+        <artifactId>pom-omero-client</artifactId>
+        <version>5.3.2</version>
+    </parent>
+
+    <groupId>ome</groupId>
+    <artifactId>OMEuiUtils</artifactId>
+    <version>0.1.6-SNAPSHOT</version>
+
+    <name>OME-ui-utils</name>
+    <description>Simple file browser for OMERO</description>
+
+    <dependencies>
+        <dependency>
+          <groupId>omero</groupId>
+          <artifactId>blitz</artifactId>
+        </dependency>
+               <dependency>
+          <groupId>ome</groupId>
+          <artifactId>formats-bsd</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>ome</groupId>
+          <artifactId>formats-gpl</artifactId>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+          <id>ome.maven</id>
+          <url>http://artifacts.openmicroscopy.org/artifactory/maven/</url>
+        </repository>
+        <repository>
+           <id>zeroc</id>
+           <name>zeroc</name>
+           <url>https://repo.zeroc.com/nexus/content/repositories/releases/</url>
+         </repository>
+         <repository>
+            <id>unidata-releases</id>
+            <name>unidata-releases</name>
+            <url>https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases</url>
+          </repository>
+    </repositories>
+
+    <build>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.2.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>java</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <mainClass>com.example.SimpleConnection</mainClass>
+            <arguments />
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.5.3</version>
+          <configuration>
+            <useReleaseProfile>false</useReleaseProfile>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.0.0</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.10.3</version>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </build>
+
+    <distributionManagement>
+      <repository>
+        <id>bintray</id>
+        <url>https://api.bintray.com/imperial-photonics/omeUiUtils/omeUiUtils</url>
+      </repository>
+    </distributionManagement>
+
+    <scm>
+      <connection>scm:git:https://github.com/imperial-photonics/omeUiUtils.git</connection>
+      <developerConnection>scm:git:git@github.com:imperial-photonics/omeUiUtils.git</developerConnection>
+      <url>https://github.com/imperial-photonics/omeUiUtils</url>
+      <tag>HEAD</tag>
+    </scm>
+    <properties>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+</project>
