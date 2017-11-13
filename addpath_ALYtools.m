@@ -40,8 +40,8 @@ if ~isdeployed
                 [thisdir filesep 'OMEROMatlab' filesep 'roi']);
                            
             addpath( ...
-                [thisdir filesep 'ICY_Matlab' filesep 'matlabcommunicator'],... 
-                [thisdir filesep 'ICY_Matlab' filesep 'matlabxserver']);                                                
+                [thisdir filesep 'icy_matlab' filesep 'matlabcommunicator'],... 
+                [thisdir filesep 'icy_matlab' filesep 'matlabxserver']);                                                
 end
             
 end
