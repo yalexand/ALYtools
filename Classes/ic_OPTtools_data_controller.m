@@ -113,6 +113,7 @@ classdef ic_OPTtools_data_controller < handle
         menu_controller = [];
         
         isGPU;
+        NumWorkers;
         
         proj; % native projection images (processed for co-registration and artifact correction)
         volm; % reconstructed volume
@@ -182,7 +183,11 @@ classdef ic_OPTtools_data_controller < handle
             catch    
             end                                  
             obj.isGPU = exist('isgpu','var');
-                                                
+            %
+            % if there are more than 4 cores, one can try using parfor
+            par_pool = gcp;
+            obj.NumWorkers = par_pool.NumWorkers;
+                                                            
         end
 %-------------------------------------------------------------------------%
         function set_TwIST_settings_default(obj,~,~)        
@@ -936,7 +941,61 @@ end
                          V = gather(gpu_volm);
                          
                      end
+                 % special case - using parfor
+                 elseif ~use_GPU && strcmp(obj.Reconstruction_Method,'FBP') && obj.NumWorkers >= 4
                      
+                     if 1 == f % no downsampling
+                         tic
+                                sinogram = squeeze(double(obj.proj(:,y_min,:)));
+                                reconstruction = RF(sinogram);
+                                [sizeR1,sizeR2] = size(reconstruction);
+                                V = zeros(sizeR1,sizeR2,YL); % XYZ                        
+                                PR = obj.proj;
+                                step = obj.angle_downsampling;                 
+                                n_angles = numel(obj.angles);
+                                interp = obj.FBP_interp;
+                                filter = obj.FBP_filter;
+                                fscaling = obj.FBP_fscaling;
+                                acting_angles = obj.angles(1:step:n_angles);                                
+                         parfor y = 1 : YL
+                            sinogram = squeeze(double(PR(:,y_min+y-1,:)));
+                            reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
+                            V(:,:,y) = reconstruction;
+                         end
+                         toc
+
+                     else % with downsampling                         
+                         
+                         proj_r = [];
+                         for r = 1:sizeZ
+                            if isempty(proj_r) 
+                                [szX_r,szY_r] = size(imresize(obj.proj(:,y_min:y_max,r),f));
+                                proj_r = zeros(szX_r,szY_r,sizeZ,'single');
+                            end
+                            proj_r(:,:,r) = imresize(obj.proj(:,y_min:y_max,r),f);
+                         end
+                         %
+                         tic
+                         sinogram = squeeze(double(proj_r(:,1,:)));
+                         reconstruction = RF(sinogram);                                                        
+                         [sizeR1,sizeR2] = size(reconstruction);                         
+                         V = zeros(sizeR1,sizeR2,szY_r); % XYZ
+                                step = obj.angle_downsampling;                 
+                                n_angles = numel(obj.angles);
+                                interp = obj.FBP_interp;
+                                filter = obj.FBP_filter;
+                                fscaling = obj.FBP_fscaling;
+                                acting_angles = obj.angles(1:step:n_angles);                                                         
+                         parfor y = 1 : szY_r
+                            sinogram = squeeze(double(proj_r(:,y,:)));                             
+                            reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
+                            V(:,:,y) = reconstruction;
+                         end
+                         toc
+                                                                          
+                     end
+                                                     
+                     % special case - using parfor
                  elseif ~use_GPU
                                           
                      if 1 == f % no downsampling

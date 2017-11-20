@@ -1,0 +1,215 @@
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration build-checksum="3418108113" file="C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64.prj" location="C:\Users\alexany\ALYtools" name="ic_OPTtools_PCWIN_64" preferred-package-location="C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+    <param.appname>ic_OPTtools</param.appname>
+    <param.icon />
+    <param.icons />
+    <param.version>1.0</param.version>
+    <param.authnamewatermark>Yuriy Alexandrov</param.authnamewatermark>
+    <param.email>Software for OPT volumetric reconstruction</param.email>
+    <param.company>Imperial College London</param.company>
+    <param.summary />
+    <param.description />
+    <param.screenshot />
+    <param.guid />
+    <param.installpath.string>\Imperial College London\ic_OPTtools\</param.installpath.string>
+    <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
+    <param.logo />
+    <param.install.notes />
+    <param.target.install.notes />
+    <param.intermediate>${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing</param.intermediate>
+    <param.files.only>${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_redistribution_files_only</param.files.only>
+    <param.output>${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_redistribution</param.output>
+    <param.logdir>${PROJECT_ROOT}\ic_OPTtools_PCWIN_64</param.logdir>
+    <param.enable.clean.build>false</param.enable.clean.build>
+    <param.user.defined.mcr.options />
+    <param.target.type>subtarget.standalone</param.target.type>
+    <param.support.packages />
+    <param.web.mcr>false</param.web.mcr>
+    <param.package.mcr>true</param.package.mcr>
+    <param.no.mcr>false</param.no.mcr>
+    <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
+    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
+    <param.windows.command.prompt>true</param.windows.command.prompt>
+    <param.create.log>false</param.create.log>
+    <param.log.file />
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.version />
+      <param.summary />
+      <param.description />
+      <param.screenshot />
+      <param.guid />
+      <param.installpath.string />
+      <param.installpath.combo />
+      <param.logo />
+      <param.target.install.notes />
+      <param.intermediate />
+      <param.files.only />
+      <param.output />
+      <param.logdir />
+      <param.enable.clean.build />
+      <param.user.defined.mcr.options />
+      <param.target.type />
+      <param.support.packages />
+      <param.no.mcr />
+      <param.web.mcr.name />
+      <param.package.mcr.name />
+      <param.no.mcr.name />
+      <param.windows.command.prompt />
+      <param.create.log />
+      <param.log.file />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\ic_OPTtools.m</file>
+    </fileset.main>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\BFMatlab\bioformats_package.jar</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\libs\omero_client.jar</file>
+      <file>${PROJECT_ROOT}\OMEuiUtils\OMEuiUtils.jar</file>
+    </fileset.resources>
+    <fileset.package />
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\addpath_ALYtools.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\bfCheckJavaMemory.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\bfCheckJavaPath.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\bfGetFileExtensions.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\bfGetPlane_comp_5_10_2017.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\bfGetReader.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\bfopen_comp_5_10_2017.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\bfsave.m</file>
+      <file>${PROJECT_ROOT}\BFMatlab\createMinimalOMEXMLMetadata.m</file>
+      <file>${PROJECT_ROOT}\Classes\@ic_OPTtools_gui\ic_OPTtools_gui.m</file>
+      <file>${PROJECT_ROOT}\Classes\@ic_OPTtools_gui\setup_menu.m</file>
+      <file>${PROJECT_ROOT}\Classes\@ic_OPTtools_omero_data_manager\ic_OPTtools_omero_data_manager.m</file>
+      <file>${PROJECT_ROOT}\Classes\ic_OPTtools_data_controller.m</file>
+      <file>${PROJECT_ROOT}\Classes\ic_OPTtools_front_end_menu_controller.m</file>
+      <file>${PROJECT_ROOT}\Classes\ic_OPTtools_profile_controller.m</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\enter_value.m</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\OMERO_logon.m</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\TwIST_settings.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uiextras\HBox.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uiextras\TabPanel.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uiextras\VBox.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\+mixin\Container.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\ancestors.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\AncestryObserver.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\Box.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\calcPixelSizes.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\ChildEvent.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\ChildObserver.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\Container.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\HBox.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\Image.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\loadIcon.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\LocationObserver.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\Node.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\pvchk.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\SelectionEvent.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\TabPanel.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\VBox.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uix\VisibilityObserver.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\GUILayout\Patch\getpixelposition.p</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\sort_nat.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xml_read.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xml_write.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xmlreadstring.m</file>
+      <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xmlwrite_xerces.m</file>
+      <file>${PROJECT_ROOT}\ICUtilities\initialize_memmap.m</file>
+      <file>${PROJECT_ROOT}\ICY_Matlab\matlabcommunicator\icy_command.m</file>
+      <file>${PROJECT_ROOT}\ICY_Matlab\matlabxserver\icy_closeall.m</file>
+      <file>${PROJECT_ROOT}\ICY_Matlab\matlabxserver\icy_figure.m</file>
+      <file>${PROJECT_ROOT}\ICY_Matlab\matlabxserver\icy_gettitle.m</file>
+      <file>${PROJECT_ROOT}\ICY_Matlab\matlabxserver\icy_im3show.m</file>
+      <file>${PROJECT_ROOT}\ICY_Matlab\matlabxserver\icy_imshow.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\args2struct.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\assign_handles.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\getapplicationdatadir.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\global_tempname.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\propertiesGUI.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\split.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\uipickfiles.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\connectOmero.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\createObjectDictionary.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\findOmero.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\getObjectTypes.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\getOmeroJars.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\helper\rlong.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\helper\toJavaList.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\helper\toMatlabList.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\helper\toMatrix.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\io\getDatasets.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\io\getImages.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\io\getObjects.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\io\getProjects.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\loadOmero.m</file>
+      <file>${PROJECT_ROOT}\OMEROMatlab\omeroVersion.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\conv2c.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\diffh.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\diffv.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\hR2.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\tvdenoise.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\TVnorm.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\TVnorm_gpu.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\TwIST.m</file>
+      <file>${PROJECT_ROOT}\TwIST_OPT\TwIST_gpu.m</file>
+    </fileset.depfun>
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="readme.txt" optional="true">C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="splash.png" optional="false">C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_testing\splash.png</file>
+      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="ic_OPTtools.exe" optional="false">C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_testing\ic_OPTtools.exe</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2017a</root>
+      <toolboxes>
+        <toolbox name="fixedpoint" />
+        <toolbox name="matlabcoder" />
+        <toolbox name="matlabhdlcoder" />
+        <toolbox name="embeddedcoder" />
+        <toolbox name="polyspacebugfinder" />
+      </toolboxes>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <matlabhdlcoder>
+          <enabled>true</enabled>
+        </matlabhdlcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
+      <toolbox>
+        <polyspacebugfinder>
+          <enabled>true</enabled>
+        </polyspacebugfinder>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>6.2</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

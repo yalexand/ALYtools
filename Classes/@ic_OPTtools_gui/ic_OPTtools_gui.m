@@ -85,48 +85,52 @@ classdef ic_OPTtools_gui
                         
             guidata(obj.window,handles);
                         
-            loadOmero();
-           
-            % find path to OMEuiUtils.jar - approach copied from
-            % bfCheckJavaPath
+            if ~isdeployed
             
-            % first check it isn't already in the dynamic path
-            jPath = javaclasspath('-dynamic');
-            utilJarInPath = false;
-            for i = 1:length(jPath)
-                if strfind(jPath{i},'OMEuiUtils.jar');
-                    utilJarInPath = true;
-                    break;
-                end
-            end
-                
-            if ~utilJarInPath
-                path = which('OMEuiUtils.jar');
-                if isempty(path)
-                    path = fullfile(fileparts(mfilename('fullpath')), 'OMEuiUtils.jar');
-                end
-                if ~isempty(path) && exist(path, 'file') == 2
-                    javaaddpath(path);
-                else 
-                     assert('Cannot automatically locate an OMEuiUtils JAR file');
-                end
-            end
-                                               
-            % verify that enough memory is allocated
-            bfCheckJavaMemory();
-          
-            % load both bioformats & OMERO
-            autoloadBioFormats = 1;
+                loadOmero();
 
-            % load the Bio-Formats library into the MATLAB environment
-            status = bfCheckJavaPath(autoloadBioFormats);
-            assert(status, ['Missing Bio-Formats library. Either add loci_tools.jar '...
-                'to the static Java path or add it to the Matlab path.']);
+                % find path to OMEuiUtils.jar - approach copied from
+                % bfCheckJavaPath
+
+                % first check it isn't already in the dynamic path
+                jPath = javaclasspath('-dynamic');
+                utilJarInPath = false;
+                for i = 1:length(jPath)
+                    if strfind(jPath{i},'OMEuiUtils.jar');
+                        utilJarInPath = true;
+                        break;
+                    end
+                end
+
+                if ~utilJarInPath
+                    path = which('OMEuiUtils.jar');
+                    if isempty(path)
+                        path = fullfile(fileparts(mfilename('fullpath')), 'OMEuiUtils.jar');
+                    end
+                    if ~isempty(path) && exist(path, 'file') == 2
+                        javaaddpath(path);
+                    else 
+                         assert('Cannot automatically locate an OMEuiUtils JAR file');
+                    end
+                end
+
+                % verify that enough memory is allocated
+                bfCheckJavaMemory();
+
+                % load both bioformats & OMERO
+                autoloadBioFormats = 1;
+
+                % load the Bio-Formats library into the MATLAB environment
+                status = bfCheckJavaPath(autoloadBioFormats);
+                assert(status, ['Missing Bio-Formats library. Either add loci_tools.jar '...
+                    'to the static Java path or add it to the Matlab path.']);
+   
+            end
 
             % initialize logging
             loci.common.DebugTools.enableLogging('INFO');
             java.lang.System.setProperty('javax.xml.transform.TransformerFactory', 'com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl');            
-   
+                        
             close all;
             
             set(obj.window,'Visible','on');
