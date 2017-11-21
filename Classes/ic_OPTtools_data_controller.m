@@ -943,8 +943,9 @@ end
                      end
                  % special case - using parfor
                  elseif ~use_GPU && strcmp(obj.Reconstruction_Method,'FBP') && obj.NumWorkers >= 4
-                     
+                     if ~isempty(hw), delete(hw), drawnow, end;
                      if 1 == f % no downsampling
+                         
                          tic
                                 sinogram = squeeze(double(obj.proj(:,y_min,:)));
                                 reconstruction = RF(sinogram);
@@ -956,12 +957,15 @@ end
                                 interp = obj.FBP_interp;
                                 filter = obj.FBP_filter;
                                 fscaling = obj.FBP_fscaling;
-                                acting_angles = obj.angles(1:step:n_angles);                                
+                                acting_angles = obj.angles(1:step:n_angles);
+                         hbar = parfor_progressbar(YL,'parfor reconstruction, please wait');  %create the parfor capable progress bar
                          parfor y = 1 : YL
                             sinogram = squeeze(double(PR(:,y_min+y-1,:)));
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
                             V(:,:,y) = reconstruction;
+                            hbar.iterate(20);
                          end
+                         close(hbar);
                          toc
 
                      else % with downsampling                         
@@ -985,12 +989,15 @@ end
                                 interp = obj.FBP_interp;
                                 filter = obj.FBP_filter;
                                 fscaling = obj.FBP_fscaling;
-                                acting_angles = obj.angles(1:step:n_angles);                                                         
+                                acting_angles = obj.angles(1:step:n_angles);
+                         hbar = parfor_progressbar(YL,'parfor reconstruction, please wait');  %create the parfor capable progress bar
                          parfor y = 1 : szY_r
                             sinogram = squeeze(double(proj_r(:,y,:)));                             
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
                             V(:,:,y) = reconstruction;
+                            hbar.iterate(20);
                          end
+                         close(hbar);
                          toc
                                                                           
                      end
