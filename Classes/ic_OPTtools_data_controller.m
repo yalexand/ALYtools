@@ -957,13 +957,17 @@ end
                                 interp = obj.FBP_interp;
                                 filter = obj.FBP_filter;
                                 fscaling = obj.FBP_fscaling;
-                                acting_angles = obj.angles(1:step:n_angles);
-                         hbar = parfor_progressbar(YL,'parfor reconstruction, please wait');  %create the parfor capable progress bar
+                                acting_angles = obj.angles(1:step:n_angles);                                
+                         if verbose       
+                            hbar = parfor_progressbar(YL,'parfor reconstruction, please wait');  %create the parfor capable progress bar
+                         else
+                            hbar = []; 
+                         end
                          parfor y = 1 : YL
                             sinogram = squeeze(double(PR(:,y_min+y-1,:)));
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
                             V(:,:,y) = reconstruction;
-                            hbar.iterate(20);
+                            if verbose hbar.iterate(20); end
                          end
                          close(hbar);
                          toc
@@ -990,12 +994,16 @@ end
                                 filter = obj.FBP_filter;
                                 fscaling = obj.FBP_fscaling;
                                 acting_angles = obj.angles(1:step:n_angles);
-                         hbar = parfor_progressbar(YL,'parfor reconstruction, please wait');  %create the parfor capable progress bar
+                         if verbose       
+                            hbar = parfor_progressbar(szY_r,'parfor reconstruction, please wait');  %create the parfor capable progress bar
+                         else
+                            hbar = []; 
+                         end
                          parfor y = 1 : szY_r
                             sinogram = squeeze(double(proj_r(:,y,:)));                             
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
                             V(:,:,y) = reconstruction;
-                            hbar.iterate(20);
+                            if verbose hbar.iterate(20); end
                          end
                          close(hbar);
                          toc
@@ -1136,18 +1144,47 @@ end
                     reconstruction = gather(gpu_recon);
                     obj.volm(:,:,y) = cast(reconstruction,output_datatype);
                     if verbose, waitbar(y/sizeY,wait_handle), end;                    
-                 end                                                                    
+                 end      
+             elseif strcmp(obj.Reconstruction_GPU,'OFF') && strcmp(obj.Reconstruction_Method,'FBP') && obj.NumWorkers >= 4
+                 % parfor case
+                         tic
+                         sinogram = squeeze(cast(PROJ(:,1,:),'single'));
+                         reconstruction = RF(sinogram);                                                        
+                         [sizeR1,sizeR2] = size(reconstruction);                         
+                         V = zeros(sizeR1,sizeR2,sizeY); % XYZ
+                                step = obj.angle_downsampling;                 
+                                n_angles = numel(obj.angles);
+                                interp = obj.FBP_interp;
+                                filter = obj.FBP_filter;
+                                fscaling = obj.FBP_fscaling;
+                                acting_angles = obj.angles(1:step:n_angles);
+                         if verbose       
+                            hbar = parfor_progressbar(sizeY,'parfor reconstruction, please wait');  %create the parfor capable progress bar
+                         else
+                            hbar = []; 
+                         end
+                         parfor y = 1 : sizeY
+                            sinogram = squeeze(cast(PROJ(:,y,:),'single'));
+                            reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
+                            V(:,:,y) = reconstruction;
+                            if verbose hbar.iterate(20); end
+                         end
+                         close(hbar);
+                         obj.volm = V;
+                         toc                 
              elseif strcmp(obj.Reconstruction_GPU,'OFF')                                                                                                                     
                  for y = 1 : sizeY
                     sinogram = squeeze(cast(PROJ(:,y,:),'single'));
                     reconstruction = RF(sinogram);
-                    reconstruction( reconstruction <= 0 ) = 0; % mm? 
+                    % reconstruction( reconstruction <= 0 ) = 0; % mm? 
                     obj.volm(:,:,y) = cast(reconstruction,output_datatype);
                     if verbose, waitbar(y/sizeY,wait_handle), end;                    
                  end
              end                     
              if verbose, close(wait_handle), end;             
              % main loop - ends          
+             
+             obj.volm( obj.volm <= 0 ) = 0; % mm? 
              
              obj.on_new_volm_set;  
                           
