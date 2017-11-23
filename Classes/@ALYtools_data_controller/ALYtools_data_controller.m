@@ -2678,7 +2678,8 @@ classdef ALYtools_data_controller < handle
             %[datas, captions, table_names, fig] = obj.analyze_FJ; 
             %[datas, captions, table_names, fig] = obj.analyze_RPE;
             %[datas, captions, table_names, fig] = obj.analyze_FIBERTHICKNESS; 
-            [datas, captions, table_names, fig] = obj.analyze_OPT_Mouse_Lung; 
+            %[datas, captions, table_names, fig] = obj.analyze_OPT_Mouse_Lung;
+            [datas, captions, table_names, fig] = obj.analyze_MNEPR; 
                         
         end 
 %-------------------------------------------------------------------------%  also see the function above
@@ -2687,7 +2688,8 @@ classdef ALYtools_data_controller < handle
             %sgm = obj.do_FJ_Segmentation(send_to_Icy); % filaments in junctions    
             %sgm = obj.do_RPE_Segmentation(send_to_Icy); % retinal pigment epithelial cells with lysosomes
             %sgm = obj.do_FIBERTHICKNESS_Segmentation(send_to_Icy); % special program to address fibers in SIM images
-            sgm = obj.do_OPT_Mouse_Lung_Segmentation(send_to_Icy);
+            %sgm = obj.do_OPT_Mouse_Lung_Segmentation(send_to_Icy);
+            sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
