@@ -2319,6 +2319,9 @@ end
                 fitobject = fit(ns,shift,'poly1','Robust','on');
                 newshift = round(fitobject.p2);
                 newrotation = fitobject.p1;
+                
+                disp([ abs(tan(newrotation)) 1/size(newproj,2)]);
+                
                 if (abs(tan(newrotation)) < 1/size(newproj,2)) && (abs(newshift) < 1) 
                     finished = 1;
                 else
@@ -2326,7 +2329,11 @@ end
                     rotation = rotation + newrotation/2;
                 end
             end                
-                                
+            if ~isempty(hw), delete(hw), drawnow, end
+            
+            vshift = hshift;
+            hshift = 0;
+            % ?
             %
                 obj.M1_hshift = hshift; % keep it for the case of re-usage for FLIM
                 obj.M1_vshift = vshift;
@@ -2342,9 +2349,9 @@ end
                         obj.proj = zeros(szx,szy,n_planes,class(Ishift));
                     end                
                 obj.proj(:,:,k) = Ishift;
-                if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end;
+                if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
             end
-            if ~isempty(hw), delete(hw), drawnow, end;
+            if ~isempty(hw), delete(hw), drawnow, end
             %
             clear('memmap_PROJ');
             delete(mapfile_name_proj);
