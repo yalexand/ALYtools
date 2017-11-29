@@ -2234,24 +2234,30 @@ end
 %-------------------------------------------------------------------------%
         function M1_do_registration(obj,~) % by Samuel Davis
             %            
-             [sizeX,sizeY,n_planes] = size(obj.proj);
-             wait_handle = waitbar(0,'Ini proj memmap...');
-             [mapfile_name_proj,memmap_PROJ] = initialize_memmap([sizeX,sizeY,n_planes],1,'pixels',class(obj.proj),'ini_data',obj.proj);                 
-             close(wait_handle);
+            [sizeX,sizeY,n_planes] = size(obj.proj);
+            wait_handle = waitbar(0,'Ini proj memmap...');
+            [mapfile_name_proj,memmap_PROJ] = initialize_memmap([sizeX,sizeY,n_planes],1,'pixels',class(obj.proj),'ini_data',obj.proj);                 
+            close(wait_handle);
                     
-             obj.proj = [];                
+            obj.proj = [];                
              
-             PROJ = memmap_PROJ.Data.pixels; % reference
-             offset = min(PROJ(:));
-             PROJ = PROJ-offset;
+            PROJ = memmap_PROJ.Data.pixels; % reference
+            offset = min(PROJ(:));
+            PROJ = PROJ-offset;
 
-                %
-                M1_brightness_quantile_threshold = 0.8;
-                M1_max_shift = 20;
-                %M1_window = 50;
+            %
+            M1_brightness_quantile_threshold = 0.8;
+            M1_max_shift = 20;
+            %M1_window = 50;
 
-                waitmsg = 'gathering the data to calculate corrections.. please wait..';                
-                hw = waitbar(0,waitmsg);
+            verbose = ~isdeployed;
+                
+            hw = [];
+            waitmsg = 'gathering the data to calculate corrections.. please wait..';                                
+            if verbose
+               hw = waitbar(0,waitmsg);
+            end
+                
             hshift = 0;
             rotation = 0;
             finished = 0;
@@ -2335,12 +2341,16 @@ end
             hshift = 0;
             % ?
             %
-                obj.M1_hshift = hshift; % keep it for the case of re-usage for FLIM
-                obj.M1_vshift = vshift;
-                obj.M1_rotation = rotation;
+            obj.M1_hshift = hshift; % keep it for the case of re-usage for FLIM
+            obj.M1_vshift = vshift;
+            obj.M1_rotation = rotation;
             %
+            hw = [];
             waitmsg = 'introducing corrections..';
-            hw = waitbar(0,waitmsg);            
+            if verbose
+                hw = waitbar(0,waitmsg);
+            end
+            %                        
             for k = 1:n_planes
                 I = PROJ(:,:,k);
                 Ishift = obj.M1_imshift(I,hshift,vshift,-rotation);
