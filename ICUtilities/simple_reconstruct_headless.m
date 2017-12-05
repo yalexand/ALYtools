@@ -29,7 +29,7 @@ function simple_reconstruct_headless()
         return
     end
 
-    addpath_OMEkit;
+    addpath_ALYtools;
     
     bfCheckJavaMemory;
     bfCheckJavaPath;
@@ -38,39 +38,39 @@ function simple_reconstruct_headless()
     dc = ic_OPTtools_data_controller([]);
 
     % SETTINGS - this block is not necessary, 
-    % if one simply relies on what is in the settings file
-    dc.Prefiltering_Size = 'None';
-    dc.swap_XY_dimensions = 'AUTO';
-    dc.registration_method = 'None';
-    dc.imstack_filename_convention_for_angle = 'C1';
-    %
-    dc.downsampling = 2;
-    dc.angle_downsampling = 1;
-    %
-    dc.FBP_interp = 'linear';
-    dc.FBP_filter = 'Ram-Lak';
-    dc.FBP_fscaling = 1;
-    %
-    dc.Reconstruction_Method = 'FBP';
-    dc.Reconstruction_GPU = 'OFF';
-    dc.Reconstruction_Largo = 'OFF';
-    %
-    dc.TwIST_TAU = 0.0008;
-    dc.TwIST_LAMBDA = 0.0001;
-    dc.TwIST_ALPHA = 0;
-    dc.TwIST_BETA = 0;
-    dc.TwIST_STOPCRITERION = 1;
-    dc.TwIST_TOLERANCEA = 0.0001;
-    dc.TwIST_TOLERANCED = 0.0001;
-    dc.TwIST_DEBIAS = 0;
-    dc.TwIST_MAXITERA = 10000;
-    dc.TwIST_MAXITERD = 200;
-    dc.TwIST_MINITERA = 5;
-    dc.TwIST_MINITERD = 5;
-    dc.TwIST_INITIALIZATION = 0;
-    dc.TwIST_MONOTONE = 1;
-    dc.TwIST_SPARSE = 1;
-    dc.TwIST_VERBOSE = 0;
+%     % if one simply relies on what is in the settings file
+%     dc.Prefiltering_Size = 'None';
+%     dc.swap_XY_dimensions = 'AUTO';
+%     dc.registration_method = 'None';
+%     dc.imstack_filename_convention_for_angle = 'C1';
+%     %
+%     dc.downsampling = 2;
+%     dc.angle_downsampling = 1;
+%     %
+%     dc.FBP_interp = 'linear';
+%     dc.FBP_filter = 'Ram-Lak';
+%     dc.FBP_fscaling = 1;
+%     %
+%     dc.Reconstruction_Method = 'FBP';
+%     dc.Reconstruction_GPU = 'OFF';
+%     dc.Reconstruction_Largo = 'OFF';
+%     %
+%     dc.TwIST_TAU = 0.0008;
+%     dc.TwIST_LAMBDA = 0.0001;
+%     dc.TwIST_ALPHA = 0;
+%     dc.TwIST_BETA = 0;
+%     dc.TwIST_STOPCRITERION = 1;
+%     dc.TwIST_TOLERANCEA = 0.0001;
+%     dc.TwIST_TOLERANCED = 0.0001;
+%     dc.TwIST_DEBIAS = 0;
+%     dc.TwIST_MAXITERA = 10000;
+%     dc.TwIST_MAXITERD = 200;
+%     dc.TwIST_MINITERA = 5;
+%     dc.TwIST_MINITERD = 5;
+%     dc.TwIST_INITIALIZATION = 0;
+%     dc.TwIST_MONOTONE = 1;
+%     dc.TwIST_SPARSE = 1;
+%     dc.TwIST_VERBOSE = 0;
     % SETTINGS    
                     
     for k=3:numel(strings)
