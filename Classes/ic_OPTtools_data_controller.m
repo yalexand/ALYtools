@@ -64,7 +64,7 @@ classdef ic_OPTtools_data_controller < handle
         % TwIST        
         
         swap_XY_dimensions = 'AUTO'; % 'N' and 'AUTO'
-        registration_method = 'M1'; % this is done on loading
+        registration_method = 'None'; % or "M1" - this is done on loading
         %
         imstack_filename_convention_for_angle = 'C1';
                 
