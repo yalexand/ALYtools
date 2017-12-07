@@ -1803,7 +1803,7 @@ end
                        end
 
                        if ~isempty(obj.M1_vshift)
-                           plane = obj.M1_imshift(plane,obj.M1_hshift,obj.M1_vshift,-obj.M1_rotation);
+                           plane = obj.M1_imshift(plane,obj.M1_hshift,obj.M1_vshift,obj.M1_rotation);
                        end
                        
                        s = obj.Prefiltering_Size;
