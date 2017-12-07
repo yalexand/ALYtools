@@ -2411,7 +2411,7 @@ end
 function shift = M1_TangShift(obj,sino)
     
     if obj.isGPU
-        sino = gpuArray(sino);
+        sino = gather(sino);
     end
     
     sino = double(sino)./max(sino(:)); 
