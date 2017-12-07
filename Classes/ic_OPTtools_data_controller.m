@@ -2261,8 +2261,10 @@ end
             hshift = 0;
             rotation = 0;
             finished = 0;
+            count = 0;
 
-            while ~finished
+            while ~finished && count < 20
+                count = count+1;
 
                 sizeCheck = size(obj.M1_imshift(PROJ(:,:,1),0,hshift,-rotation));
                 newproj = zeros(sizeCheck(1),sizeCheck(2),size(PROJ,3));
@@ -2320,7 +2322,7 @@ end
                 ns = (1:length(brightEnough))'-length(brightEnough)/2;
                 ns = ns(~isnan(shift));
                 shift = shift(~isnan(shift));
-                %figure(2); histogram2(ns,shift,'YBinEdges',-21:2:21,'DisplayStyle','tile','ShowEmptyBins','on');
+                figure(2); histogram2(ns,shift,'YBinEdges',-21:2:21,'DisplayStyle','tile','ShowEmptyBins','on');
                 %drawnow;
 
                 fitobject = fit(ns,shift,'poly1','Robust','on');
@@ -2329,13 +2331,14 @@ end
                 
                 disp([ abs(tan(newrotation)) 1/size(newproj,2)]);
                 
-                if (abs(tan(newrotation)) < 1/size(newproj,2)) && (abs(newshift) < 1) 
+                if (abs(tan(newrotation)) < 1/size(newproj,2)) && (abs(newshift) < 2) 
                     finished = 1;
                 else
                     hshift = hshift + newshift;
                     rotation = rotation + newrotation/2;
                 end
-            end                
+            end 
+            close(2)
             if ~isempty(hw), delete(hw), drawnow, end
             
             vshift = hshift;
