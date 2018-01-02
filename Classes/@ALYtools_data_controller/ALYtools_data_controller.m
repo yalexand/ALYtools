@@ -4002,7 +4002,9 @@ t = str2num(cell2mat(t1(1)));
                 %
                 y(y<0)=0;                                           
                 %
-                w = sqrt(y);
+                %w = sqrt(y); 
+                w = 1./sqrt(y); % bug found by Sean
+                w(isinf(w))=0;
                 %
                 w(~FITTING_MASK) = 0;
                 %
