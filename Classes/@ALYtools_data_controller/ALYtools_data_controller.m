@@ -233,6 +233,7 @@ classdef ALYtools_data_controller < handle
             per_image_TCSPC_FLIM_conv_irf_pp_69_70 = true; % saved
             per_image_TCSPC_FLIM_irf_background = 0;
             per_image_TCSPC_FLIM_tvb_scaling = 0; 
+            per_image_TCSPC_FLIM_weights_resampling_factor = 2;             
             %
             external_segmentations = [];
                                
@@ -2026,6 +2027,7 @@ classdef ALYtools_data_controller < handle
             settings.per_image_TCSPC_FLIM_conv_irf_pp_69_70 = obj.per_image_TCSPC_FLIM_conv_irf_pp_69_70;
             settings.per_image_TCSPC_FLIM_irf_background = obj.per_image_TCSPC_FLIM_irf_background; 
             settings.per_image_TCSPC_FLIM_tvb_scaling = obj.per_image_TCSPC_FLIM_tvb_scaling;
+            settings.per_image_TCSPC_FLIM_weights_resampling_factor = obj.per_image_TCSPC_FLIM_weights_resampling_factor;
                                     
             xml_write(fname,settings);
         end
@@ -2176,6 +2178,7 @@ classdef ALYtools_data_controller < handle
                 obj.per_image_TCSPC_FLIM_conv_irf_pp_69_70 = settings.per_image_TCSPC_FLIM_conv_irf_pp_69_70;
                 obj.per_image_TCSPC_FLIM_irf_background = settings.per_image_TCSPC_FLIM_irf_background;
                 obj.per_image_TCSPC_FLIM_tvb_scaling = settings.per_image_TCSPC_FLIM_tvb_scaling;
+                obj.per_image_TCSPC_FLIM_weights_resampling_factor = settings.per_image_TCSPC_FLIM_weights_resampling_factor;
                                                                                 
              end
         end
@@ -4002,8 +4005,9 @@ t = str2num(cell2mat(t1(1)));
                 %
                 y(y<0)=0;                                           
                 %
-                %w = sqrt(y); 
-                w = 1./sqrt(y); % bug found by Sean
+                % to correct the bug found by Sean
+                y_ = resample(resample(full(y),1,obj.per_image_TCSPC_FLIM_weights_resampling_factor),obj.per_image_TCSPC_FLIM_weights_resampling_factor,1);
+                w = 1./sqrt(y_);                
                 w(isinf(w))=0;
                 %
                 w(~FITTING_MASK) = 0;
