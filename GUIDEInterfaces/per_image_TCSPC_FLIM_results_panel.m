@@ -357,47 +357,25 @@ dc = handles.data_controller;
     
                    if isempty(dc.M_imgdata), return, end;
                     try
-                        hw = waitbar(0,'..saving segmntations..');
+                        hw = waitbar(0,'..saving decays..');
                         for k=1:numel(dc.M_imgdata)
                             fname = char(dc.M_filenames{k});
                             fname = strrep(fname,'.sdt','');
                             fname = strrep(fname,'.ome.tiff','');
                             fname = strrep(fname,'.OME.tiff','');
+                            fname = strrep(fname,'.txt','');                            
                             fname = [ directoryname filesep fname '.txt'];
                             %
-                                   fid = fopen(fname,'w'); % this train is needed for it to be open in (one specific version of) FLIMfit
-                                   fprintf(fid,'%s  %f\r\n','Well',490);
-                                   fprintf(fid,'%s  %f\r\n','WellIndex',0);
-                                   fprintf(fid,'%s  %f\r\n','Wavelength',490);
-                                   fprintf(fid,'%s  %f\r\n','Polarization',2);
-                                   fprintf(fid,'%s  %f\r\n','AcquisitionStatus',1);
-                                   fprintf(fid,'%s  %f\r\n','PowerLevel',4608);
-                                   fprintf(fid,'%s  %f\r\n','AcquisitionTime',13.109596);
-                                   %
-                                   for m=1:numel(t)
-                                    fprintf(fid,'%f  %f\r\n',t(m),DECAYS(m,k));
-                                   end
-                                   fclose(fid);
+                            save_decay_to_FLIMfit_5032_compatible_txt_file(fname,t,squeeze(DECAYS(:,k)));
                             %
                             if ~isempty(hw), waitbar(k/numel(dc.M_imgdata),hw); drawnow, end;
                         end
                         if ~isempty(hw), delete(hw), drawnow; end;
                         %
                         %irf
-                                   fid = fopen([ directoryname filesep 'irf.txt'],'w');
-                                   fprintf(fid,'%s  %f\r\n','Well',490);
-                                   fprintf(fid,'%s  %f\r\n','WellIndex',0);
-                                   fprintf(fid,'%s  %f\r\n','Wavelength',490);
-                                   fprintf(fid,'%s  %f\r\n','Polarization',2);
-                                   fprintf(fid,'%s  %f\r\n','AcquisitionStatus',1);
-                                   fprintf(fid,'%s  %f\r\n','PowerLevel',4608);
-                                   fprintf(fid,'%s  %f\r\n','AcquisitionTime',13.109596);
-                                   %
-                                   for m=1:numel(t)
-                                    fprintf(fid,'%f  %f\r\n',t(m),IRF(m));
-                                   end
-                                   fclose(fid);                        
+                        save_decay_to_FLIMfit_5032_compatible_txt_file([ directoryname filesep 'irf.txt'],t,IRF);
                         %irf
                         %                        
                     catch
                     end
+

@@ -4006,7 +4006,8 @@ t = str2num(cell2mat(t1(1)));
                 y(y<0)=0;                                           
                 %
                 % to correct the bug found by Sean
-                y_ = resample(resample(full(y),1,obj.per_image_TCSPC_FLIM_weights_resampling_factor),obj.per_image_TCSPC_FLIM_weights_resampling_factor,1);
+                RF = obj.per_image_TCSPC_FLIM_weights_resampling_factor;
+                y_ = resample(resample(full(y),1,RF),RF,1);
                 w = 1./sqrt(y_);                
                 w(isinf(w))=0;
                 %
@@ -4429,13 +4430,23 @@ function load_irf(obj,~,~)
                  end
              elseif strcmp(extension,'txt')
                  try
-                    irfdata = importdata(filespec);     
-                    irf = irfdata(:,2);
+                   data = importdata(filespec);
+                    if isnumeric(data)
+                        data_v = data(:,2);
+                    else
+                        nrows = size(data.data,1);
+                        if nrows - 256 < 20 % hack
+                            L = 256;
+                        end
+                         offset = nrows - L + 1 ;
+                         data_v = data.data(offset:nrows,1);
+                    end                                                            
+                    irf = data_v;
                     irf = irf/sum(irf(:));                    
                     obj.per_image_TCSPC_FLIM_irf = irf;
                     obj.per_image_TCSPC_FLIM_irf_filename = filespec;
                  catch
-                    errordlg('Error while trying to load csv IRF');
+                    errordlg('Error while trying to load txt IRF');
                  end    
              end                 
 end
