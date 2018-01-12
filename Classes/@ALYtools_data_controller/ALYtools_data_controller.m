@@ -321,14 +321,14 @@ classdef ALYtools_data_controller < handle
             obj.M_filenames = [];
             
             if ischar(filenames) %single file
-                obj.open_image([pathname filenames]);
+                if ~obj.open_image([pathname filenames]), return, end;
                 obj.M_imgdata{1} = obj.imgdata;
                 obj.show_data(obj.send_original_to_Icy_on_show);
                 obj.M_filenames{1} = filenames;                
             else
                 hw = waitbar(0,'Loading files, please wait');
                 for k=1:numel(filenames)                
-                    obj.open_image([pathname char(filenames(k))]);
+                    if ~obj.open_image([pathname char(filenames(k))]), break, end;
                     obj.M_imgdata{k} = obj.imgdata;
                     obj.M_filenames{k} = filenames(k);
                     % obj.current_filename = filename;  
@@ -353,7 +353,9 @@ classdef ALYtools_data_controller < handle
         end      
         
  %-------------------------------------------------------------------------%           
-        function open_image(obj,full_filename,~)
+        function ret = open_image(obj,full_filename,~)
+            
+            ret = true;
             
             full_filename = strrep(full_filename,[filesep filesep],filesep);
             
@@ -384,12 +386,14 @@ classdef ALYtools_data_controller < handle
                             L = 256;
                         end
                          offset = nrows - L + 1 ;
-                         data_v = data.data(offset:nrows,1);
+                         data_v = data.data(offset:nrows,2);
                     end
                     I = zeros(1,1,1,1,numel(data_v));
                     I(1,1,1,1,:) = data_v;
                     obj.per_image_TCSPC_FLIM_nonimaging = true;
                 catch
+                    ret = false;
+                    errordlg('*.txt file seems to be corrupt - can not load');
                     return;
                 end               
             else
@@ -404,6 +408,8 @@ classdef ALYtools_data_controller < handle
                     end;
                     obj.per_image_TCSPC_FLIM_nonimaging = false;
                 catch
+                    errordlg('error on loading - can not continue');
+                    ret = false;
                     return; % mmm
                 end
             end
@@ -526,7 +532,7 @@ classdef ALYtools_data_controller < handle
             set( obj.scene_axes, 'xticklabel', [], 'yticklabel', [] );
             xlabel(obj.scene_axes,obj.current_filename);
             
-            if send_original_to_Icy
+            if send_original_to_Icy && ~obj.per_image_TCSPC_FLIM_nonimaging 
                 obj.send_original_to_Icy;
             end
         end
@@ -4439,7 +4445,7 @@ function load_irf(obj,~,~)
                             L = 256;
                         end
                          offset = nrows - L + 1 ;
-                         data_v = data.data(offset:nrows,1);
+                         data_v = data.data(offset:nrows,2);
                     end                                                            
                     irf = data_v;
                     irf = irf/sum(irf(:));                    

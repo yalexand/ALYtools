@@ -30,15 +30,17 @@ function save_decay_to_FLIMfit_5032_compatible_txt_file(fullfilename,t,v)
         vt = t(m)/1000;
         vv = v(m);
 
-        ST = S;
-        st = num2str(vt);
-        ST(1:length(st))=st;
-        %
-        SV = S;
-        sv = num2str(vv);
-        SV(1:length(sv))=sv;
-
-        fprintf(fid,'%s\t%s\r\n',ST,SV);
+        fprintf(fid,'%f\t%f\r\n',vt,vv); % use for FLIMfit compatibility
+        
+%         ST = S;
+%         st = num2str(vt);
+%         ST(1:length(st))=st;
+%         %
+%         SV = S;
+%         sv = num2str(vv);
+%         SV(1:length(sv))=sv;
+% 
+%         fprintf(fid,'%s\t%s\r\n',ST,SV);
 
     end
 
