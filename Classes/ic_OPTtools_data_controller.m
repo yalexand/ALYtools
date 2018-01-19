@@ -2322,7 +2322,7 @@ end
                 ns = (1:length(brightEnough))'-length(brightEnough)/2;
                 ns = ns(~isnan(shift));
                 shift = shift(~isnan(shift));
-                figure(2); histogram2(ns,shift,'YBinEdges',-21:2:21,'DisplayStyle','tile','ShowEmptyBins','on');
+                % figure(2); histogram2(ns,shift,'YBinEdges',-21:2:21,'DisplayStyle','tile','ShowEmptyBins','on');
                 %drawnow;
 
                 fitobject = fit(ns,shift,'poly1','Robust','on');
