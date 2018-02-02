@@ -804,7 +804,7 @@ classdef ic_OPTtools_front_end_menu_controller < handle
                     set(obj.menu_settings_Zrange,'Label','Z range : full');
                     obj.data_controller.Z_range = []; % no selection                    
                     obj.omero_data_manager.image = [];
-                end;                
+                end                
         end   
         
         

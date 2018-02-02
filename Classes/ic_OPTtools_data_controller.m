@@ -1680,21 +1680,24 @@ end
                 
             else % images should be loaded from HD
                 
-                if isdir(obj.BatchSrcDirectory)
+                if ~isdir(obj.BatchSrcDirectory)
+                    errordlg('wrong BatchSrcDirectory, can not continue'), return;                    
+                end                    
 
-                    if ~isempty(obj.file_names)
-                        names_list = obj.file_names;
-                    else                    
-                        files = dir([obj.BatchSrcDirectory filesep '*.OME.tiff']);
-                        num_files = length(files);
-                        if 0 ~= num_files
-                            names_list = cell(1,num_files);
-                            for k = 1:num_files
-                                names_list{k} = char(files(k).name);
-                            end
+                if ~isempty(obj.file_names)
+                    names_list = obj.file_names;
+                else                    
+                    files = dir([obj.BatchSrcDirectory filesep '*.OME.tiff']);
+                    num_files = length(files);
+                    if 0 ~= num_files
+                        names_list = cell(1,num_files);
+                        for k = 1:num_files
+                            names_list{k} = char(files(k).name);
                         end
                     end
+                end
 
+                if 0~=length(files)
                    waitmsg = 'Batch processing...';
                    hw = waitbar(0,waitmsg);                    
                    for k=1:numel(names_list)
@@ -1726,12 +1729,57 @@ end
                             end
                         end                    
                         waitbar(k/numel(names_list),hw); drawnow;                                                                            
-                    end
-
-                    delete(hw);drawnow;
-
+                   end
+                   delete(hw);drawnow;
                 else
-                    %? - can't arrive here?
+                    %%%%%%%%%%%%%% try stack layout here - start
+                    files = dir(obj.BatchSrcDirectory);
+                    dir_names = [];
+                    for k=1:length(files)
+                        curname = files(k).name;
+                        if isdir([obj.BatchSrcDirectory filesep curname]) && ~strcmp(curname,'.') && ~strcmp(curname,'..')
+                            dir_names = [dir_names; {curname}];
+                        end                                
+                    end
+                    try 
+                        waitmsg = 'Batch processing...';
+                        hw = waitbar(0,waitmsg);  
+                        for k=1:length(dir_names)
+                            waitbar((k-1)/length(dir_names),hw); drawnow;
+                            pth = [obj.BatchSrcDirectory filesep char(dir_names(k))]
+                            if isempty(obj.imstack_get_delays(pth))                    
+                                infostring = obj.imstack_Set_Src_Single(pth,false);
+                            else
+                                infostring = obj.imstack_Set_Src_Single_FLIM(pth,'sum',false);
+                            end
+                            if ~isempty(infostring)
+                                obj.Z_range = []; % no selection
+                                if ~isempty(obj.delays) %FLIM
+                                    obj.perform_reconstruction_FLIM;
+                                else
+                                    if strcmp(obj.Reconstruction_Largo,'ON')
+                                        obj.perform_reconstruction_Largo;
+                                    else
+                                        obj.volm = obj.perform_reconstruction(false);
+                                    end
+                                end
+                                %
+                                % save volume on disk
+                                iName = char(dir_names(k));
+                                L = length(iName);
+                                savefilename = [iName '_VOLUME.OME.tiff'];
+                                if isempty(obj.delays) % non-FLIM
+                                    obj.save_volume([obj.BatchDstDirectory filesep savefilename],false); % silent
+                                else
+                                    obj.save_volm_FLIM([obj.BatchDstDirectory filesep savefilename],false); % silent
+                                end
+                            end                    
+                        end
+                        delete(hw);drawnow;
+                    catch
+                        
+                    end
+                    %%%%%%%%%%%%%% try stack layout here - ends
                 end
                 
             end 
