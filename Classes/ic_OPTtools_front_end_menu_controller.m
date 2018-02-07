@@ -445,7 +445,8 @@ classdef ic_OPTtools_front_end_menu_controller < handle
                 button = questdlg('Do you want to run Batch or Current Single?',...
                 'Choose what exactly you want to do','Batch','Single','Clear All','Clear All');
                 if strcmp(button,'Batch')                   
-                   obj.data_controller.run_batch(obj.omero_data_manager);                   
+                   verbose = true;
+                   obj.data_controller.run_batch(obj.omero_data_manager,verbose);                   
                    obj.clear_all;
                    ret = true;                                       
                 elseif strcmp(button,'Single')         

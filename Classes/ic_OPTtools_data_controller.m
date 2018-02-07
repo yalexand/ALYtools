@@ -1621,7 +1621,7 @@ end
              
         end
 %-------------------------------------------------------------------------%                
-        function run_batch(obj,omero_data_manager,~)
+        function run_batch(obj,omero_data_manager,verbose,~)
                                                   
             if strcmp(obj.Reconstruction_Largo,'ON') && 1 ~= obj.downsampling
                 errordlg('only 1/1 proj-volm scale, full size, is supported, can not continue');
@@ -1633,7 +1633,9 @@ end
                 s2 = get(obj.menu_controller.menu_Batch_Indicator_Src,'Label');
             end;
             %
-            if ( strcmp(s1,s2) || ~isempty(obj.omero_Image_IDs) ) && ~isempty(omero_data_manager.session) % images should be loaded from OMERO
+            if exist('s1','var') && exist('s2','var') ... 
+               && ( strcmp(s1,s2) || ~isempty(obj.omero_Image_IDs) ) ... 
+               && ~isempty(omero_data_manager.session) % images should be loaded from OMERO
                 %
                 imageList = [];
                 if ~isempty(obj.omero_Image_IDs)
@@ -1648,9 +1650,13 @@ end
                 end;
                 %
                 waitmsg = 'Batch processing...';
-                hw = waitbar(0,waitmsg);
+                if verbose
+                    hw = waitbar(0,waitmsg);
+                end
                 for k = 1:length(imageList) 
-                        waitbar((k-1)/length(imageList),hw); drawnow                    
+                        if exist('hw','var')
+                            waitbar((k-1)/length(imageList),hw); drawnow
+                        end
                         infostring = obj.OMERO_load_image(omero_data_manager,imageList(k),false);
                         if ~isempty(infostring)                    
                             if ~isempty(obj.delays) %FLIM
@@ -1673,10 +1679,14 @@ end
                                 obj.save_volm_FLIM([obj.BatchDstDirectory filesep savefilename],false); % silent
                             end
                         end   
-                        waitbar(k/length(imageList),hw); drawnow
+                        if exist('hw','var')
+                            waitbar(k/length(imageList),hw);drawnow;
+                        end
                 end 
                 obj.omero_Image_IDs = [];
-                delete(hw);drawnow;                  
+                if exist('hw','var')
+                    delete(hw);drawnow;
+                end
                 
             else % images should be loaded from HD
                 
@@ -1699,9 +1709,11 @@ end
 
                 if 0~=length(files)
                    waitmsg = 'Batch processing...';
-                   hw = waitbar(0,waitmsg);                    
+                    if verbose
+                        hw = waitbar(0,waitmsg);
+                    end
                    for k=1:numel(names_list)
-                        waitbar((k-1)/numel(names_list),hw); drawnow;
+                        if exist('hw','var'), waitbar((k-1)/numel(names_list),hw); drawnow; end;
                         fname = [obj.BatchSrcDirectory filesep names_list{k}];                    
                         infostring = obj.Set_Src_Single(fname,false);
                         if isempty(infostring)
@@ -1728,9 +1740,9 @@ end
                                 obj.save_volm_FLIM([obj.BatchDstDirectory filesep savefilename],false); % silent
                             end
                         end                    
-                        waitbar(k/numel(names_list),hw); drawnow;                                                                            
+                        if exist('hw','var'), waitbar(k/numel(names_list),hw); drawnow; end;
                    end
-                   delete(hw);drawnow;
+                   if exist('hw','var'), delete(hw);drawnow; end
                 else
                     %%%%%%%%%%%%%% try stack layout here - start
                     files = dir(obj.BatchSrcDirectory);
@@ -1743,9 +1755,11 @@ end
                     end
                     try 
                         waitmsg = 'Batch processing...';
-                        hw = waitbar(0,waitmsg);  
+                        if verbose 
+                            hw = waitbar(0,waitmsg);  
+                        end;
                         for k=1:length(dir_names)
-                            waitbar((k-1)/length(dir_names),hw); drawnow;
+                            if exist('hw','var'), waitbar((k-1)/length(dir_names),hw); drawnow; end;
                             pth = [obj.BatchSrcDirectory filesep char(dir_names(k))]
                             if isempty(obj.imstack_get_delays(pth))                    
                                 infostring = obj.imstack_Set_Src_Single(pth,false);
@@ -1775,9 +1789,8 @@ end
                                 end
                             end                    
                         end
-                        delete(hw);drawnow;
-                    catch
-                        
+                        if exist('hw','var'), delete(hw);drawnow; end;
+                    catch                        
                     end
                     %%%%%%%%%%%%%% try stack layout here - ends
                 end

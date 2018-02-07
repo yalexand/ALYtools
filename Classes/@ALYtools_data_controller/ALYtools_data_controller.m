@@ -306,6 +306,7 @@ classdef ALYtools_data_controller < handle
             catch
                 disp('Error while trying to save settings: not saved');
             end
+            close all; % radical
         end       
 %-------------------------------------------------------------------------%                
          function clear_all(obj,~)
