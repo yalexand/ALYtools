@@ -150,7 +150,7 @@ classdef ic_OPTtools_data_controller < handle
             addlistener(obj,'proj_and_volm_clear',@obj.on_proj_and_volm_clear);                                    
 
             try 
-            obj.load_settings;
+            obj.load_settings([]);
             catch
             end
             
@@ -250,9 +250,16 @@ classdef ic_OPTtools_data_controller < handle
             xml_write([pwd filesep obj.data_settings_filename], settings);
         end % save_settings
 %-------------------------------------------------------------------------%                        
-        function load_settings(obj,~,~)        
-             if exist([pwd filesep obj.data_settings_filename],'file') 
-                [ settings, ~ ] = xml_read ([pwd filesep obj.data_settings_filename]);                                 
+        function ret = load_settings(obj,filename,~)        
+             ret = false; 
+             if isempty(filename) 
+                filename = [pwd filesep obj.data_settings_filename];
+             end
+             %
+             try
+             if exist(filename,'file')                 
+                [ settings, ~ ] = xml_read (filename);                  
+                %
                 obj.DefaultDirectory = settings.DefaultDirectory;  
                 obj.IcyDirectory = settings.IcyDirectory;
                 obj.downsampling = settings.downsampling;
@@ -286,8 +293,10 @@ classdef ic_OPTtools_data_controller < handle
                 %
                 obj.swap_XY_dimensions = settings.swap_XY_dimensions;
                 obj.registration_method = settings.registration_method;
-                obj.imstack_filename_convention_for_angle = settings.imstack_filename_convention_for_angle;                
-                
+                obj.imstack_filename_convention_for_angle = settings.imstack_filename_convention_for_angle;                                
+             end
+             ret = true;
+             catch
              end
         end
 %-------------------------------------------------------------------------%
