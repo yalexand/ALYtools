@@ -274,7 +274,7 @@ classdef ALYtools_data_controller < handle
             
             obj.RootDirectory = pwd;
             
-            if isempty(obj.IcyDirectory)
+            if (ispc || ismac) && isempty(obj.IcyDirectory) && ~isdeployed
                 hw = waitbar(0,'looking for Icy directory..');
                 waitbar(0.1,hw);                
                 if ispc
