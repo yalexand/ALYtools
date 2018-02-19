@@ -1789,7 +1789,6 @@ end
                                 %
                                 % save volume on disk
                                 iName = char(dir_names(k));
-                                L = length(iName);
                                 savefilename = [iName '_VOLUME.OME.tiff'];
                                 if isempty(obj.delays) % non-FLIM
                                     obj.save_volume([obj.BatchDstDirectory filesep savefilename],false); % silent
@@ -2135,7 +2134,15 @@ end
             if isempty(D), return, end;
             %
             obj.get_angles_from_imstack_filenames({D.name});
-            if isempty(obj.angles), errordlg('imstack_Set_Src_Single: can not deduce angles, can not continue'); end;            
+            if isempty(obj.angles)
+                msgstr = 'imstack_Set_Src_Single: can not deduce angles, can not continue';
+                if verbose
+                    errordlg(msgstr); 
+                else
+                    disp(msgstr); 
+                end
+                return;
+            end;
             %
             n_planes = numel(obj.angles);
             %
@@ -2216,11 +2223,16 @@ end
 %-------------------------------------------------------------------------%         
         function infostring = imstack_Set_Src_Single_FLIM(obj,path,verbose,~)
             infostring = [];
+            %
+            % to do
+            %
         end
 %-------------------------------------------------------------------------%
         function ret = imstack_get_delays(obj,path,~)            
             ret = [];
-                                    
+            %
+            % to do
+            %                                                
             try
             catch
                 return;
