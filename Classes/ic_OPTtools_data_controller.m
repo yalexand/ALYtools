@@ -24,6 +24,13 @@ classdef ic_OPTtools_data_controller < handle
     % and The Wellcome Trust through a grant entitled 
     % "The Open Microscopy Environment: Image Informatics for Biological Sciences" (Ref: 095931).
    
+% ??? WARNING on deletion: Warning: Objects of 'datetime' class exist.  Cannot clear this class or any of its superclasses.    
+% With handle classes I have taken to maintaing a list in the figure appdata area 
+% maintained by calling a common superclass method from the constructors, 
+% and adding a DeleteFcn callback that calls a static superclass method 
+% to delete any remaining valid handle objects when a figure closes. 
+% A bit of a pain but it seems to work.    
+    
     properties(Constant)
         data_settings_filename = 'opt_tools_data_settings.xml';
     end
@@ -138,10 +145,10 @@ classdef ic_OPTtools_data_controller < handle
         
         function obj = ic_OPTtools_data_controller(varargin)            
             %   
-            if ~isempty(varargin{1})
-                handles = args2struct(varargin);
-                assign_handles(obj,handles);
-            end
+%             if ~isempty(varargin{1})
+%                 handles = args2struct(varargin);
+%                 assign_handles(obj,handles);
+%             end
                         
             addlistener(obj,'new_proj_set',@obj.on_new_proj_set);
             addlistener(obj,'new_volm_set',@obj.on_new_volm_set);                        
@@ -710,7 +717,7 @@ function save_volume(obj,full_filename,verbose,~)
 end
 %-------------------------------------------------------------------------%
         function res = proj_rect_orientation_is_OK(obj,~,~)
-            
+
             [sizeX,sizeY,n_planes] = size(obj.proj);
              
             ps1_acc = [];
@@ -2593,5 +2600,62 @@ function shiftedImage = M1_imshift(obj,img,hShift,vShift,rotation)
         shiftedImage = img;
 end
 %-------------------------------------------------------------------------%
+function ret = split_original(obj,DST_DIR,base_name,N,~) % NO FLIM
+    %
+    prefix = '_ic_split_';
+    %
+    ret = false;
+    if ~isdir(DST_DIR) || isempty(obj.proj)
+        disp('either input parameters are bad, or no data loaded, can not continue');
+        return;
+    end
+    % presume RAM is enough big
+    [ sizeX sizeY np ] = size(obj.proj);
+        
+    bsz = floor(sizeY/N);
+    excess = rem(sizeY,N);
+    sizes = ones(1,N-1)*bsz;
+    sizes = [sizes bsz+excess];
+    %
+    for k=1:N
+        start_ind = (k-1)*bsz+1;
+        end_ind = k*bsz;
+        if k==N
+            end_ind = end_ind + excess;
+        end
+        buf = obj.proj(:,start_ind:end_ind,:);
+        disp([start_ind end_ind]);
+        % save "buf" as OME.tiff with current angles
+        ometiffilename = [DST_DIR filesep base_name prefix num2str(k) '.OME.tiff'];                
+        %
+        sizeZ = np;
+        sizeC = 1;
+        sizeT = 1;
+        angle_start = obj.angles(1);
+        angle_end = obj.angles(numel(obj.angles));
+        angle_step = obj.angles(2) - obj.angles(1);
+        for i=1:sizeZ
+                z = i;
+                c = 1;
+                t = 1;
+                I = squeeze(buf(:,:,i));
+                telapsed = add_plane_to_OMEtiff_with_metadata_ZCT(I, [z c t], [sizeZ sizeC sizeT], [], ometiffilename, ...
+                    'ModuloZ_Type', 'Rotation', ...
+                    'ModuloZ_TypeDescription', 'OPT', ...
+                    'ModuloZ_Unit', 'degree', ...
+                    'ModuloZ_Start', angle_start, ...
+                    'ModuloZ_Step', angle_step, ...
+                    'ModuloZ_End', angle_end, ...
+                    'BigTiff', true);
+        end
+        %                        
+    end
+    
+    ret = true;
+end
+%-------------------------------------------------------------------------%
     end % methods
 end % class
+
+
+

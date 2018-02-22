@@ -41,8 +41,11 @@ ip.addOptional('ModuloT_Labels', [], @isnumeric);
 ip.addOptional('Tags', [], @ischar);    
 ip.addOptional('Tags_SeparatingSeq', [], @ischar); 
 ip.addOptional('verbose', [], @islogical);
-ip.addParamValue('Compression', '',  @(x) ismember(x, getCompressionTypes()));
-ip.addParamValue('BigTiff', false , @islogical);
+%ip.addParamValue('Compression', '',  @(x) ismember(x, getCompressionTypes()));
+%ip.addParamValue('BigTiff', false , @islogical);
+ip.addParameter('Compression', '',  @(x) ismember(x, getCompressionTypes()));
+ip.addParameter('BigTiff', false , @islogical);
+
 
 ip.parse(varargin{:});
 
@@ -59,7 +62,7 @@ index = sub2ind(ZCT,z,c,t);
                 
 if 1 == index % make all setups
 
-        addpath_OMEkit;
+        addpath_ALYtools;
         
         % verify that enough memory is allocated
         bfCheckJavaMemory();
