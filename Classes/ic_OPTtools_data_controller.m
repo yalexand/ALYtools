@@ -40,7 +40,6 @@ classdef ic_OPTtools_data_controller < handle
         downsampling = 1;
         angle_downsampling = 1; 
         Z_range = []; 
-        
         FBP_interp = 'linear';
         FBP_filter = 'Ram-Lak';
         FBP_fscaling = 1;  
@@ -2129,15 +2128,15 @@ end
                         end              
         end
 %-------------------------------------------------------------------------%         
-        function infostring = imstack_Set_Src_Single(obj,path,verbose,~)
+        function infostring = imstack_Set_Src_Single(obj,pth,verbose,~)
             
             infostring = [];
             
-            if ~isdir(path), return, end; % shouldn't happen
+            if ~isdir(pth), return, end; % shouldn't happen
             
             ext = '*.tif';
-            D = dir( fullfile(path,ext) );
-            if isempty(D), ext = '*.tiff';D = dir( fullfile(path,ext) ); end;
+            D = dir( fullfile(pth,ext) );
+            if isempty(D), ext = '*.tiff';D = dir( fullfile(pth,ext) ); end;
             if isempty(D), return, end;
             %
             obj.get_angles_from_imstack_filenames({D.name});
@@ -2156,12 +2155,12 @@ end
             obj.proj = [];
             %            
                 if verbose
-                    str = strsplit(path,filesep);
+                    str = strsplit(pth,filesep);
                     wait_handle = waitbar(0,['reading planes from ' char(str(length(str)))]);
                 end;                 
                 %                
                 for k=1:n_planes
-                    plane = imread([path filesep char(D(k).name)]);
+                    plane = imread([pth filesep char(D(k).name)]);
                     %
                     % do median filtration if needed
                     s = obj.Prefiltering_Size;
@@ -2196,7 +2195,7 @@ end
                     obj.proj = [];                  
                     %
                     for p = 1 : n_planes    
-                        plane = imread([path filesep char(D(p).name)]);
+                        plane = imread([pth filesep char(D(p).name)]);
                         plane = rot90(plane);
                         %   
                         if isempty(obj.proj)
@@ -2218,9 +2217,9 @@ end
                     obj.do_registration;
                 end                                
                                             
-            infostring = path;
+            infostring = pth;
             
-            obj.DefaultDirectory = path;
+            obj.DefaultDirectory = pth;
             
             obj.on_new_proj_set;
             
@@ -2228,14 +2227,14 @@ end
                                                 
         end
 %-------------------------------------------------------------------------%         
-        function infostring = imstack_Set_Src_Single_FLIM(obj,path,verbose,~)
+        function infostring = imstack_Set_Src_Single_FLIM(obj,pth,verbose,~)
             infostring = [];
             %
             % to do
             %
         end
 %-------------------------------------------------------------------------%
-        function ret = imstack_get_delays(obj,path,~)            
+        function ret = imstack_get_delays(obj,pth,~)            
             ret = [];
             %
             % to do
@@ -2246,9 +2245,10 @@ end
             end
         end
 %-------------------------------------------------------------------------%
-        function get_angles_from_imstack_filenames(obj,D,~) % D is an array with imgstack Directory's filenames 
+        function get_angles_from_imstack_filenames(obj,D_in,~) % D is an array with imgstack Directory's filenames 
             %
-            obj.angles = zeros(1,numel(D));
+            D = sort_nat(D_in);
+            obj.angles = zeros(1,numel(D)); 
             
             % C1 convention - try to read real angle positions
             if strcmp('C1',obj.imstack_filename_convention_for_angle)
@@ -2276,23 +2276,9 @@ end
                         return;
                     end                                
                 end
-            % C2 convention - read number of steps
-            elseif strcmp('C2',obj.imstack_filename_convention_for_angle)
-                %
-                % read number of steps form last 5 digits, 
-                % then divide 360 by this number to get a step
-                %
-                nums = zeros(1,numel(D));
-                try
-                    for k=1:numel(D)
-                            str = char(D{k});
-                            pointpos = strfind(str,'.');
-                            nums(k) = str2double(str(pointpos - 5:pointpos-1));
-                    end
-                    obj.angles = 360/numel(nums)*nums; % something isn't right here
-                catch
-                    obj.angles = [];                    
-                end
+            % C2 convention - 360 degrees based, equidistanced
+            elseif strcmp('C2',obj.imstack_filename_convention_for_angle)                
+                  obj.angles = (0:numel(D)-1)*360/numel(D);
             end
             %
             % maybe this will work?

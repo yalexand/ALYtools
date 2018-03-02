@@ -1,0 +1,37 @@
+#!/bin/sh
+#  loc_ARRScript.pbs
+#  
+#  Created by Yuriy Alexandrov on 26/02/2018.
+#
+
+# ## ask PBS for time (format hh:mm:ss)
+# #PBS -l walltime=02:00:0
+# ## ask for 20 jobs with 24 cpus and total 64gb memory (per node)
+# #PBS -l select=1:ncpus=24:mem=110gb
+# #PBS -J 1-4
+
+# #PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1:gpu_type=GTXTITAN
+# #PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1:gpu_type=K80
+# #PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1:gpu_type=P100
+
+# ## ask PBS for time (format hh:mm:ss)
+#PBS -l walltime=02:00:0
+# ## ask for 4 jobs with GPU
+#PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1
+#PBS -J 1-4
+
+# add environment variables to args list
+ARGS="$SETUP_ARGS":"$PBS_ARRAY_INDEX"
+
+##load application modules
+#module load java
+module load matlab/R2017b
+
+#module load vnc
+#`vnc_start`
+
+$HOME/OPT_Reconstruction/OPT_NodeScript.sh $ARGS
+
+#vnc_stop
+
+exit

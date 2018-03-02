@@ -1,15 +1,28 @@
 function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
 
-    if ~( (isdir(SRC_DIR_NAME) || exist(SRC_DIR_NAME,'file')) && isdir(DST_DIR_NAME) )
+    if ~( (isdir(SRC_DIR_NAME) || 2==exist(SRC_DIR_NAME)) && isdir(DST_DIR_NAME) )
         disp('input parameters are not valid directory names, can not continue');
         return;
     end
 
-    addpath_ALYtools;
-    
-    bfCheckJavaMemory;
-    bfCheckJavaPath;
-    bfUpgradeCheck;
+            addpath_ALYtools;
+                
+            % verify that enough memory is allocated
+            bfCheckJavaMemory();
+
+            % load bioformats 
+            autoloadBioFormats = 1;
+            % load the Bio-Formats library into the MATLAB environment
+            status = bfCheckJavaPath(autoloadBioFormats);
+            assert(status, ['Missing Bio-Formats library. Either add loci_tools.jar '...
+                    'to the static Java path or add it to the Matlab path.']);
+
+            bfCheckJavaPath;
+            bfUpgradeCheck;    
+
+            % initialize logging
+            loci.common.DebugTools.enableLogging('INFO');
+            java.lang.System.setProperty('javax.xml.transform.TransformerFactory', 'com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl');   
        
     dc = ic_OPTtools_data_controller([]);
     if strcmpi(swap,'y') % then swap dimensions
