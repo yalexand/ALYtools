@@ -265,9 +265,9 @@ classdef ic_OPTtools_front_end_menu_controller < handle
          %------------------------------------------------------------------
         function menu_file_set_src_single_callback(obj, ~, ~)
             try
-            [file,path] = uigetfile({'*.OME.tiff','OME.tiff Files'},'Select OPT data file',obj.data_controller.DefaultDirectory);
+            [file,path] = uigetfile({'*.OME.tiff;*.OME.tif;*.ome.tiff;*.ome.tif;','OME.tiff Files'},'Select OPT data file',obj.data_controller.DefaultDirectory);
             catch
-                [file,path] = uigetfile({'*.OME.tiff','OME.tiff Files'},'Select OPT data file',pwd);
+                [file,path] = uigetfile({'*.OME.tiff;*.OME.tif;*.ome.tiff;*.ome.tif;','OME.tiff Files'},'Select OPT data file',pwd);
             end
             if file ~= 0
                 verbose = true;

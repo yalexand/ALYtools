@@ -1387,6 +1387,8 @@ end
             
             ret = [];
             
+            r = []; % "reader"
+            
             try
             
                 r = loci.formats.ChannelFiller();
@@ -1415,6 +1417,12 @@ end
                 end
                         
             catch
+            end
+            
+            if isempty(ret) && ~isempty(r) % try this as last resort
+                omeMeta = r.getMetadataStore();                     
+                sizeZ = omeMeta.getPixelsSizeZ(0).getValue;
+                ret = 360/sizeZ*(0:sizeZ-1);
             end
             
         end
