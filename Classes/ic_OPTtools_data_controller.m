@@ -1419,10 +1419,15 @@ end
             catch
             end
             
-            if isempty(ret) && ~isempty(r) % try this as last resort
-                omeMeta = r.getMetadataStore();                     
-                sizeZ = omeMeta.getPixelsSizeZ(0).getValue;
-                ret = 360/sizeZ*(0:sizeZ-1);
+            if isempty(ret) && ~isempty(r)
+                try % try this as last resort
+                    omeMeta = r.getMetadataStore();                     
+                    sizeZ = omeMeta.getPixelsSizeZ(0).getValue;
+                     if  sizeZ > 89
+                        ret = 360/sizeZ*(0:sizeZ-1);
+                     end
+                catch
+                end
             end
             
         end
