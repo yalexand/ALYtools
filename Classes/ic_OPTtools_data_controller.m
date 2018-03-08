@@ -2260,20 +2260,28 @@ end
 %-------------------------------------------------------------------------%
         function get_angles_from_imstack_filenames(obj,D_in,~) % D is an array with imgstack Directory's filenames 
             %
-            D = sort_nat(D_in);
-            obj.angles = zeros(1,numel(D)); 
-            
-            % C1 convention - try to read real angle positions
-            if strcmp('C1',obj.imstack_filename_convention_for_angle)
+                D = sort_nat(D_in);
+                         
                 try
+                    obj.angles = zeros(1,numel(D));
                     for k=1:numel(D)
                         out = parse_string_for_attribute_value(char(D{k}),{'Rot'});
-                        obj.angles(k)=out{1}.value;
+                        val = out{1}.value;
+                        if ~isnumeric(val)
+                            obj.angles = [];
+                            break;
+                        end               
+                        obj.angles(k)=val;
+                    end
+                    if sum(isnan(obj.angles)) > 0 || sum(isinf(obj.angles)) > 0
+                        obj.angles = [];
+                    else                
+                        return;
                     end
                 catch
                     obj.angles = [];
                 end
-                %
+                
                 % next attempt if 'Rot' convention fails - simply try to cast
                 % everyhting before extension as numeric
                 if isempty(obj.angles)
@@ -2282,27 +2290,52 @@ end
                         for k=1:numel(D)
                             str = char(D{k});
                             pointpos = strfind(str,'.');
-                            obj.angles(k) = str2double(str(1:pointpos-1));
+                             val = str2double(str(1:pointpos-1));
+                             if ~isnumeric(val)
+                                 obj.angles = [];
+                                 break;
+                             end
+                             obj.angles(k) = val;
                         end
+                     if sum(isnan(obj.angles)) > 0 || sum(isinf(obj.angles)) > 0
+                        obj.angles = [];
+                     else                
+                        return;
+                     end
+                    catch
+                        obj.angles = [];                        
+                    end    
+                end
+                %
+                if isempty(obj.angles)  
+                    obj.angles = zeros(1,numel(D));
+                    try
+                        obj.angles = (0:numel(D)-1)*360/numel(D);
+                        if sum(isnan(obj.angles)) > 0 || sum(isinf(obj.angles)) > 0
+                            obj.angles = [];
+                        else                
+                            return;
+                        end           
                     catch
                         obj.angles = [];
-                        return;
-                    end                                
-                end
-            % C2 convention - 360 degrees based, equidistanced
-            elseif strcmp('C2',obj.imstack_filename_convention_for_angle)                
-                  obj.angles = (0:numel(D)-1)*360/numel(D);
-            end
-            %
-            % maybe this will work?
-            try
-                if isnumeric(obj.imstack_filename_convention_for_angle) && ...
-                    numel(obj.imstack_filename_convention_for_angle) == numel(obj.angles)
-                    obj.angles = obj.imstack_filename_convention_for_angle;
-                end
-            catch
-                obj.angles = [];
-            end
+                    end
+                end 
+                %
+                if isempty(obj.angles)  
+                    obj.angles = zeros(1,numel(D));
+                    try
+                        if isnumeric(obj.imstack_filename_convention_for_angle)
+                            obj.angles = obj.imstack_filename_convention_for_angle;
+                        end
+                        if sum(isnan(obj.angles)) > 0 || sum(isinf(obj.angles)) > 0
+                            obj.angles = [];
+                        else                
+                            return;
+                        end                       
+                    catch
+                        obj.angles = [];
+                    end
+                end                 
             %
             %
             % IF FAILED, ADD HERE MORE METHODS TO GET ANGLES FROM FILNAMES 
