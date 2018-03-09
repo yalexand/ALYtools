@@ -8,10 +8,9 @@ function merging_3channel(src,dst,t1,t2,t3)
 % t3 = '_Wavelength_560nm';
 % merging_3channel('c:\temp\merging_test_data\src','c:\temp\merging_test_data\dst','_Wavelength_380nm','_Wavelength_450nm','_Wavelength_560nm')
 
-ext = '*.tif';
-
-D = dir( fullfile(src,ext) );
+ext = '*.tif'; D = dir( fullfile(src,ext) );
 if isempty(D), ext = '*.tiff';D = dir( fullfile(src,ext) ); end;
+if isempty(D), ext = '*.ome.tiff';D = dir( fullfile(src,ext) ); end;
 if isempty(D), return, end;
 
 fnames = {D.name};

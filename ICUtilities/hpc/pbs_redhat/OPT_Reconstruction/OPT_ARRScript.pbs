@@ -9,18 +9,6 @@
 #PBS -l select=1:ncpus=24:mem=110gb
 #PBS -J 1-4
 
-# add environment variables to args list
-ARGS="$SETUP_ARGS":"$PBS_ARRAY_INDEX"
-
-##load application modules
-#module load java
-module load matlab/R2017b
-
-#module load vnc
-#`vnc_start`
-
-$HOME/OPT_Reconstruction/OPT_NodeScript.sh $ARGS
-
-#vnc_stop
+$HOME/OPT_Reconstruction/OPT_NodeScript.sh $SETUP_ARGS
 
 exit
