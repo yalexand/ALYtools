@@ -12,46 +12,55 @@ if isempty(D), return, end;
 fnames = {D.name};
 
 channelnames = [];
-x = [];
-y = [];
-for k=1:numel(fnames)
-     str = char(fnames(k));
-     res = parse_OpenFLIM_HCA_1(str);
-     channelnames = [channelnames; res(5)];
-end
-channelnames = unique(channelnames);
+wxytfz = [];% wxytfz pairs
 
-L1=[];
-L2=[];
-L3=[];
-
-xys = [];% xy pairs
 separator = 'alksdlajdlalnxmkortjfnqoke';
 for k=1:numel(fnames)
-     str = char(fnames(k));
-     res = parse_OpenFLIM_HCA_1(str);
-     x = char(res(2)); % supposed to be unique
+     res = parse_OpenFLIM_HCA_1(char(fnames(k)));
+     w = char(res(1)); 
+     x = char(res(2)); 
      y = char(res(3));
-     %chan = char(res(5));
-     xys = [xys; {[x separator y]}];
+     t = char(res(4));
+     z = char(res(6));
+     %
+     wxytfz = [wxytfz; {[w separator x separator y separator t separator z]}];
+     %
+     channelnames = [channelnames; res(5)];
 end
-xys=unique(xys);
 
-for k=1:numel(xys)
-     str = char(xys(k));
-     r = strsplit(char(xys(k)),separator);
-     x = char(r(1));
-     y = char(r(2));
+wxytfz=unique(wxytfz);
+channelnames = unique(channelnames);
+
+L1 = [];
+L2 = [];
+L3 = [];
+
+for k=1:numel(wxytfz)
+     res = strsplit(char(wxytfz(k)),separator);
+     w = char(res(1)); 
+     x = char(res(2)); 
+     y = char(res(3));
+     t = char(res(4));
+     z = char(res(5));
      n1 = [];
      n2 = [];
      n3 = [];
-     for k=1:numel(fnames)
-         str = char(fnames(k));
-         if ~isempty(strfind(str,x)) && ~isempty(strfind(str,y)) && ~isempty(strfind(str,char(channelnames(1))))
+     for m=1:numel(fnames)
+         str = char(fnames(m));
+         %
+         res = parse_OpenFLIM_HCA_1(str);
+         w_m = char(res(1));
+         x_m = char(res(2));
+         y_m = char(res(3));
+         t_m = char(res(4));
+         f_m = char(res(5));
+         z_m = char(res(6));
+         %    
+         if     strcmp(w,w_m) && strcmp(x,x_m) && strcmp(y,y_m) && strcmp(t,t_m) && strcmp(z,z_m) && strcmp(f_m,channelnames(1))
              n1 = str;
-         elseif ~isempty(strfind(str,x)) && ~isempty(strfind(str,y)) && ~isempty(strfind(str,char(channelnames(2))))
+         elseif strcmp(w,w_m) && strcmp(x,x_m) && strcmp(y,y_m) && strcmp(t,t_m) && strcmp(z,z_m) && strcmp(f_m,channelnames(2))
              n2 = str;
-         elseif ~isempty(strfind(str,x)) && ~isempty(strfind(str,y)) && ~isempty(strfind(str,char(channelnames(3))))
+         elseif strcmp(w,w_m) && strcmp(x,x_m) && strcmp(y,y_m) && strcmp(t,t_m) && strcmp(z,z_m) && strcmp(f_m,channelnames(3))
              n3 = str;
          end
      end
@@ -63,13 +72,13 @@ end
 I = [];
 
 for k=1:numel(L1)
-    % find image file names
+    %
     f1 = [src filesep char(L1(k))];
     f2 = [src filesep char(L2(k))];
     f3 = [src filesep char(L3(k))];
     %
     res = parse_OpenFLIM_HCA_1(f1);
-    basename = ['Well=' char(res(1)) '_X=' char(res(2)) '_Y=' char(res(3))];    
+    basename = ['Well=' char(res(1)) '_X=' char(res(2)) '_Y=' char(res(3)) '_T=' char(res(4)) '_Z=' char(res(6))];
     %
     [uppixX,uppixZ,U1] = bfopen_v(f1);
     [uppixX,uppixZ,U2] = bfopen_v(f2);
