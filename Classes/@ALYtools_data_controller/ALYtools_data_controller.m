@@ -301,12 +301,19 @@ classdef ALYtools_data_controller < handle
                 
 %-------------------------------------------------------------------------%
         function delete(obj)
-            try
-                obj.save_settings([obj.RootDirectory filesep obj.data_settings_filename]);
-            catch
-                disp('Error while trying to save settings: not saved');
+            
+  ButtonName = questdlg('Do you want to save current settings?', ...
+                         'Settings saving on exit', ...
+                         'Yes', 'No - quit without settings saving', 'Yes');
+            if strcmp(ButtonName,'Yes')                                                 
+                try
+                    obj.save_settings([obj.RootDirectory filesep obj.data_settings_filename]);
+                catch
+                    disp('Error while trying to save settings: not saved');
+                end
+                close all; % radical
             end
-            close all; % radical
+            
         end       
 %-------------------------------------------------------------------------%                
          function clear_all(obj,~)
