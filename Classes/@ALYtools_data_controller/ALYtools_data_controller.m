@@ -409,7 +409,7 @@ classdef ALYtools_data_controller < handle
                 try
                     [uppixX,uppixZ,I] = bfopen_v(full_filename);
                     if ~isempty(uppixX)
-                        obj.microns_per_pixel = uppixX;
+                        %obj.microns_per_pixel = uppixX;
                     else
                         disp('No spatial resolution information found, set obj.microns_per_pixel = 1');
                         obj.microns_per_pixel = 1;
@@ -1016,7 +1016,7 @@ classdef ALYtools_data_controller < handle
                         
                     end     
                     
-                    if obj.save_analysis_output_as_xls && ~isempty(data) && ~isempty(caption) && ~isempty(table_name) % common excel data file
+                    if obj.save_analysis_output_as_xls && ~isempty(CMN) && ~isempty(caption) && ~isempty(table_name) % common excel data file
                        if ispc
                         xlswrite( cmnxlsname,CMN );
                        else
@@ -2859,11 +2859,13 @@ end
                 %  data, especially in a batch.. 
                 %  so maybe think about OR, for now via comment/uncomment
                 
-                datas = data;
-                captions = {'filename','nuc_index','nuc_cX','nuc_cY','cell_index','nuclear_area', ...
-                    'gran_area','gran_tot_fluorescence','gran_distance_to_nucleus','gran_distance_to_nucleus_weighted','gran_distance_to_cell_border','gran_distance_to_cell_border_weighted', ...
-                    'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter'};
-                table_names = {'MPHG_CELL_BY_CELL'};                                                                                                                                               
+                if ~isempty(data)
+                    datas = data;
+                    captions = {'filename','nuc_index','nuc_cX','nuc_cY','cell_index','nuclear_area', ...
+                        'gran_area','gran_tot_fluorescence','gran_distance_to_nucleus','gran_distance_to_nucleus_weighted','gran_distance_to_cell_border','gran_distance_to_cell_border_weighted', ...
+                        'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter'};
+                    table_names = {'MPHG_CELL_BY_CELL'};                                                                                                                                               
+                end
  end     
 %-------------------------------------------------------------------------%  
         function [datas, captions, table_names, fig] = analyze_FJ(obj,~,~)            

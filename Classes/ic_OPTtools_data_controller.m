@@ -2385,6 +2385,7 @@ end
             count = 0;
 
             while ~finished && count < 20
+                if verbose, waitbar(count/20,hw), end;
                 count = count+1;
 
                 sizeCheck = size(obj.M1_imshift(PROJ(:,:,1),0,hshift,-rotation));
@@ -2459,8 +2460,8 @@ end
                     rotation = rotation + newrotation/2;
                 end
             end 
-            close(2)
-            if ~isempty(hw), delete(hw), drawnow, end
+            %close(2)
+            if verbose && ~isempty(hw), delete(hw), drawnow, end
             
             vshift = hshift;
             hshift = 0;
