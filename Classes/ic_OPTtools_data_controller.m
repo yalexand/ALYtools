@@ -2447,9 +2447,14 @@ end
                 % figure(2); histogram2(ns,shift,'YBinEdges',-21:2:21,'DisplayStyle','tile','ShowEmptyBins','on');
                 %drawnow;
 
-                fitobject = fit(ns,shift,'poly1','Robust','on');
-                newshift = round(fitobject.p2);
-                newrotation = fitobject.p1;
+                if length(ns) > 1
+                    fitobject = fit(ns,shift,'poly1','Robust','on');
+                    newshift = round(fitobject.p2);
+                    newrotation = fitobject.p1;
+                else
+                    newshift = 0;
+                    newrotation = 0;                    
+                end
                 
                 disp([ abs(tan(newrotation)) 1/size(newproj,2)]);
                 
