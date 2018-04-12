@@ -129,6 +129,8 @@ classdef ic_OPTtools_data_controller < handle
         memmap_volm = [];
         proj_mapfile_name = [];
         volm_mapfile_name = [];
+        
+        run_headless = false;
                                        
     end
     
@@ -760,7 +762,21 @@ end
 %-------------------------------------------------------------------------%
         function delete(obj)
             obj.clear_memory_mapping;
-            obj.save_settings;
+            %
+            if ~obj.run_headless
+                ButtonName = questdlg('Do you want to save current settings?', ...
+                             'Settings saving on exit', ...
+                             'Yes', 'No - quit without settings saving', 'Yes');
+                if strcmp(ButtonName,'Yes')                                                 
+                    try
+                        obj.save_settings;
+                    catch
+                        disp('Error while trying to save settings: not saved');
+                    end
+                    close all; % radical
+                end
+            end
+
         end
 %-------------------------------------------------------------------------%        
         function reconstruction = FBP(obj,sinogram,~)

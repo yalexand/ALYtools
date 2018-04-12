@@ -25,6 +25,7 @@ function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
             java.lang.System.setProperty('javax.xml.transform.TransformerFactory', 'com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl');   
        
     dc = ic_OPTtools_data_controller([]);
+    dc.run_headless = true;
     if strcmpi(swap,'y') % then swap dimensions
         dc.swap_XY_dimensions = 'Y';
     else

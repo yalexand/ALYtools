@@ -212,7 +212,7 @@ classdef ALYtools_gui
            handles = guidata(obj.window);
            
            if isempty(handles)
-               disp('close_request_fcn: hadles empty');
+               disp('close_request_fcn: handles empty');
                delete(obj.window);
                return;
            end
