@@ -73,6 +73,8 @@ classdef ic_OPTtools_data_controller < handle
         registration_method = 'None'; % or "M1" - this is done on loading
         %
         imstack_filename_convention_for_angle = 'C1';
+        %
+        save_volume_bit_depth = 64; % default 
                 
     end                    
     
@@ -254,7 +256,9 @@ classdef ic_OPTtools_data_controller < handle
             settings.swap_XY_dimensions = obj.swap_XY_dimensions;
             settings.registration_method = obj.registration_method;
             settings.imstack_filename_convention_for_angle = obj.imstack_filename_convention_for_angle;
-                                    
+            %
+            settings.save_volume_bit_depth = obj.save_volume_bit_depth;
+            
             xml_write([pwd filesep obj.data_settings_filename], settings);
         end % save_settings
 %-------------------------------------------------------------------------%                        
@@ -302,6 +306,8 @@ classdef ic_OPTtools_data_controller < handle
                 obj.swap_XY_dimensions = settings.swap_XY_dimensions;
                 obj.registration_method = settings.registration_method;
                 obj.imstack_filename_convention_for_angle = settings.imstack_filename_convention_for_angle;                                
+                %
+                obj.save_volume_bit_depth = settings.save_volume_bit_depth;                
              end
              ret = true;
              catch
@@ -701,18 +707,32 @@ function save_volume(obj,full_filename,verbose,~)
         save(full_filename,'vol','-v7.3');
         clear('vol');
     elseif ~isempty(strfind(lower(full_filename),'.ome.tiff'))
-    %
-        [szX,szY,szZ] = size(obj.volm);                                        
-        if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
-            metadata = createMinimalOMEXMLMetadata(reshape(obj.volm,[szX,szY,1,1,szZ]),'XYCTZ');
-            toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
-            metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
-            metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
-            metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
-            bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
-        else
-            bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
-        end                    
+    %   
+        [szX,szY,szZ] = size(obj.volm);                                            
+        if 64 == obj.save_volume_bit_depth
+            if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
+                metadata = createMinimalOMEXMLMetadata(reshape(obj.volm,[szX,szY,1,1,szZ]),'XYCTZ');
+                toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
+                metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
+                metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
+                metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
+                bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
+            else
+                bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
+            end                    
+        elseif 16 == obj.save_volume_bit_depth    
+            V = uint16(obj.volm);
+            if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
+                metadata = createMinimalOMEXMLMetadata(reshape(V,[szX,szY,1,1,szZ]),'XYCTZ');
+                toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
+                metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
+                metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
+                metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
+                bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
+            else
+                bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
+            end                                
+        end
     end
     if verbose, delete(hw), drawnow; end;
 end

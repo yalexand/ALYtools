@@ -273,6 +273,7 @@ classdef ALYtools_data_controller < handle
             end
             
             obj.OPT_data_controller = ic_OPTtools_data_controller([]);
+            obj.OPT_data_controller.run_headless = true;
             
             obj.RootDirectory = pwd;
             
