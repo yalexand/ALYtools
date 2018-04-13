@@ -74,7 +74,7 @@ classdef ic_OPTtools_data_controller < handle
         %
         imstack_filename_convention_for_angle = 'C1';
         %
-        save_volume_bit_depth = 64; % default 
+        save_volume_bit_depth = 32; % default 
                 
     end                    
     
@@ -709,7 +709,7 @@ function save_volume(obj,full_filename,verbose,~)
     elseif ~isempty(strfind(lower(full_filename),'.ome.tiff'))
     %   
         [szX,szY,szZ] = size(obj.volm);                                            
-        if 64 == obj.save_volume_bit_depth
+        if 32 == obj.save_volume_bit_depth
             if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
                 metadata = createMinimalOMEXMLMetadata(reshape(obj.volm,[szX,szY,1,1,szZ]),'XYCTZ');
                 toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
@@ -1001,7 +1001,7 @@ end
                                 sinogram = squeeze(double(obj.proj(:,y_min,:)));
                                 reconstruction = RF(sinogram);
                                 [sizeR1,sizeR2] = size(reconstruction);
-                                V = zeros(sizeR1,sizeR2,YL); % XYZ                        
+                                V = zeros(sizeR1,sizeR2,YL,'single'); % XYZ                        
                                 PR = obj.proj;
                                 step = obj.angle_downsampling;                 
                                 n_angles = numel(obj.angles);
@@ -1038,7 +1038,7 @@ end
                          sinogram = squeeze(double(proj_r(:,1,:)));
                          reconstruction = RF(sinogram);                                                        
                          [sizeR1,sizeR2] = size(reconstruction);                         
-                         V = zeros(sizeR1,sizeR2,szY_r); % XYZ
+                         V = zeros(sizeR1,sizeR2,szY_r,'single'); % XYZ
                                 step = obj.angle_downsampling;                 
                                 n_angles = numel(obj.angles);
                                 interp = obj.FBP_interp;
@@ -1072,7 +1072,7 @@ end
                             reconstruction = RF(sinogram);
                             if isempty(V)
                                 [sizeR1,sizeR2] = size(reconstruction);
-                                V = zeros(sizeR1,sizeR2,YL); % XYZ
+                                V = zeros(sizeR1,sizeR2,YL,'single'); % XYZ
                             end
                             %
                             V(:,:,y) = reconstruction;
@@ -1096,7 +1096,7 @@ end
                             reconstruction = RF(sinogram);                                                        
                             if isempty(V)
                                 [sizeR1,sizeR2] = size(reconstruction);
-                                V = zeros(sizeR1,sizeR2,szY_r); % XYZ
+                                V = zeros(sizeR1,sizeR2,szY_r,'single'); % XYZ
                             end
                             %
                             V(:,:,y) = reconstruction;
@@ -1202,7 +1202,7 @@ end
                          sinogram = squeeze(cast(PROJ(:,1,:),'single'));
                          reconstruction = RF(sinogram);                                                        
                          [sizeR1,sizeR2] = size(reconstruction);                         
-                         V = zeros(sizeR1,sizeR2,sizeY); % XYZ
+                         V = zeros(sizeR1,sizeR2,sizeY,'single'); % XYZ
                                 step = obj.angle_downsampling;                 
                                 n_angles = numel(obj.angles);
                                 interp = obj.FBP_interp;
@@ -1674,7 +1674,7 @@ end
                             reconstruction = RF(sinogram);
                             if isempty(obj.volm)
                                 [sizeR1,sizeR2] = size(reconstruction);
-                                obj.volm = zeros(sizeR1,sizeR2,YL); % XYZ
+                                obj.volm = zeros(sizeR1,sizeR2,YL,'single'); % XYZ
                             end
                             %
                             res(:,:,y) = reconstruction;
@@ -1721,9 +1721,13 @@ end
                         if exist('hw','var')
                             waitbar((k-1)/length(imageList),hw); drawnow
                         end
+                        tic
                         infostring = obj.OMERO_load_image(omero_data_manager,imageList(k),false);
+                        disp(infostring);
+                        disp(['loading time = ' num2str(toc)]);                                                
                         if ~isempty(infostring)                    
-                            if ~isempty(obj.delays) %FLIM
+                            tic
+                            if ~isempty(obj.delays) %FLIM                                
                                 obj.perform_reconstruction_FLIM;
                             else
                                 if strcmp(obj.Reconstruction_Largo,'ON')
@@ -1732,8 +1736,10 @@ end
                                     obj.volm = obj.perform_reconstruction(false);
                                 end
                             end
+                            disp(['reconstruction time = ' num2str(toc)]);
                             %
                             % save volume on disk - presume OME.tiff filenames everywhere
+                            tic
                             iName = char(java.lang.String(imageList(k).getName().getValue()));                            
                             L = length(iName);
                             savefilename = [iName(1:L-9) '_VOLUME.OME.tiff'];
@@ -1742,6 +1748,8 @@ end
                             else
                                 obj.save_volm_FLIM([obj.BatchDstDirectory filesep savefilename],false); % silent
                             end
+                            disp([obj.BatchDstDirectory filesep savefilename]);
+                            disp(['saving time = ' num2str(toc)]);                            
                         end   
                         if exist('hw','var')
                             waitbar(k/length(imageList),hw);drawnow;
@@ -1779,11 +1787,17 @@ end
                    for k=1:numel(names_list)
                         if exist('hw','var'), waitbar((k-1)/numel(names_list),hw); drawnow; end;
                         fname = [obj.BatchSrcDirectory filesep names_list{k}];                    
+                        tic
                         infostring = obj.Set_Src_Single(fname,false);
+                        disp(infostring);
+                        disp(['loading time = ' num2str(toc)]);                                                    
                         if isempty(infostring)
+                            tic
                             infostring = obj.Set_Src_FLIM(fname,'sum',false);
+                            disp(infostring);                            
                         end
-                        if ~isempty(infostring) 
+                        if ~isempty(infostring)
+                            tic
                             if ~isempty(obj.delays) %FLIM
                                 obj.perform_reconstruction_FLIM;
                             else
@@ -1793,16 +1807,20 @@ end
                                     obj.volm = obj.perform_reconstruction(false);
                                 end
                             end
+                            disp(['reconstruction time = ' num2str(toc)]);
                             %
                             % save volume on disk
                             iName = names_list{k};
                             L = length(iName);
                             savefilename = [iName(1:L-9) '_VOLUME.OME.tiff'];
+                            tic
                             if isempty(obj.delays) % non-FLIM
                                 obj.save_volume([obj.BatchDstDirectory filesep savefilename],false); % silent
                             else
                                 obj.save_volm_FLIM([obj.BatchDstDirectory filesep savefilename],false); % silent
                             end
+                            disp([obj.BatchDstDirectory filesep savefilename]);
+                            disp(['saving time = ' num2str(toc)]);                            
                         end                    
                         if exist('hw','var'), waitbar(k/numel(names_list),hw); drawnow; end;
                    end
@@ -1824,13 +1842,20 @@ end
                         end;
                         for k=1:length(dir_names)
                             if exist('hw','var'), waitbar((k-1)/length(dir_names),hw); drawnow; end;
-                            pth = [obj.BatchSrcDirectory filesep char(dir_names(k))]
-                            if isempty(obj.imstack_get_delays(pth))                    
+                            pth = [obj.BatchSrcDirectory filesep char(dir_names(k))];
+                            if isempty(obj.imstack_get_delays(pth))
+                                tic
                                 infostring = obj.imstack_Set_Src_Single(pth,false);
+                                disp(infostring);
+                                disp(['loading time = ' num2str(toc)]);                                                            
                             else
+                                tic
                                 infostring = obj.imstack_Set_Src_Single_FLIM(pth,'sum',false);
+                                disp(infostring);
+                                disp(['loading time = ' num2str(toc)]);
                             end
                             if ~isempty(infostring)
+                                tic
                                 obj.Z_range = []; % no selection
                                 if ~isempty(obj.delays) %FLIM
                                     obj.perform_reconstruction_FLIM;
@@ -1841,8 +1866,10 @@ end
                                         obj.volm = obj.perform_reconstruction(false);
                                     end
                                 end
+                                disp(['reconstruction time = ' num2str(toc)]);
                                 %
                                 % save volume on disk
+                                tic
                                 iName = char(dir_names(k));
                                 savefilename = [iName '_VOLUME.OME.tiff'];
                                 if isempty(obj.delays) % non-FLIM
@@ -1850,6 +1877,8 @@ end
                                 else
                                     obj.save_volm_FLIM([obj.BatchDstDirectory filesep savefilename],false); % silent
                                 end
+                                disp([obj.BatchDstDirectory filesep savefilename]);
+                                disp(['saving time = ' num2str(toc)]);                                
                             end                    
                         end
                         if exist('hw','var'), delete(hw);drawnow; end;

@@ -53,11 +53,18 @@ function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
     if 2==exist(SRC_DIR_NAME) % SRC_DIR_NAME is single OME.tiff file not directory
         try
                         fname = SRC_DIR_NAME;
+                        tic
                         infostring = dc.Set_Src_Single(fname,false);
+                        disp(infostring);
+                        disp(['loading time = ' num2str(toc)]);
                         if isempty(infostring)
+                            tic
                             infostring = dc.Set_Src_FLIM(fname,'sum',false);
+                            disp(infostring);
+                            disp(['loading time = ' num2str(toc)]);                            
                         end
                         if ~isempty(infostring) 
+                            tic
                             dc.Z_range = []; % no selection
                             if ~isempty(dc.delays) %FLIM
                                 dc.perform_reconstruction_FLIM;
@@ -68,8 +75,10 @@ function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
                                     dc.volm = dc.perform_reconstruction(false);
                                 end
                             end
+                            disp(['reconstruction time = ' num2str(toc)]);
                             %
                             % save volume on disk
+                            tic
                             s = strsplit(fname,filesep);
                             iName = char(s(numel(s)));
                             L = length(iName);
@@ -79,6 +88,8 @@ function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
                             else
                                 dc.save_volm_FLIM([DST_DIR_NAME filesep savefilename],false); % silent
                             end
+                            disp([DST_DIR_NAME filesep savefilename]);
+                            disp(['saving time = ' num2str(toc)]);
                             %
                             clear('dc');
                             if isdeployed
@@ -92,13 +103,20 @@ function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
         end
     elseif 7==exist(SRC_DIR_NAME) % presume that SRC_DIR_NAME is single projections stack 
         try
-                            pth = SRC_DIR_NAME
-                            if isempty(dc.imstack_get_delays(pth))                    
+                            pth = SRC_DIR_NAME;
+                            if isempty(dc.imstack_get_delays(pth))     
+                                tic
                                 infostring = dc.imstack_Set_Src_Single(pth,false);
+                                disp(infostring);
+                                disp(['loading time = ' num2str(toc)]);                                
                             else
+                                tic
                                 infostring = dc.imstack_Set_Src_Single_FLIM(pth,'sum',false);
+                                disp(infostring);
+                                disp(['loading time = ' num2str(toc)]);                                
                             end
                             if ~isempty(infostring)
+                                tic
                                 dc.Z_range = []; % no selection
                                 if ~isempty(dc.delays) %FLIM
                                     dc.perform_reconstruction_FLIM;
@@ -109,8 +127,10 @@ function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
                                         dc.volm = dc.perform_reconstruction(false);
                                     end
                                 end
+                                disp(['reconstruction time = ' num2str(toc)]);
                                 %
                                 % save volume on disk
+                                tic
                                 s = strsplit(pth,filesep);
                                 iName = char(s(numel(s)));
                                 savefilename = [iName '_VOLUME.OME.tiff'];
@@ -119,6 +139,8 @@ function ic_OPTtools_reconstruct(SRC_DIR_NAME,DST_DIR_NAME,swap)
                                 else
                                     dc.save_volm_FLIM([DST_DIR_NAME filesep savefilename],false); % silent
                                 end
+                                disp([DST_DIR_NAME filesep savefilename]);
+                                disp(['saving time = ' num2str(toc)]);
                                 %
                                 clear('dc');
                                 if isdeployed
