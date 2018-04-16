@@ -2859,17 +2859,41 @@ end
                         icyvol(:,:,6,1,1) = sgm_gran; 
                 
                 fig = icyvol;            
-                
-                %  it looks cumbersome to save cell-by-cell AND per-FOV
-                %  data, especially in a batch.. 
-                %  so maybe think about OR, for now via comment/uncomment
-                
+                                  
                 if ~isempty(data)
-                    datas = data;
-                    captions = {'filename','nuc_index','nuc_cX','nuc_cY','cell_index','nuclear_area', ...
-                        'gran_area','gran_tot_fluorescence','gran_distance_to_nucleus','gran_distance_to_nucleus_weighted','gran_distance_to_cell_border','gran_distance_to_cell_border_weighted', ...
-                        'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter'};
-                    table_names = {'MPHG_CELL_BY_CELL'};                                                                                                                                               
+                    % check if it is possible to infer well plate info                    
+                    res = parse_OpenFLIM_HCA_1(char(data(1,1)));
+                    if ~isempty(res) && 5 == length(res)     
+                        for k=1:size(data,1)
+                            res = parse_OpenFLIM_HCA_1(char(data(k,1)));
+                            well = res(1);
+                            x = res(2);
+                            y = res(3);
+                            t = res(4);
+                            z = res(5);
+                            %
+                            well = char(well);
+                            LETTER = cellstr(well(1));
+                            NUMBER = cellstr(well(2:length(well)));
+                            %
+                            currec = data(k,:);
+                            fname = currec(1);
+                            rest_of_rec = currec(2:length(currec));
+                            rec = [fname LETTER NUMBER x y t z rest_of_rec];
+                            datas = [datas; rec];                            
+                        end
+                        captions = {'filename','well_LETTER','wel_NUMBER','x','y','T','z','nuc_index','nuc_cX','nuc_cY','cell_index','nuclear_area', ...
+                            'gran_area','gran_tot_fluorescence','gran_distance_to_nucleus','gran_distance_to_nucleus_weighted','gran_distance_to_cell_border','gran_distance_to_cell_border_weighted', ...
+                            'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter'};
+                        table_names = {'MPHG_CELL_BY_CELL'};
+                        return;
+                    else                    
+                        datas = data;
+                        captions = {'filename','nuc_index','nuc_cX','nuc_cY','cell_index','nuclear_area', ...
+                            'gran_area','gran_tot_fluorescence','gran_distance_to_nucleus','gran_distance_to_nucleus_weighted','gran_distance_to_cell_border','gran_distance_to_cell_border_weighted', ...
+                            'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter'};
+                        table_names = {'MPHG_CELL_BY_CELL'};                                                                                                                                               
+                    end
                 end
  end     
 %-------------------------------------------------------------------------%  

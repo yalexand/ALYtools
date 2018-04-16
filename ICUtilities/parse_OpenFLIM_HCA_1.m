@@ -5,13 +5,28 @@ function res = parse_OpenFLIM_HCA_1(s)
 
 res = [];
 
-t = {' Well=',' X=',' Y=',' T=',' Filterset=',' Z=',' ID=',' Laser intensity=','.ome.tiff'};
-begs = cell2mat(regexp(s,t));
+try
+    t = {' Well=',' X=',' Y=',' T=',' Filterset=',' Z=',' ID=',' Laser intensity=','.ome.tiff'};
+    begs = cell2mat(regexp(s,t));
+    for k=1:numel(t)-1    
+        L = length(t{k});
+        cur_val = s(begs(k)+L:begs(k+1)-1);
+        res = [res; {cur_val}];
+    end    
+    return;    
+catch
+end
 
-for k=1:numel(t)-1    
-    L = length(t{k});
-    cur_val = s(begs(k)+L:begs(k+1)-1);
-    res = [res; {cur_val}];
+try
+    t = {'Well=','_X=','_Y=','_T=','_Z=','.OME.tiff'};
+    begs = cell2mat(regexp(s,t));
+    for k=1:numel(t)-1    
+        L = length(t{k});
+        cur_val = s(begs(k)+L:begs(k+1)-1);
+        res = [res; {cur_val}];
+    end    
+    return;    
+catch
 end
 
 end
