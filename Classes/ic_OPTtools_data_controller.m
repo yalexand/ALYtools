@@ -1170,10 +1170,9 @@ end
              % to define reconstruction size - ends
              %
              % output_datatype = class(reconstruction); % fair
-             output_datatype = 'uint16'; % some economy on RAM..             
+             % output_datatype = 'uint16'; % some economy on RAM..             
+             output_datatype = 'single';
              try
-                % output_datatype = class(reconstruction); % fair
-                output_datatype = 'uint16'; % some economy on RAM..
                 obj.volm = zeros(size_volm_X,size_volm_Y,sizeY,output_datatype);                
              catch
                 clear('memmap_PROJ');
@@ -1193,6 +1192,7 @@ end
                     gpu_recon = RF(gpu_sinogram);
                     gpu_recon( gpu_recon < 0 ) = 0;
                     reconstruction = gather(gpu_recon);
+                    reconstruction( reconstruction <= 0 ) = 0; % yepp
                     obj.volm(:,:,y) = cast(reconstruction,output_datatype);
                     if verbose, waitbar(y/sizeY,wait_handle), end;                    
                  end      
@@ -1201,8 +1201,9 @@ end
                          tic
                          sinogram = squeeze(cast(PROJ(:,1,:),'single'));
                          reconstruction = RF(sinogram);                                                        
-                         [sizeR1,sizeR2] = size(reconstruction);                         
-                         V = zeros(sizeR1,sizeR2,sizeY,'single'); % XYZ
+                         [sizeR1,sizeR2] = size(reconstruction);
+                         obj.volm = [];
+                         V = zeros(sizeR1,sizeR2,sizeY,output_datatype); % XYZ
                                 step = obj.angle_downsampling;                 
                                 n_angles = numel(obj.angles);
                                 interp = obj.FBP_interp;
@@ -1217,7 +1218,8 @@ end
                          parfor y = 1 : sizeY
                             sinogram = squeeze(cast(PROJ(:,y,:),'single'));
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
-                            V(:,:,y) = reconstruction;
+                            reconstruction( reconstruction <= 0 ) = 0; 
+                            V(:,:,y) = cast(reconstruction,output_datatype);
                             if verbose hbar.iterate(20); end
                          end
                          close(hbar);
@@ -1227,15 +1229,13 @@ end
                  for y = 1 : sizeY
                     sinogram = squeeze(cast(PROJ(:,y,:),'single'));
                     reconstruction = RF(sinogram);
-                    % reconstruction( reconstruction <= 0 ) = 0; % mm? 
+                    reconstruction( reconstruction <= 0 ) = 0;
                     obj.volm(:,:,y) = cast(reconstruction,output_datatype);
                     if verbose, waitbar(y/sizeY,wait_handle), end;                    
                  end
              end                     
              if verbose, close(wait_handle), end;             
-             % main loop - ends          
-             
-             obj.volm( obj.volm <= 0 ) = 0; % mm? 
+             % main loop - ends                       
              
              obj.on_new_volm_set;  
                           
