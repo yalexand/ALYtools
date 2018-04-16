@@ -9,10 +9,17 @@
 # #PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1:gpu_type=P100
 
 # ## ask PBS for time (format hh:mm:ss)
-#PBS -l walltime=02:00:0
+# #PBS -l walltime=02:00:0
 # ## ask for 4 jobs with GPU
-#PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1
+# #PBS -lselect=1:ncpus=1:mem=8gb:ngpus=1
+# #PBS -lselect=1:mem=10gb:ncpus=4:ngpus=4:gpu_type=P100
+
+
+#PBS -l walltime=02:00:0
+#PBS -lselect=1:mem=10gb:ncpus=4:ngpus=4
 #PBS -J 1-4
+
+module load cuda
 
 $HOME/OPT_Reconstruction/OPT_NodeScript.sh $ARGS
 
