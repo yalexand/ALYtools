@@ -818,7 +818,7 @@ classdef ALYtools_data_controller < handle
             timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
             dirname = [obj.RootDirectory filesep ['ALYtools Analysis ' timestamp]];
             %
-            if obj.save_analysis_output_as_xls || obj.save_analysis_output_as_OMEtiff
+            if obj.save_analysis_output_as_xls || obj.save_analysis_output_as_OMEtiff && ~isempty(datas)
                 mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
             end                   
                     %  
@@ -975,7 +975,7 @@ classdef ALYtools_data_controller < handle
                                 end                               
                             end
                             %
-                            if obj.send_analysis_output_to_Icy
+                            if obj.send_analysis_output_to_Icy && ~isempty(fig)
                                 try
                                     if strcmp(obj.problem,'HL1')
                                         icy_imshow(fig.icyvol,[obj.current_filename ' - HL1 results']);                             
@@ -2751,8 +2751,11 @@ end
      table_names = 'ALYtools data';
      fig = [];
      
-                sgm = obj.do_MPHG_Segmentation(false);
+                %sgm = obj.do_MPHG_Segmentation(false);
                 %             sgm = cat(3,u_cell,u_gran,u_nuc,sgm_cells,double(sgm_gran),sgm_nukes);
+                sgm = obj.do_MPHG_2018_Segmentation(false);
+                       
+                if isempty(sgm), return, end
                 
                 u_cell = squeeze(sgm(:,:,1));
                 u_gran = squeeze(sgm(:,:,2));
@@ -2760,7 +2763,7 @@ end
                 sgm_cell = squeeze(sgm(:,:,4));
                 sgm_gran = squeeze(sgm(:,:,5));
                 sgm_nuc = squeeze(sgm(:,:,6));
-                                                                
+                                                                                
                 % quantifiers estimating the effective distance of from lysososmes to nuclei
                 nuc_dist_map = bwdist(sgm_nuc);
                 cell_dist_map = bwdist(~sgm_cell);
