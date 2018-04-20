@@ -9,8 +9,9 @@
             % segment nukes        
                 % HARDCODED SETUPS
                 nuc_scale = fix(obj.u2pix(16));
-                nuc_threshold = 0.1;
-                nuc_smoothing = fix(obj.u2pix(3));
+                nuc_threshold = 0.05;
+                %nuc_threshold = 0.1;
+                nuc_smoothing = fix(obj.u2pix(5));
                 nuc_min_area = fix(obj.u22pix2(144));
                 nuc_rel_bg_scale = 2.5;            
                 minimal_gran_size = fix(obj.u2pix(0.5));
@@ -47,19 +48,40 @@
                                         
             %%%%%%%%%%%%%%%%%% CELLS
             %
-            % important parameter - controls width of "collar"
-            % FAC = 1.5;
-            FAC = 1;
+            cell_smoothing_scale = fix(nuc_scale/5);
+            smthd_cells = gsderiv(u_cell,cell_smoothing_scale,0);
+                        
+            % cell_overpeak_ratio = 1.5; % permissive
+            cell_overpeak_ratio = 1.75; % permissive
+                        
+            minval = min(smthd_cells(:));
+            
+            [cnt,vls] = hist(smthd_cells(:),100);
+            [pks,locs]= findpeaks(cnt,'MINPEAKDISTANCE',10);
             %
-            dist_from_nuc = fix(nuc_scale*FAC); 
-            z2 = imdilate(sgm_nukes,strel('disk',dist_from_nuc,0));
-            sgm_cells = z2; 
+            candidate_index = min(locs);
+            %
+            if cnt(1) > cnt(candidate_index)
+                candidate_index = 1;
+            end
+            %
+            t = vls(candidate_index) + cell_overpeak_ratio*(vls(candidate_index)-minval);
+            %                        
+            sgm_cells = smthd_cells > t;
+               
+            FAC = 0.2; % ?
+            %
+            dist_from_nuc = max(2,fix(nuc_scale*FAC)); 
+            dilated_nukes = imdilate(sgm_nukes,strel('disk',dist_from_nuc,0));
+                        
+            sgm_cells = sgm_cells | dilated_nukes; 
             
             % break cell clumps
             z2 = bwmorph(sgm_nukes,'thicken',Inf);
             sep_lines = ~z2;
             sep_lines(~sgm_cells)=0;
             sgm_cells(sep_lines)=0;
+            dilated_nukes(sep_lines)=0;
             
             % remove orphan pieces of cellular stuff..
             L_n = bwlabel(sgm_nukes);
@@ -72,15 +94,24 @@
                 cell_label = L_c(xcn,ycn);
                 L_c(L_c==cell_label)=0;
             end            
-            sgm_cells(L_c~=0)=0;          
-            
+            sgm_cells(L_c~=0)=0;  
+            %
+            % remove too large "cells" that may be a result of too low threshold 
+            R = 3.4*nuc_scale; % factor   
+            max_cell_size = fix(pi*R^2); % pixels
+            sgm_cells = sgm_cells.*(~bwareaopen(sgm_cells,max_cell_size));
+            sgm_cells = sgm_cells | dilated_nukes;
+            %
+            %%%%%%%%%%%%%%%%%% CELLS            
+                                    
+            %%%%%%%%%%%%%%%            
             %
             sgm_cells = imclearborder(sgm_cells);
             sgm_nukes = sgm_nukes & sgm_cells;
             
             if 0==sum(sgm_cells), return, end
             %
-            
+            % segment pathogen stuff                             
             % backup PR setups                                    
             obj_PR_K = obj.PR_K;
             obj_PR_S1 = obj.PR_S1;

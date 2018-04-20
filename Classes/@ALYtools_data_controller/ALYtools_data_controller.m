@@ -2796,6 +2796,7 @@ end
                          cur_nuclear_area = stats_n(n).Area;
                          cur_gran_area = sum(sum(sgm_gran.*cell_img));
                          cur_tot_gran_fluorescence = sum(sum(sgm_gran.*cell_img.*u_gran));
+                         cur_tot_cell_fluorescence = sum(sum(cell_img.*u_cell));
                          %
                          cur_gran_distance_to_nucleus = nan;
                          cur_gran_distance_to_nucleus_weighted = nan;
@@ -2847,7 +2848,8 @@ end
                          cur_gran_Rg_w, ...                                                  
                          cur_cell_area, ...
                          cur_cell_Rg, ...
-                         cur_cell_effective_diameter};                        
+                         cur_cell_effective_diameter, ...
+                         cur_tot_cell_fluorescence};
                          %
                          data = [data; record];                                                                            
                      end
@@ -2887,14 +2889,14 @@ end
                         end
                         captions = {'filename','well_LETTER','wel_NUMBER','x','y','T','z','nuc_index','nuc_cX','nuc_cY','cell_index','nuclear_area', ...
                             'gran_area','gran_tot_fluorescence','gran_distance_to_nucleus','gran_distance_to_nucleus_weighted','gran_distance_to_cell_border','gran_distance_to_cell_border_weighted', ...
-                            'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter'};
+                            'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter','cur_tot_cell_fluorescence'};
                         table_names = {'MPHG_CELL_BY_CELL'};
                         return;
                     else                    
                         datas = data;
                         captions = {'filename','nuc_index','nuc_cX','nuc_cY','cell_index','nuclear_area', ...
                             'gran_area','gran_tot_fluorescence','gran_distance_to_nucleus','gran_distance_to_nucleus_weighted','gran_distance_to_cell_border','gran_distance_to_cell_border_weighted', ...
-                            'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter'};
+                            'gran_Rg','gran_Rg_w','cell_area','cell_Rg','cell_effective_diameter','cur_tot_cell_fluorescence'};
                         table_names = {'MPHG_CELL_BY_CELL'};                                                                                                                                               
                     end
                 end
