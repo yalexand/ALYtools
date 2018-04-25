@@ -9,8 +9,7 @@
             % segment nukes        
                 % HARDCODED SETUPS
                 nuc_scale = fix(obj.u2pix(16));
-                nuc_threshold = 0.05;
-                %nuc_threshold = 0.1;
+                nuc_threshold = 0.075;
                 nuc_smoothing = fix(obj.u2pix(5));
                 nuc_min_area = fix(obj.u22pix2(144));
                 nuc_rel_bg_scale = 2.5;            
@@ -21,10 +20,12 @@
                 nuc_scale, ...
                 nuc_rel_bg_scale, ...
                 nuc_threshold, ...
-                nuc_smoothing, ...
+                1, ... % see below
                 nuc_min_area);            
             sgm_nukes(sgm_nukes~=0)=1;               
-            
+            % special fine-quality smoothing
+            sgm_nukes = imclose(sgm_nukes,strel('disk',nuc_smoothing,0));
+
             sgm_nukes = imfill(sgm_nukes,'holes');              
             sgm_nukes = imclearborder(sgm_nukes);
             
@@ -76,17 +77,23 @@
                         
             sgm_cells = sgm_cells | dilated_nukes; 
             
-            % break cell clumps
+            % break cell clumps - one by one approach
             z2 = bwmorph(sgm_nukes,'thicken',Inf);
             sep_lines = ~z2;
-            sep_lines(~sgm_cells)=0;
-            sgm_cells(sep_lines)=0;
-            dilated_nukes(sep_lines)=0;
-            
+            L_c = bwlabel(sgm_cells);
+            sgm_cells = zeros(size(sgm_cells));
+            for k=1:max(L_c(:))
+                cur_clump = (L_c==k);
+                cur_sep_lines = ~bwmorph(cur_clump.*sgm_nukes,'thicken',Inf);                
+                cur_clump(cur_sep_lines)=0;
+                sgm_cells = sgm_cells + cur_clump;
+            end
+            dilated_nukes(sep_lines)=0; % probably not needed
+           
             % remove orphan pieces of cellular stuff..
             L_n = bwlabel(sgm_nukes);
             stats_n = regionprops(L_n,'Area','Centroid');    
-            L_c = bwlabel(sgm_cells);                                    
+            L_c = bwlabel(sgm_cells);
             %
             for n = 1:numel(stats_n)
                 xcn = fix(stats_n(n).Centroid(2));
