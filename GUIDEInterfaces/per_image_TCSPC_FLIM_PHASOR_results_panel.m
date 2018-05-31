@@ -58,7 +58,7 @@ cla(handles.phasor_plot,'reset');
 
                 phasors = res{1};
                 Tp = res{2};
-                histogram2(handles.phasor_plot,phasors(:,1),phasors(:,2),'Normalization','probability','DisplayStyle','tile');
+                histogram2(handles.phasor_plot,phasors(:,1),phasors(:,2),'Normalization','probability','DisplayStyle','tile','EdgeColor','none','LineStyle','none');
                 
                 hold on;
                 theta = 0:pi/1000:pi;
@@ -73,12 +73,12 @@ cla(handles.phasor_plot,'reset');
                 
                 hold on;
                 for k=1:numel(tau)
-                text(handles.phasor_plot,G(k),S(k),['\bf\it' num2str(tau(k)/1000)],'fontsize',12,'Color','Black');
+                text(handles.phasor_plot,G(k),S(k),['\bf\it' num2str(tau(k)/1000)],'fontsize',16,'Color','Black');
                 hold on;
                 end
                                              
                 hold off;
-                axis([-.5 1 0 1]);
+                axis([-.05 1 0 0.7]);
                 xlabel('G');
                 ylabel('S');
                 grid on

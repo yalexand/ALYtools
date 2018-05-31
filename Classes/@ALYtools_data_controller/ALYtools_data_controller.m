@@ -4605,6 +4605,15 @@ function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
                     for k=1:numel(obj.M_imgdata)
                         %
                         u = double(squeeze(obj.M_imgdata{k}));
+                                               
+                        %averaging
+                        sigma = 2;
+                        for m=1:size(u,3)
+                            I = squeeze(u(:,:,m));
+                            [I_avr] = gsderiv(I,sigma,0);
+                            u(:,:,m) = I_avr;
+                        end
+                        %                       
                         mask = sgm{k};       
                         %
                         for xx=1:size(u,1)
