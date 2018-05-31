@@ -18,7 +18,7 @@ function save_segmentation(obj, ~, ~)
                     if isempty(obj.M_imgdata), return, end;
                     try
                         sgm = obj.do_per_image_TCSPC_FLIM_Segmentation(false);
-                        hw = waitbar(0,'..saving segmntations..');
+                        hw = waitbar(0,'..saving segmentations..');
                         for k=1:numel(obj.M_imgdata)
                             fname = char(obj.M_filenames{k});
                             fname = strrep(fname,'.sdt','');

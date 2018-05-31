@@ -59,6 +59,7 @@ function handles = setup_menu(obj,handles)
     handles.menu_segmentation_adjust = uimenu(menu_segmentation,'Label','Adjust');
     handles.menu_segmentation_save = uimenu(menu_segmentation,'Label','Make and save','Separator','on');
     handles.menu_segmentation_load = uimenu(menu_segmentation,'Label','Load and use');
+    handles.menu_segmentation_clear = uimenu(menu_segmentation,'Label','Clear loaded');    
     
     %================================= analysis    
     
@@ -82,6 +83,7 @@ function handles = setup_menu(obj,handles)
     handles.menu_settings_problem_Sparks = uimenu(handles.menu_settings_problem,'Label','Sparks','Separator','on');    
     handles.menu_settings_problem_Experimental = uimenu(handles.menu_settings_problem,'Label','Experimental','Separator','on');
     handles.menu_settings_problem_per_image_TCSPC_FLIM = uimenu(handles.menu_settings_problem,'Label','per_image_TCSPC_FLIM','Separator','on');
+    handles.menu_settings_problem_per_image_TCSPC_FLIM_PHASOR = uimenu(handles.menu_settings_problem,'Label','per_image_TCSPC_FLIM_PHASOR','Separator','on');
     
     handles.menu_settings_problem_dependent = uimenu(menu_settings,'Label','Problem-Specific','Separator','on');                    
     handles.menu_settings_general = uimenu(menu_settings,'Label','General','Separator','on');                        

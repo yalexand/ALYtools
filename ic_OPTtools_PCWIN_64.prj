@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="3418108113" file="C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64.prj" location="C:\Users\alexany\ALYtools" name="ic_OPTtools_PCWIN_64" preferred-package-location="C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
+  <configuration build-checksum="2994317222" file="c:\Users\yalexand\ALYtools\ic_OPTtools_PCWIN_64.prj" location="c:\Users\yalexand\ALYtools" name="ic_OPTtools_PCWIN_64" preferred-package-location="c:\Users\yalexand\ALYtools\ic_OPTtools_PCWIN_64\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>ic_OPTtools</param.appname>
     <param.icon />
     <param.icons />
@@ -22,13 +22,14 @@
     <param.logdir>${PROJECT_ROOT}\ic_OPTtools_PCWIN_64</param.logdir>
     <param.enable.clean.build>false</param.enable.clean.build>
     <param.user.defined.mcr.options />
+    <param.embed.ctf>true</param.embed.ctf>
     <param.target.type>subtarget.standalone</param.target.type>
     <param.support.packages />
     <param.web.mcr>false</param.web.mcr>
     <param.package.mcr>true</param.package.mcr>
     <param.no.mcr>false</param.no.mcr>
     <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
-    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.package.mcr.name>ic_OPTtools_Installer</param.package.mcr.name>
     <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
     <param.windows.command.prompt>true</param.windows.command.prompt>
     <param.create.log>false</param.create.log>
@@ -51,11 +52,11 @@
       <param.logdir />
       <param.enable.clean.build />
       <param.user.defined.mcr.options />
+      <param.embed.ctf />
       <param.target.type />
       <param.support.packages />
       <param.no.mcr />
       <param.web.mcr.name />
-      <param.package.mcr.name />
       <param.no.mcr.name />
       <param.windows.command.prompt />
       <param.create.log />
@@ -86,8 +87,11 @@
       <file>${PROJECT_ROOT}\Classes\ic_OPTtools_data_controller.m</file>
       <file>${PROJECT_ROOT}\Classes\ic_OPTtools_front_end_menu_controller.m</file>
       <file>${PROJECT_ROOT}\Classes\ic_OPTtools_profile_controller.m</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\enter_value.fig</file>
       <file>${PROJECT_ROOT}\GUIDEInterfaces\enter_value.m</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\OMERO_logon.fig</file>
       <file>${PROJECT_ROOT}\GUIDEInterfaces\OMERO_logon.m</file>
+      <file>${PROJECT_ROOT}\GUIDEInterfaces\TwIST_settings.fig</file>
       <file>${PROJECT_ROOT}\GUIDEInterfaces\TwIST_settings.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uiextras\HBox.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\GUI Layout Toolbox\layout\+uiextras\TabPanel.m</file>
@@ -116,6 +120,7 @@
       <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xml_write.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xmlreadstring.m</file>
       <file>${PROJECT_ROOT}\HelperFunctions\xml_io_tools\xmlwrite_xerces.m</file>
+      <file>${PROJECT_ROOT}\ICUtilities\add_plane_to_OMEtiff_with_metadata_ZCT.m</file>
       <file>${PROJECT_ROOT}\ICUtilities\initialize_memmap.m</file>
       <file>${PROJECT_ROOT}\ICY_Matlab\matlabcommunicator\icy_command.m</file>
       <file>${PROJECT_ROOT}\ICY_Matlab\matlabxserver\icy_closeall.m</file>
@@ -127,6 +132,8 @@
       <file>${PROJECT_ROOT}\InternalHelperFunctions\assign_handles.m</file>
       <file>${PROJECT_ROOT}\InternalHelperFunctions\getapplicationdatadir.m</file>
       <file>${PROJECT_ROOT}\InternalHelperFunctions\global_tempname.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\parfor_progressbar.m</file>
+      <file>${PROJECT_ROOT}\InternalHelperFunctions\parse_string_for_attribute_value.m</file>
       <file>${PROJECT_ROOT}\InternalHelperFunctions\propertiesGUI.m</file>
       <file>${PROJECT_ROOT}\InternalHelperFunctions\split.m</file>
       <file>${PROJECT_ROOT}\InternalHelperFunctions\uipickfiles.m</file>
@@ -156,19 +163,18 @@
       <file>${PROJECT_ROOT}\TwIST_OPT\TwIST_gpu.m</file>
     </fileset.depfun>
     <build-deliverables>
-      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="readme.txt" optional="true">C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_testing\readme.txt</file>
-      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="splash.png" optional="false">C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_testing\splash.png</file>
-      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="ic_OPTtools.exe" optional="false">C:\Users\alexany\ALYtools\ic_OPTtools_PCWIN_64\for_testing\ic_OPTtools.exe</file>
+      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="splash.png" optional="false">c:\Users\yalexand\ALYtools\ic_OPTtools_PCWIN_64\for_testing\splash.png</file>
+      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="readme.txt" optional="true">c:\Users\yalexand\ALYtools\ic_OPTtools_PCWIN_64\for_testing\readme.txt</file>
+      <file location="${PROJECT_ROOT}\ic_OPTtools_PCWIN_64\for_testing" name="ic_OPTtools.exe" optional="false">c:\Users\yalexand\ALYtools\ic_OPTtools_PCWIN_64\for_testing\ic_OPTtools.exe</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files\MATLAB\R2017a</root>
+      <root>C:\Program Files\MATLAB\R2016b</root>
       <toolboxes>
         <toolbox name="fixedpoint" />
         <toolbox name="matlabcoder" />
         <toolbox name="matlabhdlcoder" />
         <toolbox name="embeddedcoder" />
-        <toolbox name="polyspacebugfinder" />
       </toolboxes>
       <toolbox>
         <fixedpoint>
@@ -190,11 +196,6 @@
           <enabled>true</enabled>
         </embeddedcoder>
       </toolbox>
-      <toolbox>
-        <polyspacebugfinder>
-          <enabled>true</enabled>
-        </polyspacebugfinder>
-      </toolbox>
     </matlab>
     <platform>
       <unix>false</unix>
@@ -205,7 +206,7 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>6.2</osver>
+      <osver>6.1</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>win64</arch>

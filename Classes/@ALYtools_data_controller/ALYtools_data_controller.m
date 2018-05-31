@@ -65,6 +65,7 @@ classdef ALYtools_data_controller < handle
         % multiple image loading - data and filenames
         M_imgdata = [];
         M_filenames = [];
+        M_sgm = []; % segmentation masks
         %
         
         
@@ -468,7 +469,7 @@ classdef ALYtools_data_controller < handle
                              obj.HL1_ref_channel = 1;
                          end                                               
                          
-                case { 'Experimental', 'per_image_TCSPC_FLIM' }  
+                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' }  
                     
                      % if sT<6, don't believe it is T, reinterpret as channels
                      if sT < 6 && sC ==1
@@ -536,7 +537,7 @@ classdef ALYtools_data_controller < handle
                     elseif 1 == sC
                         image(uint8(map(squeeze(I(:,:,1,1,1)),0,255)),'Parent',obj.scene_axes);
                     end  
-                case 'per_image_TCSPC_FLIM'
+                case {'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'}
                     image(uint8(map(squeeze(sum(I,5)),0,255)),'Parent',obj.scene_axes);
                     
             end
@@ -701,7 +702,7 @@ classdef ALYtools_data_controller < handle
                      % Experimental_Segmentation_settings(obj);
                      obj.do_Experimental_Segmentation(true);                                     
                      
-                case 'per_image_TCSPC_FLIM'                     
+                case {'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'}
                     % parasytise
                     if isempty(obj.M_imgdata), return, end;
                     k = numel(obj.M_imgdata); % last
@@ -810,8 +811,9 @@ classdef ALYtools_data_controller < handle
                 case 'Sparks'
                     [datas, captions, table_names, fig] = obj.analyze_Sparks;                    
                 case 'per_image_TCSPC_FLIM'
-                    [datas, captions, table_names, fig] = obj.analyze_per_image_TCSPC_FLIM;                    
-                                                                                
+                    [datas, captions, table_names, fig] = obj.analyze_per_image_TCSPC_FLIM;
+                case 'per_image_TCSPC_FLIM_PHASOR'
+                    [datas, captions, table_names, fig] = obj.analyze_per_image_TCSPC_FLIM_PHASOR;                                                                                
                     
             end % switch
 
@@ -2701,7 +2703,8 @@ classdef ALYtools_data_controller < handle
             %[datas, captions, table_names, fig] = obj.analyze_RPE;
             %[datas, captions, table_names, fig] = obj.analyze_FIBERTHICKNESS; 
             %[datas, captions, table_names, fig] = obj.analyze_OPT_Mouse_Lung;
-            [datas, captions, table_names, fig] = obj.analyze_MNEPR; 
+            %[datas, captions, table_names, fig] = obj.analyze_MNEPR; 
+            [datas, captions, table_names, fig] = obj.analyze_DarkNuclei; 
                         
         end 
 %-------------------------------------------------------------------------%  also see the function above
@@ -2711,7 +2714,8 @@ classdef ALYtools_data_controller < handle
             %sgm = obj.do_RPE_Segmentation(send_to_Icy); % retinal pigment epithelial cells with lysosomes
             %sgm = obj.do_FIBERTHICKNESS_Segmentation(send_to_Icy); % special program to address fibers in SIM images
             %sgm = obj.do_OPT_Mouse_Lung_Segmentation(send_to_Icy);
-            sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
+            %sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
+            sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
@@ -4442,8 +4446,8 @@ t = str2num(cell2mat(t1(1)));
                 res.IRF = IRF;
                 res.raw_decays = raw_decays;
                 res.bckg_corrected_decays = bckg_corrected_decays;
- 
-                per_image_TCSPC_FLIM_results_panel(res);                
+                
+                per_image_TCSPC_FLIM_results_panel(res);
     end        
 %-------------------------------------------------------------------------%          
 function load_irf(obj,~,~)    
@@ -4514,6 +4518,140 @@ function load_tvb(obj,~,~)
                 errordlg('Error while trying to load tvb');
              end
 end
+%-------------------------------------------------------------------------%          
+function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
+    
+                phasors = [];
+    
+                mega = 1e6;
+                pico = 1e-12;
+                sec = 1;
+                Hz = 1;
+
+                IRF = obj.per_image_TCSPC_FLIM_irf;
+                %
+                if isempty(IRF)
+                    errordlg('no IRF loaded, can not contiue')
+                    return;
+                end
+                Nbins = length(IRF);
+
+                f = obj.per_image_TCSPC_FLIM_rep_rate*mega*Hz;
+                Tp = 1/f/(pico*sec);
+                DT = Tp/Nbins;
+                t = DT*(0:Nbins - 1);
+                %
+                shift = 0;
+                if 0~=obj.per_image_TCSPC_FLIM_irf_shift
+                    shift = shift + obj.per_image_TCSPC_FLIM_irf_shift/DT;
+                end                
+                IRF = shift_curve(IRF,shift);
+                %
+                IRF = IRF/sum(IRF);                
+                %
+                IRF = IRF - obj.per_image_TCSPC_FLIM_irf_background;
+                IRF(IRF<0)=0;
+                IRF = IRF/sum(IRF); 
+                %                                                                
+                bckg = obj.per_image_TCSPC_FLIM_background_value;
+                %
+                tvb = obj.per_image_TCSPC_FLIM_tvb*obj.per_image_TCSPC_FLIM_tvb_scaling;
+                
+                if ~isempty(tvb) % sizes should match
+                    if length(tvb) ~= length(IRF)
+                        errordlg('length of tvb and IRF dont match, can not continue');
+                        return;
+                    end
+                else
+                    tvb = zeros(size(IRF));                    
+                end
+                %
+                fitting_mask = ones(size(t));
+                %                
+                i_min = round(obj.per_image_TCSPC_FLIM_Tmin/DT);
+                i_max = round(obj.per_image_TCSPC_FLIM_Tmax/DT);   
+                % NB - IF ONE TRIES TO CROP IRF THE SAME WAY - IT DOESN'T LOOK GOOD
+                if 0~= i_min
+                    fitting_mask(1:i_min)=0;
+                end
+                if 0~=i_max % TO DO
+                    fitting_mask(i_max:Nbins)=0;
+                end
+                    %reference frequency
+                    W = 2*pi/Tp; 
+                    %
+                    % G,S phasor for the tau_R reference IRF
+                    G_irf = sum(IRF.*cos(W*t).*fitting_mask)/sum(IRF.*fitting_mask);
+                    S_irf = sum(IRF.*sin(W*t).*fitting_mask)/sum(IRF.*fitting_mask);
+                    %                                                                                                                
+                if obj.per_image_TCSPC_FLIM_nonimaging % cuvette data
+                    return;
+                else % imaging
+                    %
+                    if ~isempty(obj.M_sgm)
+                        sgm = obj.M_sgm;
+                    else
+                        sgm = obj.do_per_image_TCSPC_FLIM_Segmentation(false);
+                    end
+                    %
+                    for k=1:numel(obj.M_imgdata)
+                        u = squeeze(obj.M_imgdata{k});                        
+                        if Nbins ~= size(u,3)
+                            errordlg('data and IRF are not compatible, can not continue');
+                            return;                    
+                        end
+                    end
+                    %
+                    for k=1:numel(obj.M_imgdata)
+                        %
+                        u = double(squeeze(obj.M_imgdata{k}));
+                        mask = sgm{k};       
+                        %
+                        for xx=1:size(u,1)
+                            for yy=1:size(u,2)
+                                if 0 ~= mask(xx,yy)
+                                    D = squeeze(u(xx,yy,:)); %decay
+                                    %
+                                    D = D - (bckg + tvb);
+                                    D(D<0)=0;
+                                    %
+                                    I_tot_m = sum(D'.*fitting_mask);
+                                    G_m = sum(D'.*cos(W*t).*fitting_mask)/I_tot_m;
+                                    S_m = sum(D'.*sin(W*t).*fitting_mask)/I_tot_m;
+                                    %
+                                    % irf compensation
+                                    tau_R = 0; % delta IRFs only
+                                    L_I = (G_m - 1i*S_m)/(G_irf - 1i*S_irf)/(1+1i*W*tau_R);
+                                    G =   real( L_I );
+                                    S = - imag( L_I );
+                                    phasors = [phasors; [G S]];
+                                end
+                            end
+                        end
+                    end
+                end % if obj.per_image_TCSPC_FLIM_nonimaging % cuvette data        
+end
+%-------------------------------------------------------------------------%          
+    function [datas, captions, table_names, fig] = analyze_per_image_TCSPC_FLIM_PHASOR(obj,~,~)            
+                datas = [];
+                captions = [];
+                table_names = 'ALYtools data';
+                fig = [];
+                %
+                mega = 1e6;
+                pico = 1e-12;
+                sec = 1;
+                Hz = 1;
+                %    
+                f = obj.per_image_TCSPC_FLIM_rep_rate*mega*Hz;
+                Tp = 1/f/(pico*sec);      
+                %
+                phasors = obj.per_image_TCSPC_FLIM_get_phasors;
+                %
+                res{1}=phasors;
+                res{2}=Tp;
+                per_image_TCSPC_FLIM_PHASOR_results_panel(res);
+    end
 
     end % methods
             

@@ -52,6 +52,7 @@ classdef ALYtools_menu_controller < handle
     menu_segmentation_adjust;
     menu_segmentation_save;
     menu_segmentation_load;
+    menu_segmentation_clear;
     
     %================================= analysis        
     menu_analysis_current;
@@ -75,6 +76,7 @@ classdef ALYtools_menu_controller < handle
     menu_settings_problem_Sparks;
     menu_settings_problem_Experimental; 
     menu_settings_problem_per_image_TCSPC_FLIM;
+    menu_settings_problem_per_image_TCSPC_FLIM_PHASOR;
         
     %================================= visualization    
     menu_visualization_setup_Icy_directory;
@@ -262,7 +264,11 @@ classdef ALYtools_menu_controller < handle
     function menu_segmentation_load_callback(obj, ~, ~)
         obj.data_controller.load_segmentation;
     end            
-    %------------------------------------------------------------------                    
+    %------------------------------------------------------------------
+    function menu_segmentation_clear_callback(obj, ~, ~)
+        obj.data_controller.M_sgm = [];
+    end            
+    %------------------------------------------------------------------    
     
     %================================= analysis    
     
@@ -274,7 +280,7 @@ classdef ALYtools_menu_controller < handle
         verbose = true;
         % get list of files...
         try
-            [filenames, pathname] = uigetfile({'*.tif;*.tiff;*.gif;*.avi;*.czi;*.png;*.bmp;*.jpg;*.jpeg;*.lsm','Image Files'},'Select data files', ...
+            [filenames, pathname] = uigetfile({'*.tif;*.tiff;*.gif;*.avi;*.czi;*.png;*.bmp;*.sdt;*.jpg;*.jpeg;*.lsm','Image Files'},'Select data files', ...
             obj.data_controller.DefaultDirectory,'MultiSelect','on');
         catch
             [filenames, pathname] = uigetfile({'*.tif;*.tiff;*.gif;*.avi;*.czi;*.png;*.bmp;*.jpg;*.jpeg;*.lsm','Image Files'},'Select data files', ...
@@ -337,7 +343,12 @@ classdef ALYtools_menu_controller < handle
          set(obj.menu_settings_problem,'Label',['Problem = ' 'per_image_TCSPC_FLIM']);        
          obj.data_controller.problem = 'per_image_TCSPC_FLIM';
          set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
-    end            
+    end 
+     function menu_settings_problem_per_image_TCSPC_FLIM_PHASOR_callback(obj, ~, ~) 
+         set(obj.menu_settings_problem,'Label',['Problem = ' 'per_image_TCSPC_FLIM_PHASOR']);        
+         obj.data_controller.problem = 'per_image_TCSPC_FLIM_PHASOR';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+    end         
            
          %------------------------------------------------------------------                    
     
@@ -357,11 +368,10 @@ classdef ALYtools_menu_controller < handle
              NucCyt_Problem_Specific_settings(obj.data_controller);                              
         elseif strcmp(obj.data_controller.problem,'MPHG')
              MPHG_Problem_Specific_settings(obj.data_controller);                                           
-        elseif strcmp(obj.data_controller.problem,'per_image_TCSPC_FLIM')
+        elseif strcmp(obj.data_controller.problem,'per_image_TCSPC_FLIM') || strcmp(obj.data_controller.problem,'per_image_TCSPC_FLIM_PHASOR') 
              per_image_TCSPC_FLIM_Problem_Specific_settings(obj.data_controller);                                                        
         end
-        
-                    
+                        
     end        
          %------------------------------------------------------------------                             
          function menu_settings_general_callback(obj, ~, ~)
