@@ -22,7 +22,7 @@ function varargout = per_image_TCSPC_FLIM_Problem_Specific_settings(varargin)
 
 % Edit the above text to modify the response to help per_image_TCSPC_FLIM_Problem_Specific_settings
 
-% Last Modified by GUIDE v2.5 01-Aug-2017 10:38:21
+% Last Modified by GUIDE v2.5 05-Jun-2018 12:04:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -86,6 +86,9 @@ end;
             handles.per_image_TCSPC_FLIM_fixed_tauD = dc.per_image_TCSPC_FLIM_fixed_tauD;
             handles.per_image_TCSPC_FLIM_conv_irf_pp_69_70 = dc.per_image_TCSPC_FLIM_conv_irf_pp_69_70;
 
+            handles.per_image_TCSPC_FLIM_Ref_lifetime = dc.per_image_TCSPC_FLIM_Ref_lifetime;
+            handles.per_image_TCSPC_FLIM_averaging_sigma = dc.per_image_TCSPC_FLIM_averaging_sigma;
+                        
             set(handles.irf_shift,'String',num2str(handles.per_image_TCSPC_FLIM_irf_shift));
             set(handles.IRF_background,'String',num2str(handles.per_image_TCSPC_FLIM_irf_background)); 
             set(handles.fitting_model,'String',dc.global_fit_models');
@@ -101,6 +104,8 @@ end;
             set(handles.background_value,'String',num2str(handles.per_image_TCSPC_FLIM_background_value));
             set(handles.tvb_scaling,'String',num2str(handles.per_image_TCSPC_FLIM_tvb_scaling));
             set(handles.saturation_value,'String',num2str(handles.per_image_TCSPC_FLIM_saturation_value));
+            set(handles.IRF_reference_lifetime,'String',num2str(handles.per_image_TCSPC_FLIM_Ref_lifetime));
+            set(handles.averaging_sigma,'String',num2str(handles.per_image_TCSPC_FLIM_averaging_sigma));
             %
             if ~isempty(handles.per_image_TCSPC_FLIM_irf_filename)
                 [~,IRF_NAME,IRF_EXT] = fileparts(handles.per_image_TCSPC_FLIM_irf_filename);
@@ -221,7 +226,10 @@ dc = handles.dc;
             
             dc.per_image_TCSPC_FLIM_fixed_tauD = handles.per_image_TCSPC_FLIM_fixed_tauD;
             dc.per_image_TCSPC_FLIM_conv_irf_pp_69_70 = handles.per_image_TCSPC_FLIM_conv_irf_pp_69_70;
-
+            
+            dc.per_image_TCSPC_FLIM_Ref_lifetime = handles.per_image_TCSPC_FLIM_Ref_lifetime;
+            dc.per_image_TCSPC_FLIM_averaging_sigma = handles.per_image_TCSPC_FLIM_averaging_sigma;
+            
     fh = ancestor(hObject,'figure');     
     delete(fh);
 
@@ -488,6 +496,9 @@ dc = handles.dc;
             
             dc.per_image_TCSPC_FLIM_fixed_tauD = handles.per_image_TCSPC_FLIM_fixed_tauD;
             dc.per_image_TCSPC_FLIM_conv_irf_pp_69_70 = handles.per_image_TCSPC_FLIM_conv_irf_pp_69_70;
+            
+            dc.per_image_TCSPC_FLIM_Ref_lifetime = handles.per_image_TCSPC_FLIM_Ref_lifetime;
+            dc.per_image_TCSPC_FLIM_averaging_sigma = handles.per_image_TCSPC_FLIM_averaging_sigma;
 
 % --- Executes on button press in fixed_tauD_checkbox.
 function fixed_tauD_checkbox_Callback(hObject, eventdata, handles)
@@ -650,6 +661,68 @@ uiresume(handles.figure1);
 % --- Executes during object creation, after setting all properties.
 function tvb_scaling_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to tvb_scaling (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function IRF_reference_lifetime_Callback(hObject, eventdata, handles)
+% hObject    handle to IRF_reference_lifetime (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of IRF_reference_lifetime as text
+%        str2double(get(hObject,'String')) returns contents of IRF_reference_lifetime as a double
+value = str2double(get(hObject,'String'));
+if ~isnan(value) && value >= 0
+    handles.per_image_TCSPC_FLIM_Ref_lifetime = value;
+    guidata(hObject,handles);
+else
+    value = handles.per_image_TCSPC_FLIM_Ref_lifetime;
+    set(hObject,'String',num2str(value));
+end
+uiresume(handles.figure1);
+
+% --- Executes during object creation, after setting all properties.
+function IRF_reference_lifetime_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to IRF_reference_lifetime (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function averaging_sigma_Callback(hObject, eventdata, handles)
+% hObject    handle to averaging_sigma (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of averaging_sigma as text
+%        str2double(get(hObject,'String')) returns contents of averaging_sigma as a double
+value = str2double(get(hObject,'String'));
+if ~isnan(value) && value >= 0 && value <= 21 
+    handles.per_image_TCSPC_FLIM_averaging_sigma = value;
+    guidata(hObject,handles);
+else
+    value = handles.per_image_TCSPC_FLIM_averaging_sigma;
+    set(hObject,'String',num2str(value));
+end
+uiresume(handles.figure1);
+
+% --- Executes during object creation, after setting all properties.
+function averaging_sigma_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to averaging_sigma (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

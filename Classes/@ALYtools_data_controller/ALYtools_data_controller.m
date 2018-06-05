@@ -235,6 +235,9 @@ classdef ALYtools_data_controller < handle
             per_image_TCSPC_FLIM_irf_background = 0;
             per_image_TCSPC_FLIM_tvb_scaling = 0; 
             per_image_TCSPC_FLIM_weights_resampling_factor = 2;             
+            
+            per_image_TCSPC_FLIM_Ref_lifetime = 0;
+            per_image_TCSPC_FLIM_averaging_sigma = 0;
             %
             external_segmentations = [];
                                
@@ -2048,7 +2051,9 @@ classdef ALYtools_data_controller < handle
             settings.per_image_TCSPC_FLIM_conv_irf_pp_69_70 = obj.per_image_TCSPC_FLIM_conv_irf_pp_69_70;
             settings.per_image_TCSPC_FLIM_irf_background = obj.per_image_TCSPC_FLIM_irf_background; 
             settings.per_image_TCSPC_FLIM_tvb_scaling = obj.per_image_TCSPC_FLIM_tvb_scaling;
-            settings.per_image_TCSPC_FLIM_weights_resampling_factor = obj.per_image_TCSPC_FLIM_weights_resampling_factor;
+            settings.per_image_TCSPC_FLIM_weights_resampling_factor = obj.per_image_TCSPC_FLIM_weights_resampling_factor;            
+            settings.per_image_TCSPC_FLIM_Ref_lifetime = obj.per_image_TCSPC_FLIM_Ref_lifetime;
+            settings.per_image_TCSPC_FLIM_averaging_sigma = obj.per_image_TCSPC_FLIM_averaging_sigma;
                                     
             xml_write(fname,settings);
         end
@@ -2183,7 +2188,6 @@ classdef ALYtools_data_controller < handle
                                 
                 obj.expar = settings.expar;
                 
-                %
                 obj.per_image_TCSPC_FLIM_irf = settings.per_image_TCSPC_FLIM_irf;
                 obj.per_image_TCSPC_FLIM_irf_shift = settings.per_image_TCSPC_FLIM_irf_shift;
                 obj.per_image_TCSPC_FLIM_rep_rate = settings.per_image_TCSPC_FLIM_rep_rate;
@@ -2200,7 +2204,9 @@ classdef ALYtools_data_controller < handle
                 obj.per_image_TCSPC_FLIM_irf_background = settings.per_image_TCSPC_FLIM_irf_background;
                 obj.per_image_TCSPC_FLIM_tvb_scaling = settings.per_image_TCSPC_FLIM_tvb_scaling;
                 obj.per_image_TCSPC_FLIM_weights_resampling_factor = settings.per_image_TCSPC_FLIM_weights_resampling_factor;
-                                                                                
+                obj.per_image_TCSPC_FLIM_Ref_lifetime = settings.per_image_TCSPC_FLIM_Ref_lifetime;
+                obj.per_image_TCSPC_FLIM_averaging_sigma = settings.per_image_TCSPC_FLIM_averaging_sigma;
+                                                                                                
              end
         end
 %-------------------------------------------------------------------------%                
@@ -4032,7 +4038,18 @@ t = str2num(cell2mat(t1(1)));
                     %                                                                                
                     for k=1:numel(obj.M_imgdata)
                         %
-                        u = squeeze(obj.M_imgdata{k});                        
+                        u = double(squeeze(obj.M_imgdata{k})); 
+                        %
+                        %averaging
+                        if obj.per_image_TCSPC_FLIM_averaging_sigma > 0
+                            sigma = obj.per_image_TCSPC_FLIM_averaging_sigma;
+                            for mm=1:size(u,3)
+                                uu = squeeze(u(:,:,mm));
+                                [I_avr] = gsderiv(uu,sigma,0);
+                                u(:,:,mm) = I_avr;
+                            end
+                        end
+                        %                                                                                                                       
                         mask = sgm{k};       
                         Npixs_k = sum(mask(:));
                         numbers_of_pixels(k) = Npixs_k;
@@ -4607,11 +4624,13 @@ function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
                         u = double(squeeze(obj.M_imgdata{k}));
                                                
                         %averaging
-                        sigma = 2;
-                        for m=1:size(u,3)
-                            I = squeeze(u(:,:,m));
-                            [I_avr] = gsderiv(I,sigma,0);
-                            u(:,:,m) = I_avr;
+                        if obj.per_image_TCSPC_FLIM_averaging_sigma > 0
+                            sigma = obj.per_image_TCSPC_FLIM_averaging_sigma;
+                            for m=1:size(u,3)
+                                I = squeeze(u(:,:,m));
+                                [I_avr] = gsderiv(I,sigma,0);
+                                u(:,:,m) = I_avr;
+                            end
                         end
                         %                       
                         mask = sgm{k};       
@@ -4629,7 +4648,7 @@ function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
                                     S_m = sum(D'.*sin(W*t).*fitting_mask)/I_tot_m;
                                     %
                                     % irf compensation
-                                    tau_R = 0; % delta IRFs only
+                                    tau_R = obj.per_image_TCSPC_FLIM_Ref_lifetime;
                                     L_I = (G_m - 1i*S_m)/(G_irf - 1i*S_irf)/(1+1i*W*tau_R);
                                     G =   real( L_I );
                                     S = - imag( L_I );
