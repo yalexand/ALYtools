@@ -4619,7 +4619,10 @@ function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
                         end
                     end
                     %
+                    hw = waitbar(0,'Collecting phasors, please wait');                    
                     for k=1:numel(obj.M_imgdata)
+                        %
+                        if ~isempty(hw), waitbar(k/numel(obj.M_imgdata),hw); drawnow, end;                            
                         %
                         u = double(squeeze(obj.M_imgdata{k}));
                                                
@@ -4635,11 +4638,12 @@ function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
                         %                       
                         mask = sgm{k};       
                         %
+                        phasors_k = zeros(sum(mask(:)),2);
+                        index = 0;
                         for xx=1:size(u,1)
                             for yy=1:size(u,2)
                                 if 0 ~= mask(xx,yy)
-                                    D = squeeze(u(xx,yy,:)); %decay
-                                    %
+                                    D = squeeze(u(xx,yy,:)); %decay                                    
                                     D = D - (bckg + tvb);
                                     D(D<0)=0;
                                     %
@@ -4652,11 +4656,14 @@ function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
                                     L_I = (G_m - 1i*S_m)/(G_irf - 1i*S_irf)/(1+1i*W*tau_R);
                                     G =   real( L_I );
                                     S = - imag( L_I );
-                                    phasors = [phasors; [G S]];
+                                    index = index+1;
+                                    phasors_k(index,:)=[G S];
                                 end
                             end
                         end
+                        phasors = [phasors; phasors_k];
                     end
+                    if ~isempty(hw), delete(hw), drawnow; end;
                 end % if obj.per_image_TCSPC_FLIM_nonimaging % cuvette data        
 end
 %-------------------------------------------------------------------------%          
