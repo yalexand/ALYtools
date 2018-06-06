@@ -65,6 +65,13 @@ if isempty(dc.M_imgdata),
     return, 
 end;
 
+if strcmp(dc.problem,'per_image_TCSPC_FLIM_PHASOR')
+    set(handles.text29,'Visible','off');
+    set(handles.fitting_model,'Visible','off');
+    set(handles.fixed_tauD_checkbox,'Visible','off');
+    set(handles.fixed_tauD,'Visible','off');    
+end
+
             handles.dc = dc;         
 %             per_image_TCSPC_FLIM_t = [];
 %             per_image_TCSPC_FLIM_irf = [];
