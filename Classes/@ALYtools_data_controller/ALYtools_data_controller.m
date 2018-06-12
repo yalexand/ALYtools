@@ -260,10 +260,12 @@ classdef ALYtools_data_controller < handle
             
     methods
         
-        function obj = ALYtools_data_controller(varargin)            
+        function obj = ALYtools_data_controller(RUN_HEADLESS,varargin)            
             %   
+            obj.run_headless = RUN_HEADLESS;
+            %
             if ~isempty(varargin{1})
-                handles = args2struct(varargin);
+                handles = args2struct(varargin);                
                 assign_handles(obj,handles);                     
                 %                    
                 scene_panel = handles.scene_panel;              
@@ -276,12 +278,11 @@ classdef ALYtools_data_controller < handle
             catch
             end
             
-            obj.OPT_data_controller = ic_OPTtools_data_controller([]);
-            obj.OPT_data_controller.run_headless = true;
+            obj.OPT_data_controller = ic_OPTtools_data_controller(true,[]); %headless
             
             obj.RootDirectory = pwd;
             
-            if (ispc || ismac) && isempty(obj.IcyDirectory) && ~isdeployed
+            if (ispc || ismac) && isempty(obj.IcyDirectory) && ~isdeployed && ~obj.run_headless
                 hw = waitbar(0,'looking for Icy directory..');
                 waitbar(0.1,hw);                
                 if ispc

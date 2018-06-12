@@ -80,7 +80,7 @@ classdef ALYtools_gui
 
             handles = obj.setup_layout(handles);            
             
-            handles.data_controller = ALYtools_data_controller(handles);                        
+            handles.data_controller = ALYtools_data_controller(false,handles); % NOT headless
                         
             handles.omero_data_manager = ic_OPTtools_omero_data_manager(handles); % borrow this one - doesn't matter           
             

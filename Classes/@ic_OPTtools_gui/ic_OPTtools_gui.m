@@ -76,7 +76,7 @@ classdef ic_OPTtools_gui
             handles.window = obj.window;
             handles.use_popup = true;
                                                                                    
-            handles.data_controller = ic_OPTtools_data_controller(handles);                        
+            handles.data_controller = ic_OPTtools_data_controller(false,handles); % NOT headless
             handles.omero_data_manager = ic_OPTtools_omero_data_manager(handles);            
             
             handles = obj.setup_menu(handles);            

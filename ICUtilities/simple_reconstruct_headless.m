@@ -35,7 +35,7 @@ function simple_reconstruct_headless()
     bfCheckJavaPath;
     bfUpgradeCheck;
 
-    dc = ic_OPTtools_data_controller([]);
+    dc = ic_OPTtools_data_controller(true,[]); % headless
 
     % SETTINGS - this block is not necessary, 
 %     % if one simply relies on what is in the settings file

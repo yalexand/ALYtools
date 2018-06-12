@@ -16,7 +16,7 @@ function ic_OPTtools_split(SRC_DIR_NAME,DST_DIR_NAME,N_str,swap)
     bfCheckJavaPath;
     bfUpgradeCheck;
        
-    dc = ic_OPTtools_data_controller([]);
+    dc = ic_OPTtools_data_controller(true,[]); % headless
     if strcmpi(swap,'y') % then swap dimensions
         dc.swap_XY_dimensions = 'Y';
     else

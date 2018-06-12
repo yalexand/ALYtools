@@ -146,12 +146,14 @@ classdef ic_OPTtools_data_controller < handle
             
     methods
         
-        function obj = ic_OPTtools_data_controller(varargin)            
+        function obj = ic_OPTtools_data_controller(RUN_HEADLESS,varargin)            
             %   
 %             if ~isempty(varargin{1})
 %                 handles = args2struct(varargin);
 %                 assign_handles(obj,handles);
 %             end
+
+            obj.run_headless = RUN_HEADLESS;
                         
             addlistener(obj,'new_proj_set',@obj.on_new_proj_set);
             addlistener(obj,'new_volm_set',@obj.on_new_volm_set);                        
@@ -164,7 +166,7 @@ classdef ic_OPTtools_data_controller < handle
             catch
             end
             
-            if (ispc || ismac) && isempty(obj.IcyDirectory) && ~isdeployed
+            if (ispc || ismac) && isempty(obj.IcyDirectory) && ~isdeployed && ~obj.run_headless
                 hw = waitbar(0,'looking for Icy directory..');
                 waitbar(0.1,hw);                
                 if ispc
