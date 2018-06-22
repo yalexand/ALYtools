@@ -2711,7 +2711,8 @@ classdef ALYtools_data_controller < handle
             %[datas, captions, table_names, fig] = obj.analyze_FIBERTHICKNESS; 
             %[datas, captions, table_names, fig] = obj.analyze_OPT_Mouse_Lung;
             %[datas, captions, table_names, fig] = obj.analyze_MNEPR; 
-            [datas, captions, table_names, fig] = obj.analyze_DarkNuclei; 
+            %[datas, captions, table_names, fig] = obj.analyze_DarkNuclei; 
+            [datas, captions, table_names, fig] = obj.analyze_NucleiTimeStack;             
                         
         end 
 %-------------------------------------------------------------------------%  also see the function above
@@ -2722,7 +2723,8 @@ classdef ALYtools_data_controller < handle
             %sgm = obj.do_FIBERTHICKNESS_Segmentation(send_to_Icy); % special program to address fibers in SIM images
             %sgm = obj.do_OPT_Mouse_Lung_Segmentation(send_to_Icy);
             %sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
-            sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
+            %sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
+            sgm = obj.do_NucleiTimeStack_Segmentation(send_to_Icy);            
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
@@ -3128,8 +3130,7 @@ end
                icyvol(:,:,3,1,1) = L_n;
                icyvol(:,:,4,1,1) = L_c;   
                %
-               fig = icyvol;
-                                                
+               fig = icyvol;                                                
         end                
 %-------------------------------------------------------------------------%
         function sgm = do_HL1_Segmentation(obj,send_to_Icy,~)
