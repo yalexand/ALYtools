@@ -479,6 +479,12 @@ classdef ALYtools_data_controller < handle
                      if sT < 6 && sC ==1
                         I = reshape(I,[sX,sY,sZ,sT,sC]);
                      end
+                     
+                     % if sC>12, don't believe it is C, reinterpret as Z
+                     if sC > 12 && sZ ==1
+                        I = reshape(I,[sX,sY,sC,sZ,sT]);
+                     end
+                     
                      %                   
                      obj.imgdata = I;                        
                                           
@@ -538,7 +544,7 @@ classdef ALYtools_data_controller < handle
                 case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks'}
                     if 3 == sC || 4 == sC
                         image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes);
-                    elseif 1 == sC
+                    elseif 1 == sC || 2 == sC
                         image(uint8(map(squeeze(I(:,:,1,1,1)),0,255)),'Parent',obj.scene_axes);
                     end  
                 case {'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'}
@@ -824,7 +830,7 @@ classdef ALYtools_data_controller < handle
             timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
             dirname = [obj.RootDirectory filesep ['ALYtools Analysis ' timestamp]];
             %
-            if obj.save_analysis_output_as_xls || obj.save_analysis_output_as_OMEtiff && ~isempty(datas)
+            if (obj.save_analysis_output_as_xls && ~isempty(datas)) || obj.save_analysis_output_as_OMEtiff 
                 mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
             end                   
                     %  
