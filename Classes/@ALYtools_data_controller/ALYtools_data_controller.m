@@ -240,6 +240,9 @@ classdef ALYtools_data_controller < handle
             per_image_TCSPC_FLIM_averaging_sigma = 0;
             %
             external_segmentations = [];
+            
+            %
+            FijiScriptsDirectory = 'C:\Users\alexany\Fiji\Fiji.app\scripts';
                                
     end    
         

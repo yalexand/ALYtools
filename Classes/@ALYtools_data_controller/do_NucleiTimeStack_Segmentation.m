@@ -8,6 +8,7 @@
             % to reduce to "T" dependence
             
             % segment
+            sT = 16; % debug
             icyvol = zeros(sX,sY,3,1,sT);
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,1,k)));
@@ -20,7 +21,7 @@
                % once - donor
                z = nonlinear_tophat(ud,S,K)-1;
                z(z<t)=0;                 
-               z = imopen(z,strel('disk',2));               
+               z = imopen(z,strel('disk',2,0));               
                %
                  % fill SMALL holes                             
                  z1 = imfill(z,'holes') - z;
@@ -35,7 +36,7 @@
                % another one - acceptor
                z = nonlinear_tophat(ua,S,K)-1;
                z(z<t)=0;                 
-               z = imopen(z,strel('disk',2));               
+               z = imopen(z,strel('disk',2,0));               
                %
                  % fill SMALL holes                             
                  z1 = imfill(z,'holes') - z;

@@ -178,6 +178,12 @@ classdef ALYtools_gui
             loci.common.DebugTools.enableLogging('INFO');
             java.lang.System.setProperty('javax.xml.transform.TransformerFactory', 'com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl');            
             
+            FijiScriptsDirectory = handles.data_controller.FijiScriptsDirectory;
+            if isdir(FijiScriptsDirectory)
+                addpath(FijiScriptsDirectory);
+                Miji(false);
+            end;
+            
             close all;
             
             set(obj.window,'Visible','on');
