@@ -34,49 +34,7 @@ a_data = [];
 % legend({'donor','acceptor'})
 % grid on;
 
-for k=1:nFovs
-    ud = fig(:,:,1,1,k);
-    ua = fig(:,:,2,1,k);
-    nukes = fig(:,:,3,1,k);
-    d_sample = ud(nukes==1);
-    d_sample = single(d_sample(:));
-    a_sample = ua(nukes==1);
-    a_sample = single(a_sample(:));
-    d_data = [d_data d_sample'];
-    a_data = [a_data a_sample'];
-    k
-end
-%
-IA_min = quantile(a_data,0.01)
-IA_max = quantile(a_data,0.99)
-%
-ID_min = quantile(d_data,0.01)
-ID_max = quantile(d_data,0.99)
-%
-% boundaries for Z
-Z_data = [];
-for k=1:nFovs
-    ud = fig(:,:,1,1,k);
-    ua = fig(:,:,2,1,k);
-    nukes = fig(:,:,3,1,k);
-    d_sample = ud(nukes==1);
-    d_sample = single(d_sample(:));
-    a_sample = ua(nukes==1);
-    a_sample = single(a_sample(:));
-    Z = (a_sample - IA_min)./(d_sample - ID_min);
-    Z_data = [d_data Z'];
-    k    
-end
-
-Z = Z(Z>0);
-Z = Z(~isinf(Z));
-
-%Zmin = min(Z(:));
-%Zmax = max(Z(:));
-Zmin = quantile(Z(:),0.01);
-Zmax = quantile(Z(:),0.99);
-
-%nFovs = 6;
+% all calculus bound to the frame
 NUCDATA = cell(1,nFovs);
 E = 0.5;
 for k=1:nFovs
@@ -84,30 +42,44 @@ for k=1:nFovs
     ua = fig(:,:,2,1,k);
     nukes = fig(:,:,3,1,k);
     %
-        nnucs = 0;
-        nuc_data = [];
-        %
+        a_data = ua(nukes==1);
+        d_data = ud(nukes==1);
+        IA_min = quantile(a_data(:),0.01);
+        ID_min = quantile(d_data(:),0.01);
         Z = (ua - IA_min)./(ud - ID_min);
-        %
+            sample = Z(Z>0);
+            sample = sample(~isinf(sample));
+            sample = sample(~isnan(sample));
+            Zmin = quantile(sample(:),0.01);
+            Zmax = quantile(sample(:),0.99);        
+        %            
         try        
             %        
             L = bwlabel(nukes);
+            stats = regionprops(L,'Centroid');
             nnucs = max(L(:));
             % should be XY + RATIO + RAW INTENSITIES  = +4 COLUMNS
-            nuc_data = zeros(nnucs,3); 
-            %                        
+            nuc_data = zeros(nnucs,8); 
             for n=1:nnucs
-                sample_a = ua(L==n);
-                sample_d = ud(L==n);
+                sample_a = single(ua(L==n));
+                sample_d = single(ud(L==n));
+                %
                 Z_cur = Z(L==n);
                 Z_cur = Z_cur(~isnan(Z_cur));
                 Z_cur(Z_cur<Zmin)=Zmin;
                 Z_cur(Z_cur>Zmax)=Zmax;                
                 nuc_data(n,1)=length(sample_a(:)); % area
-                z = mean(Z_cur(:));
-                x = (z-Zmin)/(Zmax-Zmin-E*(Zmax-z));
-                nuc_data(n,2)=x;
+                z_cur = mean(Z_cur(:));
+                
+                nuc_data(n,2)=(z_cur-Zmin)/(Zmax-Zmin-E*(Zmax-z_cur));
                 nuc_data(n,3)=corr(sample_a(:),sample_d(:),'type','Pearson');
+                    mean_sample_a = mean(sample_a(:));
+                    mean_sample_d = mean(sample_d(:));
+                nuc_data(n,4)=mean_sample_a/mean_sample_d;
+                nuc_data(n,5)=mean_sample_a;
+                nuc_data(n,6)=mean_sample_d;
+                nuc_data(n,7) = stats(n).Centroid(2);
+                nuc_data(n,8) = stats(n).Centroid(1);
             end
         catch
             disp(['glitch at index ' num2str(k)]);
@@ -118,6 +90,7 @@ for k=1:nFovs
         k
         NUCDATA{k} = nuc_data;
 end
+% save('NUCDATA_test_July_4_2018','NUCDATA');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           
