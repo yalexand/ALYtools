@@ -7,12 +7,33 @@ function [datas, captions, table_names, fig] = analyze_NucleiTimeStack(obj,~,~)
      
      fig = obj.do_NucleiTimeStack_Segmentation(false);
 
-     [sX,sY,sC,nFovs,sC] = size(fig);
+     [sX,sY,sC,sZ,nFovs] = size(fig);
      
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % first define autofluorescence
 d_data = [];
 a_data = [];
+
+% d_vals = zeros(1,nFovs);
+% a_vals = zeros(1,nFovs);
+% for k=1:nFovs
+%     ud = fig(:,:,1,1,k);
+%     ua = fig(:,:,2,1,k);
+%     nukes = fig(:,:,3,1,k);
+%     d_sample = ud(nukes==1);
+%     d_sample = single(d_sample(:));
+%     a_sample = ua(nukes==1);
+%     a_sample = single(a_sample(:));
+%     d_vals(k) = median(d_sample(:));
+%     a_vals(k) = median(a_sample(:));
+% end
+% figure(22);
+% plot(1:nFovs,d_vals,'b.-',1:nFovs,a_vals,'r.-')
+% xlabel('frame #');
+% ylabel('intensity');
+% legend({'donor','acceptor'})
+% grid on;
+
 for k=1:nFovs
     ud = fig(:,:,1,1,k);
     ua = fig(:,:,2,1,k);
