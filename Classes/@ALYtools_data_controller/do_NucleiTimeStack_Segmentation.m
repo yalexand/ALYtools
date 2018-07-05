@@ -8,16 +8,20 @@
             % to reduce to "T" dependence
             
             % segment
-            %sT = 16; % debug
+            sT = 32; % 256 is record, July 5; % debug
             icyvol = zeros(sX,sY,3,1,sT);
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,1,k)));
                ua = single(squeeze(obj.imgdata(:,:,1,2,k)));
                if 0==sum(ud(:)) || 0==sum(ud(:)) , continue, end % ??
                  
-               S = 8;  
-               K  = 2.5;
-               t = 0.055;
+%                 S = 8;  
+%                 K  = 2.5;
+%                 t = 0.055;
+                S = 12;  
+                K  = 2.5;
+                t = 0.055;
+
                % once - donor
                z = nonlinear_tophat(ud,S,K)-1;
                z(z<t)=0;                 
@@ -31,7 +35,7 @@
                  % fill small holes - ends                                
                %               
                nukes = z;               
-               nukes = bwareaopen(nukes,9); % safety
+               nukes = bwareaopen(nukes,25); % safety
                sgm_d = nukes;
                % another one - acceptor
                z = nonlinear_tophat(ua,S,K)-1;
@@ -46,7 +50,7 @@
                  % fill small holes - ends                                
                %               
                nukes = z;               
-               nukes = bwareaopen(nukes,9); % safety
+               nukes = bwareaopen(nukes,25); % safety
                sgm_a = nukes;
                
                %%%%%%%%%%%%%%%%%
