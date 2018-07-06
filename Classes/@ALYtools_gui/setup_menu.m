@@ -84,6 +84,7 @@ function handles = setup_menu(obj,handles)
     handles.menu_settings_problem_Experimental = uimenu(handles.menu_settings_problem,'Label','Experimental','Separator','on');
     handles.menu_settings_problem_per_image_TCSPC_FLIM = uimenu(handles.menu_settings_problem,'Label','per_image_TCSPC_FLIM','Separator','on');
     handles.menu_settings_problem_per_image_TCSPC_FLIM_PHASOR = uimenu(handles.menu_settings_problem,'Label','per_image_TCSPC_FLIM_PHASOR','Separator','on');
+    handles.menu_settings_problem_t_dependent_Nuclei_ratio_FRET = uimenu(handles.menu_settings_problem,'Label','t_dependent_Nuclei_ratio_FRET','Separator','on');
     
     handles.menu_settings_problem_dependent = uimenu(menu_settings,'Label','Problem-Specific','Separator','on');                    
     handles.menu_settings_general = uimenu(menu_settings,'Label','General','Separator','on');                        

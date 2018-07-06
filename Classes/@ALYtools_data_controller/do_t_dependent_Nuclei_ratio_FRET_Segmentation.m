@@ -1,4 +1,4 @@
-        function sgm = do_NucleiTimeStack_Segmentation(obj,send_to_Icy,~) 
+        function sgm = do_t_dependent_Nuclei_ratio_FRET_Segmentation(obj,send_to_Icy,~) 
                        
             [sX,sY,sZ,sC,sT] = size(obj.imgdata);
             if sZ~=1
@@ -8,59 +8,58 @@
             % to reduce to "T" dependence
             
             % segment
-            sT = 32; % 256 is record, July 5; % debug
+            %sT = 12; % 256 is record, July 5; % debug
             icyvol = zeros(sX,sY,3,1,sT);
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,1,k)));
                ua = single(squeeze(obj.imgdata(:,:,1,2,k)));
                if 0==sum(ud(:)) || 0==sum(ud(:)) , continue, end % ??
                  
-%                 S = 8;  
-%                 K  = 2.5;
-%                 t = 0.055;
-                S = 12;  
-                K  = 2.5;
-                t = 0.055;
+               S = 16;  
+               K  = 2.5;
+               t = 0.055;
 
                % once - donor
-               z = nonlinear_tophat(ud,S,K)-1;
+               z = imresize(ud,[2*sX 2*sY],'bicubic');               
+               z = nonlinear_tophat(z,S,K)-1;
                z(z<t)=0;                 
-               z = imopen(z,strel('disk',2,0));               
+               z = imopen(z,strel('disk',4,0));
                %
                  % fill SMALL holes                             
                  z1 = imfill(z,'holes') - z;
-                 z2 = bwareaopen(z1,4);
+                 z2 = bwareaopen(z1,16);
                  z1(z2) = 0;
                  z = z | z1;
                  % fill small holes - ends                                
                %               
                nukes = z;               
-               nukes = bwareaopen(nukes,25); % safety
+               nukes = bwareaopen(nukes,100); % safety
                sgm_d = nukes;
                % another one - acceptor
-               z = nonlinear_tophat(ua,S,K)-1;
+               z = imresize(ua,[2*sX 2*sY],'bicubic');
+               z = nonlinear_tophat(z,S,K)-1;
                z(z<t)=0;                 
-               z = imopen(z,strel('disk',2,0));               
+               z = imopen(z,strel('disk',4,0));               
                %
                  % fill SMALL holes                             
                  z1 = imfill(z,'holes') - z;
-                 z2 = bwareaopen(z1,4);
+                 z2 = bwareaopen(z1,16);
                  z1(z2) = 0;
                  z = z | z1;
                  % fill small holes - ends                                
                %               
                nukes = z;               
-               nukes = bwareaopen(nukes,25); % safety
+               nukes = bwareaopen(nukes,100); % safety
                sgm_a = nukes;
                
                %%%%%%%%%%%%%%%%%
-               %%%%%%%%%%%%%%%%%
-                 z = sgm_d | sgm_a;
+               z = sgm_d | sgm_a;
+                 
                     % break nuclear clumps
-                    z = imdilate(z,strel('disk',1,0));
+                    z = imdilate(z,strel('disk',2,0));
                     z2 = bwlabel(z);
-                    D = bwdist(~z2); %distance map 
-                       nuc_breacking_distmap_smoothing_scale = 2;
+                    D = bwdist(~z2,'euclidean'); %distance map 
+                       nuc_breacking_distmap_smoothing_scale = 4;
                        D = medfilt2(D,[nuc_breacking_distmap_smoothing_scale nuc_breacking_distmap_smoothing_scale]);
                     D = -D;
                     D(~z2) = -Inf;                                        
@@ -70,20 +69,22 @@
                     bckgind = find([stats.Area]==max([stats.Area]));
                     L(L==bckgind) = 0;
                     z = (L>0);
+                    % break nuclear clumps - end                    
                     %            
                  nukes = z;
                     %
-                 nukes = bwareaopen(nukes,25); % safety               
-               %%%%%%%%%%%%%%%%%
-               %%%%%%%%%%%%%%%%%
+                 nukes = bwareaopen(nukes,100); % safety               
+
+                nukes = imresize(double(nukes),[sX sY],'bicubic');
+                nukes = (nukes>0.8); % binarize this way
                                              
-               icyvol(:,:,1,1,k) = ud;
-               icyvol(:,:,2,1,k) = ua;               
-               icyvol(:,:,3,1,k) = nukes;
+                icyvol(:,:,1,1,k) = ud;
+                icyvol(:,:,2,1,k) = ua;               
+                icyvol(:,:,3,1,k) = nukes;
                k 
-            end                                    
-            %                        
-            sgm = icyvol;
+            end
+            %
+            sgm = uint8(icyvol);
                                                            
                 if send_to_Icy                
                     try

@@ -242,8 +242,17 @@ classdef ALYtools_data_controller < handle
             external_segmentations = [];
             
             %
-            FijiScriptsDirectory = 'C:\Users\alexany\Fiji\Fiji.app\scripts';
-                               
+            FijiScriptsDirectory = 'C:\Users\alexany\Fiji\Fiji.app\scripts';            
+            %
+            t_dependent_Nuclei_ratio_FRET_TIMESTEP = 7/60;
+            TrackMate_RADIUS = 5;
+            TrackMate_TARGET_CHANNEL = 1;
+            TrackMate_THRESHOLD = 0;
+            TrackMate_DO_MEDIAN_FILTERING = true;
+            TrackMate_QUALITY = 1.0;
+            TrackMate_ALLOW_TRACK_SPLITTING = false;
+            TrackMate_ALLOW_TRACK_MERGING = false;
+            TrackMate_TRACK_DISPLACEMENT = 2.0;                               
     end    
         
     properties(Transient,Hidden)
@@ -476,7 +485,7 @@ classdef ALYtools_data_controller < handle
                              obj.HL1_ref_channel = 1;
                          end                                               
                          
-                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' }  
+                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' 't_dependent_Nuclei_ratio_FRET' }
                     
                      % if sT<6, don't believe it is T, reinterpret as channels
                      if sT < 6 && sC ==1
@@ -544,7 +553,7 @@ classdef ALYtools_data_controller < handle
                     if 3~=sC, obj.imgdata = []; cla(obj.scene_axes); errordlg('3 channel image is expected'); return; end;
                     image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes); 
                     
-                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks'}
+                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' 't_dependent_Nuclei_ratio_FRET'}
                     if 3 == sC || 4 == sC
                         image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes);
                     elseif 1 == sC || 2 == sC
@@ -721,7 +730,11 @@ classdef ALYtools_data_controller < handle
                     k = numel(obj.M_imgdata); % last
                     obj.PR_ref_channel = 1;
                     obj.imgdata = squeeze(sum(obj.M_imgdata{k},5));
-                    PR_Segmentation_settings(obj);                    
+                    PR_Segmentation_settings(obj);     
+                    
+                case 't_dependent_Nuclei_ratio_FRET'
+                    % t_dependent_Nuclei_ratio_FRET_Segmentation_settings(obj);
+                    
             end
 
         end    
@@ -801,7 +814,7 @@ classdef ALYtools_data_controller < handle
 %-------------------------------------------------------------------------%                                    
         function analyze_current(obj,~,~)        
 
-            if isempty(obj.imgdata), errordlg('no data!'), return, end;            
+            if isempty(obj.imgdata), errordlg('no data!'), return, end
             
             switch obj.problem
                 
@@ -826,13 +839,19 @@ classdef ALYtools_data_controller < handle
                 case 'per_image_TCSPC_FLIM'
                     [datas, captions, table_names, fig] = obj.analyze_per_image_TCSPC_FLIM;
                 case 'per_image_TCSPC_FLIM_PHASOR'
-                    [datas, captions, table_names, fig] = obj.analyze_per_image_TCSPC_FLIM_PHASOR;                                                                                
-                    
+                    [datas, captions, table_names, fig] = obj.analyze_per_image_TCSPC_FLIM_PHASOR;
+                case 't_dependent_Nuclei_ratio_FRET'
+                    [datas, captions, table_names, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;                                        
             end % switch
 
             timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
             dirname = [obj.RootDirectory filesep ['ALYtools Analysis ' timestamp]];
-            %
+            %%%%
+            if strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET') % special case where lot of data are saved
+                mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
+                fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dirname);                
+            end
+            %%%%
             if (obj.save_analysis_output_as_xls && ~isempty(datas)) || obj.save_analysis_output_as_OMEtiff 
                 mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
             end                   
@@ -919,7 +938,7 @@ classdef ALYtools_data_controller < handle
             
             switch obj.problem
                             
-                case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks'}
+                case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' 't_dependent_Nuclei_ratio_FRET'}
                     
                     dirname = [];           
                     cmnxlsname = [];
@@ -966,6 +985,14 @@ classdef ALYtools_data_controller < handle
                                 [data, caption, table_name, fig] = obj.analyze_MPHG;
                             elseif strcmp(obj.problem,'Sparks')
                                 [data, caption, table_name, fig] = obj.analyze_Sparks;
+                            elseif strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET')
+                                [data, caption, table_name, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;
+                                timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
+                                output_dir = [obj.RootDirectory filesep 'ALYtools Analysis ' timestamp];
+                                if ~exist(output_dir,'dir')
+                                    mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
+                                end
+                                fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,output_dir);
                             end
                         catch
                             disp(['failed to analyze the file ' obj.current_filename]);
@@ -1032,7 +1059,7 @@ classdef ALYtools_data_controller < handle
                             end                        
                         end
                         %                                                                                                
-                        if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end; 
+                        if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end 
                         
                     end     
                     
@@ -1044,7 +1071,7 @@ classdef ALYtools_data_controller < handle
                        end
                     end
                     
-                    if ~isempty(hw), delete(hw), drawnow; end;
+                    if ~isempty(hw), delete(hw), drawnow; end
                     
                 
                 case 'Fungus Dependent Granule Release'
@@ -1115,7 +1142,7 @@ classdef ALYtools_data_controller < handle
                                 try
                                 icy_imshow(fig,[obj.current_filename ' ' obj.problem ' analysis']);
                                 catch
-                                end;
+                                end
                             end
                             %
                             if obj.save_analysis_output_as_OMEtiff                    
@@ -1124,7 +1151,7 @@ classdef ALYtools_data_controller < handle
                             end                        
                         end
                         %                                                                                                
-                        if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end;     
+                        if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end     
                     end
                     
                     if obj.save_analysis_output_as_xls % common excel data file
@@ -1137,8 +1164,8 @@ classdef ALYtools_data_controller < handle
                       end                        
                     end
                     
-                    if ~isempty(hw), delete(hw), drawnow; end;
-                    
+                    if ~isempty(hw), delete(hw), drawnow; end
+                                        
             end % switch
                                     
         end        
@@ -2064,7 +2091,19 @@ classdef ALYtools_data_controller < handle
             settings.per_image_TCSPC_FLIM_weights_resampling_factor = obj.per_image_TCSPC_FLIM_weights_resampling_factor;            
             settings.per_image_TCSPC_FLIM_Ref_lifetime = obj.per_image_TCSPC_FLIM_Ref_lifetime;
             settings.per_image_TCSPC_FLIM_averaging_sigma = obj.per_image_TCSPC_FLIM_averaging_sigma;
-                                    
+            %
+            settings.FijiScriptsDirectory = obj.FijiScriptsDirectory;
+            %
+            settings.t_dependent_Nuclei_ratio_FRET_TIMESTEP = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
+            settings.TrackMate_RADIUS = obj.TrackMate_RADIUS;
+            settings.TrackMate_TARGET_CHANNEL = obj.TrackMate_TARGET_CHANNEL;
+            settings.TrackMate_THRESHOLD = obj.TrackMate_THRESHOLD;
+            settings.TrackMate_DO_MEDIAN_FILTERING = obj.TrackMate_DO_MEDIAN_FILTERING;
+            settings.TrackMate_QUALITY = obj.TrackMate_QUALITY;
+            settings.TrackMate_ALLOW_TRACK_SPLITTING = obj.TrackMate_ALLOW_TRACK_SPLITTING;
+            settings.TrackMate_ALLOW_TRACK_MERGING = obj.TrackMate_ALLOW_TRACK_MERGING;
+            settings.TrackMate_TRACK_DISPLACEMENT = obj.TrackMate_TRACK_DISPLACEMENT;                               
+                                                
             xml_write(fname,settings);
         end
 %-------------------------------------------------------------------------%                        
@@ -2216,7 +2255,19 @@ classdef ALYtools_data_controller < handle
                 obj.per_image_TCSPC_FLIM_weights_resampling_factor = settings.per_image_TCSPC_FLIM_weights_resampling_factor;
                 obj.per_image_TCSPC_FLIM_Ref_lifetime = settings.per_image_TCSPC_FLIM_Ref_lifetime;
                 obj.per_image_TCSPC_FLIM_averaging_sigma = settings.per_image_TCSPC_FLIM_averaging_sigma;
-                                                                                                
+                
+                obj.FijiScriptsDirectory = settings.FijiScriptsDirectory;
+                %
+                obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP = settings.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
+                obj.TrackMate_RADIUS = settings.TrackMate_RADIUS;
+                obj.TrackMate_TARGET_CHANNEL = settings.TrackMate_TARGET_CHANNEL;
+                obj.TrackMate_THRESHOLD = settings.TrackMate_THRESHOLD;
+                obj.TrackMate_DO_MEDIAN_FILTERING = settings.TrackMate_DO_MEDIAN_FILTERING;
+                obj.TrackMate_QUALITY = settings.TrackMate_QUALITY;
+                obj.TrackMate_ALLOW_TRACK_SPLITTING = settings.TrackMate_ALLOW_TRACK_SPLITTING;
+                obj.TrackMate_ALLOW_TRACK_MERGING = settings.TrackMate_ALLOW_TRACK_MERGING;
+                obj.TrackMate_TRACK_DISPLACEMENT = settings.TrackMate_TRACK_DISPLACEMENT;                               
+                                                                                                                
              end
         end
 %-------------------------------------------------------------------------%                

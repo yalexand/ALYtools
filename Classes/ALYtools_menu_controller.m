@@ -77,6 +77,7 @@ classdef ALYtools_menu_controller < handle
     menu_settings_problem_Experimental; 
     menu_settings_problem_per_image_TCSPC_FLIM;
     menu_settings_problem_per_image_TCSPC_FLIM_PHASOR;
+    menu_settings_problem_t_dependent_Nuclei_ratio_FRET;
         
     %================================= visualization    
     menu_visualization_setup_Icy_directory;
@@ -344,12 +345,16 @@ classdef ALYtools_menu_controller < handle
          obj.data_controller.problem = 'per_image_TCSPC_FLIM';
          set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
     end 
-     function menu_settings_problem_per_image_TCSPC_FLIM_PHASOR_callback(obj, ~, ~) 
+    function menu_settings_problem_per_image_TCSPC_FLIM_PHASOR_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Problem = ' 'per_image_TCSPC_FLIM_PHASOR']);        
          obj.data_controller.problem = 'per_image_TCSPC_FLIM_PHASOR';
          set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
     end         
-           
+     function menu_settings_problem_t_dependent_Nuclei_ratio_FRET_callback(obj, ~, ~) 
+         set(obj.menu_settings_problem,'Label',['Problem = ' 't_dependent_Nuclei_ratio_FRET']);        
+         obj.data_controller.problem = 't_dependent_Nuclei_ratio_FRET';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+    end                        
          %------------------------------------------------------------------                    
     
     function menu_settings_problem_dependent_callback(obj, ~, ~)
