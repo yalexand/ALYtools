@@ -2,7 +2,7 @@ function fig = t_dependent_Nuclei_ratio_FRET_postprocess(obj,in_fig,output_direc
 
      if ~isdir(output_directory), disp('wrong output directory, expect no output'), end
      
-     fig = in_fig;   
+     fig = single(in_fig);   
 
      [sX,sY,sC,sZ,nFovs] = size(fig);
 
@@ -12,29 +12,34 @@ function fig = t_dependent_Nuclei_ratio_FRET_postprocess(obj,in_fig,output_direc
         fname = strrep(fname,'.OME.tif','');
         fname = strrep(fname,'.tif','');
           
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % plot intensity
-% d_data = [];
-% a_data = [];
-% d_vals = zeros(1,nFovs);
-% a_vals = zeros(1,nFovs);
-% for k=1:nFovs
-%     ud = fig(:,:,1,1,k);
-%     ua = fig(:,:,2,1,k);
-%     nukes = fig(:,:,3,1,k);
-%     d_sample = ud(nukes==1);
-%     d_sample = single(d_sample(:));
-%     a_sample = ua(nukes==1);
-%     a_sample = single(a_sample(:));
-%     d_vals(k) = median(d_sample(:));
-%     a_vals(k) = median(a_sample(:));
-% end
-% h=figure;
-% plot(1:nFovs,d_vals,'b.-',1:nFovs,a_vals,'r.-')
-% xlabel('frame #');
-% ylabel('intensity');
-% legend({'donor','acceptor'})
-% grid on;
+% % % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% plot intensity
+d_vals = zeros(1,nFovs);
+a_vals = zeros(1,nFovs);
+for k=1:nFovs
+    ud = fig(:,:,1,1,k);
+    ua = fig(:,:,2,1,k);
+    nukes = fig(:,:,3,1,k);
+    d_sample = ud(nukes==1);
+    d_sample = single(d_sample(:));
+    a_sample = ua(nukes==1);
+    a_sample = single(a_sample(:));
+    d_vals(k) = median(d_sample(:));
+    a_vals(k) = median(a_sample(:));
+end
+h = figure;
+plot(1:nFovs,d_vals,'b.-',1:nFovs,a_vals,'r.-')
+xlabel('frame #');
+ylabel('intensity');
+legend({'donor','acceptor'})
+grid on;
+ax_new=gca;
+set(ax_new,'Position','default');
+legend(ax_new,'-DynamicLegend');
+saveName = [output_directory filesep fname '_segmented_intensities'];
+saveas(h,saveName,'fig');
+close(h);
+
 
 % all Z calculateions are bound to the frame
 NUCDATA = cell(1,nFovs);
@@ -319,7 +324,39 @@ close(h);
 %         end                
 %         icy_imshow(uint16(icyvol));    
 
+% matching
+        for k=1:numel(tracks)
+            track = tracks{k};
+            for m=1:size(track,1)
+                frame = track(m,1)+1;
+                x = round(track(m,2))+1;
+                y = round(track(m,3))+1;
+                FRET_ratio = fig(x,y,3,1,frame);
+                try
+                if 0==FRET_ratio % safely use 5x5 vicinity of the orphan point
+                    xl = max(x-2,1);
+                    xr = min(x+2,sX);
+                    yd = max(y-2,1);
+                    yu = min(y+2,sY);
+                    d_sample = fig(xl:xr,yd:yu,1,1,frame);
+                    a_sample = fig(xl:xr,yd:yu,2,1,frame);
+                    FRET_ratio = mean(a_sample(:))/mean(d_sample(:))*100;
+                    %
+                    disp(['fixing orphan TrackMate point at ' num2str(x) ' ' num2str(y) ' ' num2str(frame) ' ' num2str(FRET_ratio)]);
+                    %                    
+                end
+                    track(m,4) = FRET_ratio/100;
+                catch
+                    disp([x y frame FRET_ratio/100]);
+                end
+            end
+            tracks{k} = track;
+        end 
+fullfname = [output_directory filesep fname 'FRET_ratio_featured_TRACKMATE_OUTPUT'];
+save(fullfname,'tracks');
+% matching
+
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        fig = uint8(fig);                        
+        fig = uint16(fig);                        
 end

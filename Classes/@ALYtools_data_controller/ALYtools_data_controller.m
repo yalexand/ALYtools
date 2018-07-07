@@ -242,7 +242,7 @@ classdef ALYtools_data_controller < handle
             external_segmentations = [];
             
             %
-            FijiScriptsDirectory = 'C:\Users\alexany\Fiji\Fiji.app\scripts';            
+            FijiScriptsDirectory = 'C:\Fiji.app\scripts';            
             %
             t_dependent_Nuclei_ratio_FRET_TIMESTEP = 7/60;
             TrackMate_RADIUS = 5;
@@ -2266,8 +2266,7 @@ classdef ALYtools_data_controller < handle
                 obj.TrackMate_QUALITY = settings.TrackMate_QUALITY;
                 obj.TrackMate_ALLOW_TRACK_SPLITTING = settings.TrackMate_ALLOW_TRACK_SPLITTING;
                 obj.TrackMate_ALLOW_TRACK_MERGING = settings.TrackMate_ALLOW_TRACK_MERGING;
-                obj.TrackMate_TRACK_DISPLACEMENT = settings.TrackMate_TRACK_DISPLACEMENT;                               
-                                                                                                                
+                obj.TrackMate_TRACK_DISPLACEMENT = settings.TrackMate_TRACK_DISPLACEMENT;                                                                                                                                               
              end
         end
 %-------------------------------------------------------------------------%                
