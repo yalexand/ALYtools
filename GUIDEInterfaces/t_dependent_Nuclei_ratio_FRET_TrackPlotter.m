@@ -94,14 +94,14 @@ minmaxlimits = zeros(numel(str),2);
 minmaxlimits(:,1)=0;
 minmaxlimits(:,2)=Inf;
 
+if ~isempty(handles.track_data)
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-minmaxlimits(1+1,1)=min(squeeze(handles.track_data(1+2,:)));
-minmaxlimits(1+1,2)=max(squeeze(handles.track_data(1+2,:)));
-minmaxlimits(6+1,1)=min(squeeze(handles.track_data(6+2,:)));
-minmaxlimits(6+1,2)=max(squeeze(handles.track_data(6+2,:)));
-minmaxlimits(7+1,1)=min(squeeze(handles.track_data(7+2,:)));
-minmaxlimits(7+1,2)=max(squeeze(handles.track_data(7+2,:)));
+       for k=1:11
+            minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
+            minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
+        end
+end
 
 set(handles.filter_table, 'Data', minmaxlimits);
 set(handles.filter_table, 'RowName', str);
@@ -311,12 +311,45 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
 % hObject    handle to load_trackmate_plus_data (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+    [filename,pathname] = uigetfile({'*.mat','TrackMate+ Files'}, ...
+                    'Select data file',pwd);
+    if filename == 0, return, end;
+    load([pathname filesep filename]);
+
+    handles.raw_data = tracks;
+    handles.dt = dt;
+    handles.pixelsize = microns_per_pixel;
+    
+    handles.track_data = calculate_track_data(hObject,handles);
+       
+    visualize_histo2(hObject,handles);
+    visualize_time_dependence(hObject,handles);
+
+    Name = get(handles.figure1,'Name');
+    set(handles.figure1, 'Name', [Name ' : ' filename]);
+
+    str = [{'time'} handles.features];
+    minmaxlimits = zeros(numel(str),2);
+    minmaxlimits(:,1)=0;
+    minmaxlimits(:,2)=Inf;
+    if ~isempty(handles.track_data)
+    minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
+    minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
+        for k=1:11
+            minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
+            minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
+        end
+    end
+    set(handles.filter_table, 'Data', minmaxlimits);
+
+    % Update handles structure
+    guidata(hObject, handles);
 
 % --------------------------------------------------------------------
 function track_data = calculate_track_data(hObject,handles)
 D = handles.raw_data;
+if isempty(D), return, end;
 
-%{'length','XY_speed','XY_directionality','#neighbours','cell density','FRET_level','FRET_variability'};
 track_data = zeros(numel(D),2+numel(handles.features)); % first 2 are reserved for begin and end time
 for k=1:numel(D)
     track = D{k};
@@ -349,6 +382,7 @@ end
 % --------------------------------------------------------------------
 function visualize_histo2(hObject,handles)
 D = handles.track_data;
+if isempty(D), return, end;
 
 % need to use filtered data here
 x_ind = get(handles.histo2_X_feature,'Value');
@@ -374,6 +408,7 @@ end
 % --------------------------------------------------------------------
 function visualize_time_dependence(hObject,handles)
 D = handles.track_data;
+if isempty(D), return, end;
 
 % need to use filtered data here
 c_ind = get(handles.time_plot_colour_feature,'Value');
@@ -390,6 +425,9 @@ for k = 1:numel(y_data)
 end
 hold(handles.time_plot_axes,'off');
 axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
+xlabel(handles.time_plot_axes,'time [h]');
+%str = get(handles.time_plot_Y_feature,'String')
+%ylabel(handles.time_plot_axes,str{y_ind});
 grid(handles.time_plot_axes,'on');
 
 
