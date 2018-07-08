@@ -8,7 +8,7 @@
             % to reduce to "T" dependence
             
             % segment
-            %sT = 6; % 256 is record, July 5; % debug
+            sT = 6; % 256 is record, July 5; % debug
             icyvol = zeros(sX,sY,3,1,sT);
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,1,k)));

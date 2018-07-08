@@ -40,6 +40,12 @@ saveName = [output_directory filesep fname '_segmented_intensities'];
 saveas(h,saveName,'fig');
 close(h);
 
+% nucleus size
+% donor intensity
+% acceptor intensity
+% intensity ratio
+% Pearson correlation
+clc_res = zeros(sX,sY,5,nFovs);
 
 % all Z calculateions are bound to the frame
 NUCDATA = cell(1,nFovs);
@@ -62,7 +68,14 @@ for k=1:nFovs
         %            
         try        
             %
-            ratrefXY = zeros(sX,sY);
+            %ratrefXY = zeros(sX,sY);
+            
+            nucleus_size = zeros(sX,sY);
+            donor_intensity = zeros(sX,sY);
+            acceptor_intensity = zeros(sX,sY);
+            intensity_ratio = zeros(sX,sY);
+            Pearson_correlation = zeros(sX,sY);
+            
             %
             L = bwlabel(nukes);
             stats = regionprops(L,'Centroid');
@@ -91,10 +104,22 @@ for k=1:nFovs
                 nuc_data(n,7) = stats(n).Centroid(2);
                 nuc_data(n,8) = stats(n).Centroid(1);                
                 %
-                ratrefXY(L==n)=100*nuc_data(n,4); % A/D ratio multiplied by 100
+                %ratrefXY(L==n)=100*nuc_data(n,4); % A/D ratio multiplied by 100
+                
+                nucleus_size(L==n)=length(sample_a(:)); % area
+                donor_intensity(L==n)=mean_sample_d;
+                acceptor_intensity(L==n)=mean_sample_a;
+                intensity_ratio(L==n)=mean_sample_a/mean_sample_d;
+                Pearson_correlation(L==n)=nuc_data(n,3); % Pearson
+                
             end
             % replace binary segmentation in output for the A/D ratio multiplied by 100
-            fig(:,:,3,1,k)=ratrefXY;
+            fig(:,:,3,1,k)=intensity_ratio*100;
+            clc_res(:,:,1,k)=nucleus_size;
+            clc_res(:,:,2,k)=donor_intensity;
+            clc_res(:,:,3,k)=acceptor_intensity;
+            clc_res(:,:,4,k)=intensity_ratio;
+            clc_res(:,:,5,k)=Pearson_correlation;         
         catch
             disp(['glitch at index ' num2str(k)]);
         end
@@ -324,39 +349,65 @@ close(h);
 %         end                
 %         icy_imshow(uint16(icyvol));    
 
+
 % matching
         for k=1:numel(tracks)
             track = tracks{k};
+            ext_track = zeros(size(track,1),8); %frame,x,y+5 params
             for m=1:size(track,1)
                 frame = track(m,1)+1;
                 x = round(track(m,2))+1;
                 y = round(track(m,3))+1;
-                FRET_ratio = fig(x,y,3,1,frame);
+                nucleus_size =          clc_res(x,y,1,frame);
+                donor_intensity =       clc_res(x,y,2,frame);
+                acceptor_intensity =    clc_res(x,y,3,frame);
+                FRET_ratio =            clc_res(x,y,4,frame);
+                Pearson_correlation =   clc_res(x,y,5,frame);               
+                %              
                 try
-                if 0==FRET_ratio % safely use 5x5 vicinity of the orphan point
+                if 0==nucleus_size % safely use 5x5 vicinity of the orphan point
                     xl = max(x-2,1);
                     xr = min(x+2,sX);
                     yd = max(y-2,1);
                     yu = min(y+2,sY);
                     d_sample = fig(xl:xr,yd:yu,1,1,frame);
                     a_sample = fig(xl:xr,yd:yu,2,1,frame);
-                    FRET_ratio = mean(a_sample(:))/mean(d_sample(:))*100;
+                    FRET_ratio = mean(a_sample(:))/mean(d_sample(:));
+                    nucleus_size = 25; %:)         
+                    donor_intensity = mean(d_sample(:));      
+                    acceptor_intensity = mean(a_sample(:));       
+                    Pearson_correlation = corr(a_sample(:),d_sample(:),'type','Pearson');                       
                     %
                     disp(['fixing orphan TrackMate point at ' num2str(x) ' ' num2str(y) ' ' num2str(frame) ' ' num2str(FRET_ratio)]);
                     %                    
                 end
-                    track(m,4) = FRET_ratio/100;
+                    ext_track(m,1) = frame;
+                    ext_track(m,2) = track(m,2);
+                    ext_track(m,3) = track(m,3);
+                    ext_track(m,7) = nucleus_size; 
+                    ext_track(m,5) = donor_intensity;
+                    ext_track(m,6) = acceptor_intensity; 
+                    ext_track(m,4) = FRET_ratio;
+                    ext_track(m,8) = Pearson_correlation;                      
                 catch
-                    disp([x y frame FRET_ratio/100]);
+                    disp('glitch');
+                    disp([x y frame]);
                 end
             end
-            tracks{k} = track;
+            tracks{k} = ext_track;
         end 
+
 fullfname = [output_directory filesep fname 'FRET_ratio_featured_TRACKMATE_OUTPUT'];
-save(fullfname,'tracks');
+dt = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
+microns_per_pixel = obj.microns_per_pixel;
+save(fullfname,'tracks','dt','microns_per_pixel');
 % matching
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+t_dependent_Nuclei_ratio_FRET_TrackPlotter(tracks,... 
+    obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP, ...
+    obj.microns_per_pixel);
 
         fig = uint16(fig);                        
 end
