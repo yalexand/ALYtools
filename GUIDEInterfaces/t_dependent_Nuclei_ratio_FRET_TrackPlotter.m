@@ -65,7 +65,8 @@ handles.features = {'length', ...
                     'Donor intensity',...
                     'Acc. intensity',...
                     'nucleus size',...
-                    'D/A Pearson corr.',...                    
+                    'D/A Pearson corr.',... 
+                    't(start)'
                     };
 
 if 0==nargin-3
@@ -97,7 +98,7 @@ minmaxlimits(:,2)=Inf;
 if ~isempty(handles.track_data)
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-       for k=1:11
+       for k=1:12
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
         end
@@ -335,7 +336,7 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     if ~isempty(handles.track_data)
     minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
     minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
-        for k=1:11
+        for k=1:12
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
         end
@@ -353,8 +354,8 @@ if isempty(D), return, end;
 track_data = zeros(numel(D),2+numel(handles.features)); % first 2 are reserved for begin and end time
 for k=1:numel(D)
     track = D{k};
-    track_data(k,1) = track(1,1)*handles.dt;
-    track_data(k,2) = track(size(track,1),1)*handles.dt;
+    track_data(k,1) = (track(1,1)-1)*handles.dt;
+    track_data(k,2) = track(size(track,1)-1,1)*handles.dt;
     track_data(k,1+2) = size(track,1)*handles.dt;
     FRET_ratio = squeeze(track(:,4));   
     donor_intensity = squeeze(track(:,5));  
@@ -377,6 +378,7 @@ for k=1:numel(D)
     track_data(k,9+2) = mean_acceptor_intensity;
     track_data(k,10+2) = mean_nucleus_size;
     track_data(k,11+2) = mean_Pearson_correlation;
+    track_data(k,12+2) = track_data(k,1); % start time
 end
 
 % --------------------------------------------------------------------

@@ -351,6 +351,7 @@ classdef ALYtools_menu_controller < handle
          set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
     end         
      function menu_settings_problem_t_dependent_Nuclei_ratio_FRET_callback(obj, ~, ~) 
+         if isempty(strfind(version('-java'),'1.8')), errordlg('please switch to Java 1.8 to enable TrackMate - can not continue'); end %#ok<*CPROPLC>
          set(obj.menu_settings_problem,'Label',['Problem = ' 't_dependent_Nuclei_ratio_FRET']);        
          obj.data_controller.problem = 't_dependent_Nuclei_ratio_FRET';
          set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
