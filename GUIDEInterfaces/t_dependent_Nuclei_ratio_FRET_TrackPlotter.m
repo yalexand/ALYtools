@@ -166,6 +166,8 @@ minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
 set(handles.filter_table, 'Data', minmaxlimits);
+visualize_histo2(hObject,handles);
+visualize_time_dependence(hObject,handles);
 uiresume(handles.figure1);
 
 % --- Executes during object creation, after setting all properties.
@@ -204,6 +206,8 @@ minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
 set(handles.filter_table, 'Data', minmaxlimits);
+visualize_histo2(hObject,handles);
+visualize_time_dependence(hObject,handles);
 uiresume(handles.figure1);
 
 % --- Executes during object creation, after setting all properties.
