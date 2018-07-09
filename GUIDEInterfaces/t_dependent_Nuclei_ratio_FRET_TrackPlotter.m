@@ -371,6 +371,8 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     if filename == 0, return, end;
     load([pathname filesep filename]);
 
+    if ~exist('microns_per_pixel','var'), return, end
+    
     handles.raw_data = tracks;
     handles.dt = dt;
     handles.pixelsize = microns_per_pixel;
@@ -457,8 +459,8 @@ x_data = squeeze(D(:,x_ind+2));
 y_data = squeeze(D(:,y_ind+2));
 
 mask = handles.mask; % shouldn't be empty
-x_data=x_data(mask);
-y_data=y_data(mask);
+x_data=x_data(mask==1);
+y_data=y_data(mask==1);
 
 str = get(handles.histo2_mode,'String');
 mode = str{get(handles.histo2_mode,'Value')};
@@ -504,7 +506,7 @@ for k = 1:numel(y_data)
         hold(handles.time_plot_axes,'on');
     end
 end
-plot(handles.time_plot_axes,tb_data(mask),y_data(mask),'k.');
+plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
 hold(handles.time_plot_axes,'off');
 
 c = colorbar(handles.time_plot_axes,'Ticks',linspace(min_val,max_val,10));
