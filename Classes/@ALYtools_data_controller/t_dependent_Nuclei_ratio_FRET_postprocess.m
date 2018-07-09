@@ -397,7 +397,7 @@ close(h);
             tracks{k} = ext_track;
         end 
 
-fullfname = [output_directory filesep fname 'FRET_ratio_featured_TRACKMATE_OUTPUT'];
+fullfname = [output_directory filesep fname '_FRET_ratio_featured_TRACKMATE_OUTPUT'];
 dt = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
 microns_per_pixel = obj.microns_per_pixel;
 save(fullfname,'tracks','dt','microns_per_pixel');

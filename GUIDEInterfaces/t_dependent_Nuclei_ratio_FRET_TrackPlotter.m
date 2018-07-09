@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 07-Jul-2018 21:49:48
+% Last Modified by GUIDE v2.5 09-Jul-2018 14:16:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,22 +55,24 @@ function t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn(hObject, eventdat
 % Choose default command line output for t_dependent_Nuclei_ratio_FRET_TrackPlotter
 handles.output = hObject;
 
-handles.features = {'length', ...
-                    'XY_speed', ...
-                    'XY_directionality', ...
+handles.features = {'duration [h]', ...
+                    'XY speed [um/min]', ...
+                    'XY directionality', ...
                     '#neighbours', ...
                     'cell density', ...
-                    'rFRET_level', ...
-                    'rFRET_variability', ...
+                    'FRET ratio', ...
+                    'FRET ratio variability', ...
                     'Donor intensity',...
                     'Acc. intensity',...
-                    'nucleus size',...
+                    'nucleus size [um^2]',...
                     'D/A Pearson corr.',... 
-                    't(start)'
+                    't(start) [h]'
                     };
 
+handles.mask = [];    
+handles.track_data = [];
+                
 if 0==nargin-3
-    handles.track_data = [];
     handles.raw_data = [];
     handles.dt = 1/12; % 5 minutes
     handles.pixelsize = 2; % microns
@@ -79,6 +81,7 @@ elseif 3==nargin-3
     handles.dt = varargin{2};
     handles.pixelsize = varargin{3};
     handles.track_data = calculate_track_data(hObject,handles);
+    handles.mask = calculate_mask(hObject,handles);
 end
 
 set(handles.time_plot_Y_feature,'String',handles.features);
@@ -107,6 +110,7 @@ end
 set(handles.filter_table, 'Data', minmaxlimits);
 set(handles.filter_table, 'RowName', str);
 set(handles.filter_table, 'ColumnName', {'min','max'});
+set(handles.filter_table,'CellEditCallback',@filter_check_callback);
 
 set(handles.time_plot_axes, 'xticklabel', [], 'yticklabel', []);
 set(handles.histo2_axes, 'xticklabel', [], 'yticklabel', []);
@@ -130,7 +134,7 @@ guidata(hObject, handles);
 
 % --- Outputs from this function are returned to the command line
 function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter_OutputFcn(hObject, eventdata, handles) 
-% varargout  cell array for returning output args (see VARARGOUT);
+% varargout  cell array for returning out   put args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -147,7 +151,22 @@ function pixel_size_edit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of pixel_size_edit as text
 %        str2double(get(hObject,'String')) returns contents of pixel_size_edit as a double
-
+value = str2double(get(hObject,'String'));
+if ~isnan(value)
+    handles.pixelsize = value;
+    guidata(hObject,handles);
+else 
+    return;
+end
+handles.track_data = calculate_track_data(hObject,handles);
+minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
+minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
+       for k=1:12
+            minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
+            minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
+       end
+set(handles.filter_table, 'Data', minmaxlimits);
+uiresume(handles.figure1);
 
 % --- Executes during object creation, after setting all properties.
 function pixel_size_edit_CreateFcn(hObject, eventdata, handles)
@@ -170,7 +189,22 @@ function delta_t_edit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of delta_t_edit as text
 %        str2double(get(hObject,'String')) returns contents of delta_t_edit as a double
-
+value = str2double(get(hObject,'String'));
+if ~isnan(value) 
+    handles.dt = value;
+    guidata(hObject,handles);
+else 
+    return;
+end
+handles.track_data = calculate_track_data(hObject,handles);
+minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
+minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
+       for k=1:12
+            minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
+            minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
+       end
+set(handles.filter_table, 'Data', minmaxlimits);
+uiresume(handles.figure1);
 
 % --- Executes during object creation, after setting all properties.
 function delta_t_edit_CreateFcn(hObject, eventdata, handles)
@@ -285,7 +319,7 @@ function time_plot_colour_feature_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns time_plot_colour_feature contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from time_plot_colour_feature
-
+visualize_time_dependence(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function time_plot_colour_feature_CreateFcn(hObject, eventdata, handles)
@@ -306,6 +340,14 @@ function Untitled_1_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%-------------------------------------------------------------------------%    
+function filter_check_callback(hObject,callbackdata)
+    handles = guidata(hObject);
+    handles.mask = calculate_mask(hObject,handles);
+        % Update handles structure
+        guidata(hObject, handles);    
+    visualize_histo2(hObject,handles);
+    visualize_time_dependence(hObject,handles);
 
 % --------------------------------------------------------------------
 function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
@@ -323,9 +365,6 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     
     handles.track_data = calculate_track_data(hObject,handles);
        
-    visualize_histo2(hObject,handles);
-    visualize_time_dependence(hObject,handles);
-
     Name = get(handles.figure1,'Name');
     set(handles.figure1, 'Name', [Name ' : ' filename]);
 
@@ -342,7 +381,12 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
         end
     end
     set(handles.filter_table, 'Data', minmaxlimits);
+    
+    handles.mask = calculate_mask(hObject,handles);
 
+    visualize_histo2(hObject,handles);
+    visualize_time_dependence(hObject,handles);
+        
     % Update handles structure
     guidata(hObject, handles);
 
@@ -374,9 +418,17 @@ for k=1:numel(D)
     smoothed_FRET_ratio = medfilt2(FRET_ratio,[5 1]);
     track_data(k,7+2) = norm(smoothed_FRET_ratio - mean_FRET_ratio);
     %
+    %quantify tracks XY trajectory
+    x = squeeze(track(:,2));
+    y = squeeze(track(:,3));
+    z = zeros(size(x));
+    [directionality,velocity,velocity_sd] = quantify_track(x',y',z','noZ');
+    track_data(k,2+2) = velocity*handles.pixelsize/(handles.dt*60); % :0
+    track_data(k,3+2) = directionality;
+    %
     track_data(k,8+2) = mean_donor_intensity;
     track_data(k,9+2) = mean_acceptor_intensity;
-    track_data(k,10+2) = mean_nucleus_size;
+    track_data(k,10+2) = mean_nucleus_size*(handles.pixelsize)^2;
     track_data(k,11+2) = mean_Pearson_correlation;
     track_data(k,12+2) = track_data(k,1); % start time
 end
@@ -392,6 +444,10 @@ y_ind = get(handles.histo2_Y_feature,'Value');
 x_data = squeeze(D(:,x_ind+2));
 y_data = squeeze(D(:,y_ind+2));
 
+mask = handles.mask; % shouldn't be empty
+x_data=x_data(mask);
+y_data=y_data(mask);
+
 str = get(handles.histo2_mode,'String');
 mode = str{get(handles.histo2_mode,'Value')};
 
@@ -399,7 +455,7 @@ if strcmp(mode,'scatter')
     plot(handles.histo2_axes,x_data,y_data,'r.');
     grid(handles.histo2_axes,'on');
 elseif strcmp(mode,'histo2')
-    corr_map_W = 200;
+    corr_map_W = 100;
     corrmap = correlation_map(x_data,y_data,corr_map_W);       
     AXES = handles.histo2_axes;
     imagesc(corrmap,'Parent',AXES);
@@ -420,21 +476,86 @@ y_data = squeeze(D(:,y_ind+2));
 tb_data = squeeze(D(:,1));
 te_data = squeeze(D(:,2));
 
+mask = handles.mask;
+
+% define colors
+Ngrades = 256;
+Colors = jet(Ngrades);
+min_val = min(c_data);
+max_val = max(c_data);
+    
 axes(handles.time_plot_axes);
 for k = 1:numel(y_data)
-    plot(handles.time_plot_axes,[tb_data(k) te_data(k)],[y_data(k) y_data(k)],'k.-');
-    hold(handles.time_plot_axes,'on');
+    if 1==mask(k)
+        index = max(1,round((c_data(k) - min_val)/(max_val - min_val)*Ngrades));
+        plot(handles.time_plot_axes,[tb_data(k) te_data(k)],[y_data(k) y_data(k)],'Color',Colors(index,:));
+        hold(handles.time_plot_axes,'on');
+    end
 end
+plot(handles.time_plot_axes,tb_data(mask),y_data(mask),'k.');
 hold(handles.time_plot_axes,'off');
+
+c = colorbar(handles.time_plot_axes,'Ticks',linspace(min_val,max_val,10));
+c.Label.String = handles.features(c_ind);
+
 axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
 xlabel(handles.time_plot_axes,'time [h]');
 %str = get(handles.time_plot_Y_feature,'String')
 %ylabel(handles.time_plot_axes,str{y_ind});
 grid(handles.time_plot_axes,'on');
 
+% --------------------------------------------------------------------
+function mask = calculate_mask(hObject,handles)
+    D = handles.track_data;
+    if isempty(D), return, end;
 
+    minmaxlimits = get(handles.filter_table, 'Data');
+    minmaxlimits = minmaxlimits(2:size(minmaxlimits,1),:);
 
+    D = D(:,3:size(D,2));
 
+    mask = ones(size(D,1),1);
 
+    for k=1:numel(handles.features)
+        min_val = minmaxlimits(k,1);
+        max_val = minmaxlimits(k,2);
+        cur_vals = squeeze(D(:,k));
+        mask = mask & (cur_vals>=min_val & cur_vals<=max_val);
+    end
 
+% --------------------------------------------------------------------
+function save_settings_as_matfile_Callback(hObject, eventdata, handles)
+% hObject    handle to save_settings_as_matfile (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    [fname, fpath] = uiputfile('*.mat','Save Settings as..',[pwd filesep 'TrackPlotter_settings']);
+                if fpath == 0; return; end
+                filespec = fullfile(fpath,fname);
 
+    delta_t = handles.dt;
+    pixelsize = handles.pixelsize; %microns
+    filter_table_data = get(handles.filter_table, 'Data');
+
+    try
+        save(filespec,'delta_t','pixelsize','filter_table_data');
+    catch
+        errordlg('Error while trying to save settings - not saved');
+    end
+
+% --------------------------------------------------------------------
+function load_settings_from_matfile_Callback(hObject, eventdata, handles)
+% hObject    handle to load_settings_from_matfile (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    [filename,pathname] = uigetfile({'*.mat','TrackPlotter settings'}, ...
+                    'Select the settings file',pwd);
+    if filename == 0, return, end;
+    load([pathname filesep filename]);
+
+    try
+        handles.dt = delta_t;
+        handles.pixelsize = pixelsize; %microns
+        set(handles.filter_table, 'Data', filter_table_data);
+    catch
+        errordlg('Error while trying to load settings - not set up');
+    end
