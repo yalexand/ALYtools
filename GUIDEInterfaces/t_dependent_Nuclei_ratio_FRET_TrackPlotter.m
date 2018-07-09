@@ -151,11 +151,15 @@ function pixel_size_edit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of pixel_size_edit as text
 %        str2double(get(hObject,'String')) returns contents of pixel_size_edit as a double
+if isempty(handles.raw_data), return, end;
+
 value = str2double(get(hObject,'String'));
-if ~isnan(value)
+if ~isnan(value) && value > 0
     handles.pixelsize = value;
     guidata(hObject,handles);
 else 
+    set(hObject,'String','1');
+    guidata(hObject,handles);
     return;
 end
 handles.track_data = calculate_track_data(hObject,handles);
@@ -191,11 +195,15 @@ function delta_t_edit_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of delta_t_edit as text
 %        str2double(get(hObject,'String')) returns contents of delta_t_edit as a double
+if isempty(handles.raw_data), return, end;
+
 value = str2double(get(hObject,'String'));
-if ~isnan(value) 
+if ~isnan(value) && value > 0 
     handles.dt = value;
     guidata(hObject,handles);
 else 
+    set(hObject,'String','0.1');
+    guidata(hObject,handles);
     return;
 end
 handles.track_data = calculate_track_data(hObject,handles);
