@@ -55,6 +55,8 @@ function t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn(hObject, eventdat
 % Choose default command line output for t_dependent_Nuclei_ratio_FRET_TrackPlotter
 handles.output = hObject;
 
+handles.figureName = get(handles.figure1,'Name');
+
 handles.features = {'duration [h]', ...
                     'XY speed [um/min]', ...
                     'XY directionality', ...
@@ -81,7 +83,6 @@ elseif 3==nargin-3
     handles.dt = varargin{2};
     handles.pixelsize = varargin{3};
     handles.track_data = calculate_track_data(hObject,handles);
-    handles.mask = calculate_mask(hObject,handles);
 end
 
 set(handles.time_plot_Y_feature,'String',handles.features);
@@ -95,7 +96,7 @@ set(handles.histo2_mode,'String',{'scatter','histo2'});
 
 str = [{'time'} handles.features];
 minmaxlimits = zeros(numel(str),2);
-minmaxlimits(:,1)=0;
+minmaxlimits(:,1)=-Inf;
 minmaxlimits(:,2)=Inf;
 
 if ~isempty(handles.track_data)
@@ -104,7 +105,8 @@ minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
        for k=1:12
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
-        end
+       end
+handles.mask = calculate_mask(hObject,handles);        
 end
 
 set(handles.filter_table, 'Data', minmaxlimits);
@@ -379,12 +381,11 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     
     handles.track_data = calculate_track_data(hObject,handles);
        
-    Name = get(handles.figure1,'Name');
-    set(handles.figure1, 'Name', [Name ' : ' filename]);
+    set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
 
     str = [{'time'} handles.features];
     minmaxlimits = zeros(numel(str),2);
-    minmaxlimits(:,1)=0;
+    minmaxlimits(:,1)=-Inf;
     minmaxlimits(:,2)=Inf;
     if ~isempty(handles.track_data)
     minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
@@ -529,12 +530,14 @@ function mask = calculate_mask(hObject,handles)
     D = D(:,3:size(D,2));
 
     mask = ones(size(D,1),1);
-
+    
     for k=1:numel(handles.features)
-        min_val = minmaxlimits(k,1);
-        max_val = minmaxlimits(k,2);
+        cur_min_val = minmaxlimits(k,1);
+        cur_max_val = minmaxlimits(k,2);
         cur_vals = squeeze(D(:,k));
-        mask = mask & (cur_vals>=min_val & cur_vals<=max_val);
+        cur_vals(isnan(cur_vals)) = cur_min_val; % safety
+        cur_mask = cur_vals>=cur_min_val & cur_vals<=cur_max_val;
+        mask = mask & cur_mask;
     end
 
 % --------------------------------------------------------------------

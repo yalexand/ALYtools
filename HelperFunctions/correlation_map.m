@@ -7,20 +7,15 @@ function corrmap = correlation_map( u1,u2,W )
     H = W;
     corrmap = zeros(W,H);
         
-    u1_scaled = map(u1,1,W);
-    u2_scaled = map(u2,1,H);
-    
-    if 0~=sum(isnan(u1_scaled))
-        u1_scaled = ones(size(u1_scaled));
-    end
-    if 0~=sum(isnan(u2_scaled))
-        u2_scaled = ones(size(u2_scaled));
-    end
-    
-    sizeX=size(u1);
-    for x=1:sizeX
-        u1_coord = fix(u1_scaled(x));
-        u2_coord = fix(u2_scaled(x));
+    u1_ = u1(~isnan(u1));
+    u2_ = u2(~isnan(u2));
+
+    u1_scaled = map(u1_,1,W);
+    u2_scaled = map(u2_,1,H);
+        
+    for k=1:size(u1_scaled)
+        u1_coord = fix(u1_scaled(k));
+        u2_coord = fix(u2_scaled(k));
         corrmap(u1_coord,u2_coord) = corrmap(u1_coord,u2_coord) + 1;        
     end
     
@@ -28,6 +23,9 @@ function corrmap = correlation_map( u1,u2,W )
     
     corrmap = log10(corrmap*10);
     corrmap(isinf(corrmap))=0;
-    
+
+
+
+
 end
 
