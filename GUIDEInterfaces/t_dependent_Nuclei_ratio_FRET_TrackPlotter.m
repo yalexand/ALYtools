@@ -430,8 +430,31 @@ for k=1:numel(D)
     %
     track_data(k,6+2) = mean_FRET_ratio;
     %
-    smoothed_FRET_ratio = medfilt2(FRET_ratio,[5 1]);
-    track_data(k,7+2) = norm(smoothed_FRET_ratio - mean_FRET_ratio);
+    %smoothed_FRET_ratio = medfilt2(FRET_ratio,[5 1]);
+    %track_data(k,7+2) = norm(smoothed_FRET_ratio - mean_FRET_ratio);
+    %
+%     figure(22);
+%     if length(FRET_ratio)>100 && length(FRET_ratio)<600
+%         s = FRET_ratio;
+%         W = 40;
+%         sm_s = medfilt2(FRET_ratio,[5 1]);
+%         [~,lf] = TD_high_pass_filter(sm_s,W);        
+%         subplot(2,1,1);
+%         plot(1:length(s),s,'b.-',1:length(s),lf,'r-',1:length(s),sm_s,'k-');
+%         grid on;
+%         subplot(2,1,2);
+%         plot(1:length(s),sm_s-lf,'b.-');
+%         axis([1 600 -0.4 0.4]);
+%         grid on;
+%         disp(k);
+%     end
+        W = 40;
+        sm_s = medfilt2(FRET_ratio,[5 1]);
+        [~,lf] = TD_high_pass_filter(sm_s,W);        
+        s = sm_s-lf;
+        track_data(k,7+2) = sqrt(mean(s.*s));
+    %
+    
     %
     %quantify tracks XY trajectory
     x = squeeze(track(:,2));
