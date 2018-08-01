@@ -2763,27 +2763,22 @@ classdef ALYtools_data_controller < handle
 
         end                
 %-------------------------------------------------------------------------%  also see the function below
-        function [datas, captions, table_names, fig] = analyze_Experimental(obj,~,~)                        
-            
+        function [datas, captions, table_names, fig] = analyze_Experimental(obj,~,~)                                    
             %[datas, captions, table_names, fig] = obj.analyze_FJ; 
             %[datas, captions, table_names, fig] = obj.analyze_RPE;
             %[datas, captions, table_names, fig] = obj.analyze_FIBERTHICKNESS; 
             %[datas, captions, table_names, fig] = obj.analyze_OPT_Mouse_Lung;
             %[datas, captions, table_names, fig] = obj.analyze_MNEPR; 
-            %[datas, captions, table_names, fig] = obj.analyze_DarkNuclei; 
-            [datas, captions, table_names, fig] = obj.analyze_NucleiTimeStack;             
-                        
+            [datas, captions, table_names, fig] = obj.analyze_DarkNuclei;                         
         end 
 %-------------------------------------------------------------------------%  also see the function above
-        function sgm = do_Experimental_Segmentation(obj,send_to_Icy,~)                        
-            
+        function sgm = do_Experimental_Segmentation(obj,send_to_Icy,~)                                    
             %sgm = obj.do_FJ_Segmentation(send_to_Icy); % filaments in junctions    
             %sgm = obj.do_RPE_Segmentation(send_to_Icy); % retinal pigment epithelial cells with lysosomes
             %sgm = obj.do_FIBERTHICKNESS_Segmentation(send_to_Icy); % special program to address fibers in SIM images
             %sgm = obj.do_OPT_Mouse_Lung_Segmentation(send_to_Icy);
             %sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
-            %sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
-            sgm = obj.do_NucleiTimeStack_Segmentation(send_to_Icy);            
+            sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
