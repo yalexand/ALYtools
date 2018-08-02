@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 09-Jul-2018 14:16:00
+% Last Modified by GUIDE v2.5 02-Aug-2018 16:19:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -483,6 +483,7 @@ end
 
 % --------------------------------------------------------------------
 function visualize_histo2(hObject,handles)
+
 D = handles.track_data;
 if isempty(D), return, end;
 
@@ -516,6 +517,8 @@ function visualize_time_dependence(hObject,handles)
 D = handles.track_data;
 if isempty(D), return, end;
 
+DR = handles.raw_data;
+
 % need to use filtered data here
 c_ind = get(handles.time_plot_colour_feature,'Value');
 y_ind = get(handles.time_plot_Y_feature,'Value');
@@ -531,26 +534,81 @@ Ngrades = 256;
 Colors = jet(Ngrades);
 min_val = min(c_data);
 max_val = max(c_data);
-    
+
+show_actual_dependence = false;
+if ismember(y_ind,[4 5 6 8 9 10 11])
+    show_actual_dependence = true;
+end
+
 axes(handles.time_plot_axes);
 for k = 1:numel(y_data)
     if 1==mask(k)
         index = max(1,round((c_data(k) - min_val)/(max_val - min_val)*Ngrades));
-        plot(handles.time_plot_axes,[tb_data(k) te_data(k)],[y_data(k) y_data(k)],'Color',Colors(index,:));
+        X = [tb_data(k) te_data(k)];
+        Y = [y_data(k) y_data(k)];
+        if show_actual_dependence && get(handles.actual_dependence_checkbox,'Value') 
+            %
+            % infer the X,Y data for plotting depending on what it is
+            track = DR{k};            
+            X = track(:,1)*handles.dt;            
+            Y = [];
+                    %1   'duration [h]', ...
+                    %2   'XY speed [um/min]', ...
+                    %3   'XY directionality', ...
+                    %4*   '#neighbours', ...
+                    %5*   'cell density', ...
+                    %6*   'FRET ratio', ...
+                    %7   'FRET ratio variability', ...
+                    %8*   'Donor intensity',...
+                    %9*   'Acc. intensity',...
+                    %10*   'nucleus size [um^2]',...
+                    %11*   'D/A Pearson corr.',... 
+                    %12   't(start) [h]'            
+                switch y_ind                    
+                    case 4 % #nghbrs                    
+                        if 10==size(track,2)                        
+                            Y = squeeze(track(:,9));
+                        end
+                    case 5 % cell density
+                        if 10==size(track,2)                        
+                            Y = squeeze(track(:,10))/(handles.pixelsize)^2;
+                        end
+                    case 6 % FRET ratio
+                        Y = squeeze(track(:,4));
+                    case 8 % donor intensity                     
+                        Y = squeeze(track(:,5));
+                    case 9 % acceptor intensity
+                        Y = squeeze(track(:,6));
+                    case 10 % nucleus size
+                        Y = squeeze(track(:,7))*(handles.pixelsize)^2;
+                    case 11 % Pearson                      
+                        Y = squeeze(track(:,8));
+                end                                        
+            %
+        end
+        if isempty(Y) % back
+            X = [tb_data(k) te_data(k)];            
+            Y = [y_data(k) y_data(k)];
+        end
+        plot(handles.time_plot_axes,X,Y,'Color',Colors(index,:));        
         hold(handles.time_plot_axes,'on');
     end
 end
 plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
 hold(handles.time_plot_axes,'off');
 
-c = colorbar(handles.time_plot_axes,'Ticks',linspace(min_val,max_val,10));
-c.Label.String = handles.features(c_ind);
+try % calm down if there is no data, 
+    c = colorbar(handles.time_plot_axes,'Ticks',linspace(min_val,max_val,10));
+    c.Label.String = handles.features(c_ind);
+catch
+end
 
 axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
 xlabel(handles.time_plot_axes,'time [h]');
-%str = get(handles.time_plot_Y_feature,'String')
+%str = get(handles.time_plot_Y_feature,'String') 
 %ylabel(handles.time_plot_axes,str{y_ind});
 grid(handles.time_plot_axes,'on');
+
 
 % --------------------------------------------------------------------
 function mask = calculate_mask(hObject,handles)
@@ -609,3 +667,13 @@ function load_settings_from_matfile_Callback(hObject, eventdata, handles)
     catch
         errordlg('Error while trying to load settings - not set up');
     end
+
+
+% --- Executes on button press in actual_dependence_checkbox.
+function actual_dependence_checkbox_Callback(hObject, eventdata, handles)
+% hObject    handle to actual_dependence_checkbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of actual_dependence_checkbox
+visualize_time_dependence(hObject,handles);
