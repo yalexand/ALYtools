@@ -106,10 +106,10 @@ minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
+set(handles.filter_table, 'Data', minmaxlimits);       
 handles.mask = calculate_mask(hObject,handles);        
 end
 
-set(handles.filter_table, 'Data', minmaxlimits);
 set(handles.filter_table, 'RowName', str);
 set(handles.filter_table, 'ColumnName', {'min','max'});
 set(handles.filter_table,'CellEditCallback',@filter_check_callback);
@@ -420,13 +420,22 @@ for k=1:numel(D)
     donor_intensity = squeeze(track(:,5));  
     acceptor_intensity = squeeze(track(:,6));
     nucleus_size = squeeze(track(:,7));
-    Pearson_correlation = squeeze(track(:,8));  
+    Pearson_correlation = squeeze(track(:,8));
+    %
+    nnghb = zeros(size(FRET_ratio));
+    cell_density = zeros(size(FRET_ratio));
+    if 10==size(track,2)
+        nnghb = squeeze(track(:,9));
+        cell_density = squeeze(track(:,10));            
+    end
     %
     mean_FRET_ratio = mean(FRET_ratio);
     mean_donor_intensity = mean(donor_intensity);
     mean_acceptor_intensity = mean(acceptor_intensity);
     mean_nucleus_size = mean(nucleus_size);
-    mean_Pearson_correlation = mean(Pearson_correlation); 
+    mean_Pearson_correlation = mean(Pearson_correlation);
+    mean_nnghb = mean(nnghb);
+    mean_cell_density = mean(cell_density);
     %
     track_data(k,6+2) = mean_FRET_ratio;
     %
@@ -452,10 +461,8 @@ for k=1:numel(D)
         sm_s = medfilt2(FRET_ratio,[5 1]);
         [~,lf] = TD_high_pass_filter(sm_s,W);        
         s = sm_s-lf;
-        track_data(k,7+2) = sqrt(mean(s.*s));
-    %
-    
-    %
+        track_data(k,7+2) = sqrt(mean(s.*s));    
+        
     %quantify tracks XY trajectory
     x = squeeze(track(:,2));
     y = squeeze(track(:,3));
@@ -469,6 +476,9 @@ for k=1:numel(D)
     track_data(k,10+2) = mean_nucleus_size*(handles.pixelsize)^2;
     track_data(k,11+2) = mean_Pearson_correlation;
     track_data(k,12+2) = track_data(k,1); % start time
+    %
+    track_data(k,4+2) = mean_nnghb;
+    track_data(k,5+2) = mean_cell_density/(handles.pixelsize)^2;    
 end
 
 % --------------------------------------------------------------------
@@ -545,7 +555,7 @@ grid(handles.time_plot_axes,'on');
 % --------------------------------------------------------------------
 function mask = calculate_mask(hObject,handles)
     D = handles.track_data;
-    if isempty(D), return, end;
+    if isempty(D), return, end
 
     minmaxlimits = get(handles.filter_table, 'Data');
     minmaxlimits = minmaxlimits(2:size(minmaxlimits,1),:);

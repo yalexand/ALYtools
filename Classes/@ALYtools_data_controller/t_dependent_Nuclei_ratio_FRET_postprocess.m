@@ -45,11 +45,18 @@ close(h);
 % acceptor intensity
 % intensity ratio
 % Pearson correlation
-clc_res = zeros(sX,sY,5,nFovs);
+% # neighbours (by SOI)
+% cell density (by Delaunay) 
+clc_res = zeros(sX,sY,7,nFovs);
 
 % all Z calculateions are bound to the frame
 NUCDATA = cell(1,nFovs);
 E = 0.5;
+
+% for safety
+mean_nnghbs = zeros(1,nFovs);
+mean_cell_density = zeros(1,nFovs);
+
 for k=1:nFovs
     ud = single(fig(:,:,1,1,k));
     ua = single(fig(:,:,2,1,k));
@@ -65,7 +72,7 @@ for k=1:nFovs
 %             sample = sample(~isnan(sample));
 %             Zmin = quantile(sample(:),0.01);
 %             Zmax = quantile(sample(:),0.99);        
-        %            
+        %                    
         try        
             %
             %ratrefXY = zeros(sX,sY);
@@ -75,6 +82,9 @@ for k=1:nFovs
             acceptor_intensity = zeros(sX,sY);
             intensity_ratio = zeros(sX,sY);
             Pearson_correlation = zeros(sX,sY);
+            %
+            n_neighbours = zeros(sX,sY);
+            cell_density = zeros(sX,sY);
             
             %
             L = bwlabel(nukes);
@@ -82,6 +92,9 @@ for k=1:nFovs
             nnucs = max(L(:));
             %
             nuc_data = zeros(nnucs,8); 
+            XC = zeros(1,nnucs);
+            YC = zeros(1,nnucs);
+            
             for n=1:nnucs
                 sample_a = single(ua(L==n));
                 sample_d = single(ud(L==n));
@@ -105,7 +118,9 @@ for k=1:nFovs
                 nuc_data(n,8) = stats(n).Centroid(1);                
                 %
                 %ratrefXY(L==n)=100*nuc_data(n,4); % A/D ratio multiplied by 100
-                
+                XC(n)=stats(n).Centroid(2);
+                YC(n)=stats(n).Centroid(1);
+                %
                 nucleus_size(L==n)=length(sample_a(:)); % area
                 donor_intensity(L==n)=mean_sample_d;
                 acceptor_intensity(L==n)=mean_sample_a;
@@ -113,13 +128,50 @@ for k=1:nFovs
                 Pearson_correlation(L==n)=nuc_data(n,3); % Pearson
                 
             end
+            
+            % adjacency matrices (symmetric)
+                    % FOR SPEED ONLY
+                    % AJM_density = adjacency_matrix(XC,YC,'Delaunay');
+                    % AJM_nnghb = adjacency_matrix(XC,YC,'SOI');            
+            % best quality but slow
+            AJM_density = adjacency_matrix(XC,YC,'Gabriel');
+            AJM_nnghb = AJM_density;
+
+            % distance matrix
+            DM = squareform(pdist([XC' YC']));
+            % number of neighbours vector
+            NNGHB = sum(AJM_density,1);
+            iNNGHB = 1./NNGHB; % matrix containing inverse #nnghb
+            %
+            % for "natural" # neighbours
+            NNGHB_NNGHB = sum(AJM_nnghb,1);
+            %
+            for n=1:nnucs
+                % # neighbours
+                nnghb = NNGHB_NNGHB(n);                                
+                % estimate for cell density
+                dstncs = DM(n,:).*AJM_density(n,:);
+                dstncs = dstncs(0~=dstncs); % no zeros
+                davr = mean(dstncs);
+                density = (1 + iNNGHB(n))/(pi*davr^2);                
+                % assign
+                n_neighbours(L==n) = nnghb;
+                cell_density(L==n) = density;                
+            end
+            %
+            % mean #nnghb and density - for safety
+            mean_nnghbs(k) = mean(n_neighbours(0~=n_neighbours));
+            mean_cell_density(k) = mean(cell_density(0~=cell_density));
+            %            
             % replace binary segmentation in output for the A/D ratio multiplied by 100
             fig(:,:,3,1,k)=intensity_ratio*100;
             clc_res(:,:,1,k)=nucleus_size;
             clc_res(:,:,2,k)=donor_intensity;
             clc_res(:,:,3,k)=acceptor_intensity;
             clc_res(:,:,4,k)=intensity_ratio;
-            clc_res(:,:,5,k)=Pearson_correlation;         
+            clc_res(:,:,5,k)=Pearson_correlation;
+            clc_res(:,:,6,k)=n_neighbours;
+            clc_res(:,:,7,k)=cell_density;
         catch
             disp(['glitch at index ' num2str(k)]);
         end
@@ -219,14 +271,14 @@ for k = 1 : numel(NUCDATA)
         set(gca,'FontSize',fontsize);        
             grid on;            
             
-         subplot(2,2,2);
-         nuc_FRET_ratio = nuc_FRET_ratio(~isnan(corr_nuc_FRET_ratio)); % because may be different size
-         histogram2(nuc_FRET_ratio,corr_nuc_FRET_ratio,0:0.1:2,-1:0.1:1,'Normalization','probability','DisplayStyle','tile');
-         xlabel('FRET ratio');
-         ylabel('Donor-Acceptor pixel correlation (Pearson)','fontsize',fontsize);
-         axis([0 2 -1 1]);
-         set(gca,'FontSize',fontsize);
-         title(strrep(fname,'_',' '));
+        subplot(2,2,2);
+        nuc_FRET_ratio = nuc_FRET_ratio(~isnan(corr_nuc_FRET_ratio)); % because may be different size
+        histogram2(nuc_FRET_ratio,corr_nuc_FRET_ratio,0:0.1:2,-1:0.1:1,'Normalization','probability','DisplayStyle','tile');
+        xlabel('FRET ratio');
+        ylabel('Donor-Acceptor pixel correlation (Pearson)','fontsize',fontsize);
+        axis([0 2 -1 1]);
+        set(gca,'FontSize',fontsize);
+        title(strrep(fname,'_',' '));
              grid on;            
     catch
         disp(['glitch at ' num2str(k)]);
@@ -353,7 +405,7 @@ close(h);
 % matching
         for k=1:numel(tracks)
             track = tracks{k};
-            ext_track = zeros(size(track,1),8); %frame,x,y+5 params
+            ext_track = zeros(size(track,1),10); %frame,x,y+7 params
             for m=1:size(track,1)
                 frame = track(m,1)+1;
                 x = round(track(m,2))+1;
@@ -362,7 +414,9 @@ close(h);
                 donor_intensity =       clc_res(x,y,2,frame);
                 acceptor_intensity =    clc_res(x,y,3,frame);
                 FRET_ratio =            clc_res(x,y,4,frame);
-                Pearson_correlation =   clc_res(x,y,5,frame);               
+                Pearson_correlation =   clc_res(x,y,5,frame);
+                nnghb =                 clc_res(x,y,6,frame);
+                cell_density =          clc_res(x,y,7,frame);
                 %              
                 try
                 if 0==nucleus_size % safely use 5x5 vicinity of the orphan point
@@ -376,7 +430,9 @@ close(h);
                     nucleus_size = 25; %:)         
                     donor_intensity = mean(d_sample(:));      
                     acceptor_intensity = mean(a_sample(:));       
-                    Pearson_correlation = corr(a_sample(:),d_sample(:),'type','Pearson');                       
+                    Pearson_correlation = corr(a_sample(:),d_sample(:),'type','Pearson');
+                    nnghb = mean_nnghbs(frame);
+                    cell_density = mean_cell_density(frame);
                     %
                     disp(['fixing orphan TrackMate point at ' num2str(x) ' ' num2str(y) ' ' num2str(frame) ' ' num2str(FRET_ratio)]);
                     %                    
@@ -388,7 +444,9 @@ close(h);
                     ext_track(m,5) = donor_intensity;
                     ext_track(m,6) = acceptor_intensity; 
                     ext_track(m,4) = FRET_ratio;
-                    ext_track(m,8) = Pearson_correlation;                      
+                    ext_track(m,8) = Pearson_correlation;
+                    ext_track(m,9) = nnghb;
+                    ext_track(m,10) = cell_density;                                          
                 catch
                     disp('glitch');
                     disp([x y frame]);
