@@ -25,7 +25,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 % Last Modified by GUIDE v2.5 02-Aug-2018 16:19:33
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0; % to allow multiple instances
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn, ...
@@ -597,8 +597,8 @@ end
 plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
 hold(handles.time_plot_axes,'off');
 
-try % calm down if there is no data, 
-    c = colorbar(handles.time_plot_axes,'Ticks',linspace(min_val,max_val,10));
+try % calm down if there is no data,     
+    c = colorbar(handles.time_plot_axes,'TickLabels',{linspace(min_val,max_val,11)});    
     c.Label.String = handles.features(c_ind);
 catch
 end

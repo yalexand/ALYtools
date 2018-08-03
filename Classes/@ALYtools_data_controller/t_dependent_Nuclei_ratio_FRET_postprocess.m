@@ -131,11 +131,11 @@ for k=1:nFovs
             
             % adjacency matrices (symmetric)
                     % FOR SPEED ONLY
-                    % AJM_density = adjacency_matrix(XC,YC,'Delaunay');
-                    % AJM_nnghb = adjacency_matrix(XC,YC,'SOI');            
-            % best quality but slow
-            AJM_density = adjacency_matrix(XC,YC,'Gabriel');
-            AJM_nnghb = AJM_density;
+                    AJM_density = adjacency_matrix(XC,YC,'Delaunay');
+                    AJM_nnghb = adjacency_matrix(XC,YC,'SOI');            
+            % reasonable looking, but but slow
+            % AJM_density = adjacency_matrix(XC,YC,'Gabriel');
+            % AJM_nnghb = AJM_density;
 
             % distance matrix
             DM = squareform(pdist([XC' YC']));
