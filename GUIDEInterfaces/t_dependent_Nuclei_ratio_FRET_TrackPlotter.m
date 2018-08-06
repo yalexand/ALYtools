@@ -79,9 +79,12 @@ if 0==nargin-3
     handles.dt = 1/12; % 5 minutes
     handles.pixelsize = 2; % microns
 elseif 3==nargin-3
-    handles.raw_data = varargin{1};
+    tracks = varargin{1};
     handles.dt = varargin{2};
-    handles.pixelsize = varargin{3};
+    handles.pixelsize = varargin{3};    
+        % convention - the data saved by ALYtools are not refined, so one needs
+        % to refine it now
+        handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
     handles.track_data = calculate_track_data(hObject,handles);
 end
 
@@ -374,11 +377,14 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     load([pathname filesep filename]);
 
     if ~exist('microns_per_pixel','var'), return, end
-    
-    handles.raw_data = tracks;
+                
     handles.dt = dt;
     handles.pixelsize = microns_per_pixel;
-    
+    %
+    % convention - the data saved by ALYtools are not refined, so one needs
+    % to refine it now
+    handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+    % this object is for visualizing       
     handles.track_data = calculate_track_data(hObject,handles);
        
     set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
@@ -443,18 +449,31 @@ for k=1:numel(D)
     %track_data(k,7+2) = norm(smoothed_FRET_ratio - mean_FRET_ratio);
     %
 %     figure(22);
-%     if length(FRET_ratio)>100 && length(FRET_ratio)<600
+%     if length(FRET_ratio)>100 && length(FRET_ratio)<1000
 %         s = FRET_ratio;
 %         W = 40;
 %         sm_s = medfilt2(FRET_ratio,[5 1]);
 %         [~,lf] = TD_high_pass_filter(sm_s,W);        
-%         subplot(2,1,1);
+%         subplot(3,1,1);
 %         plot(1:length(s),s,'b.-',1:length(s),lf,'r-',1:length(s),sm_s,'k-');
+%         legend({'FRET ratio - original','LF','smoothed'});                
 %         grid on;
-%         subplot(2,1,2);
+%         
+%         subplot(3,1,2);
 %         plot(1:length(s),sm_s-lf,'b.-');
-%         axis([1 600 -0.4 0.4]);
+%         axis([1 1000 -0.4 0.4]);
+%         legend('FRET ratio - filtered');        
 %         grid on;
+%         
+%         subplot(3,1,3);
+%         s1 = medfilt2(nucleus_size,[5 1]);
+%         s2 = sm_s-lf;
+%         s1 = (s1-mean(s1(:)))/(max(s1(:)) - min(s1(:)));
+%         s2 = (s2-mean(s2(:)))/(max(s2(:)) - min(s2(:)));
+%         plot(1:length(s1),s1,'r.-',1:length(s2),s2,'b.-');
+%         axis([1 1000 -1 1]);
+%         grid on;
+%         legend({'nucleus size','FRET ratio'});
 %         disp(k);
 %     end
         W = 40;
@@ -677,3 +696,77 @@ function actual_dependence_checkbox_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of actual_dependence_checkbox
 visualize_time_dependence(hObject,handles);
+
+% this is highly specific function that exploits correlation between
+% FRET_ratio(t) and nuclear_size(t) during mitosis, relying on many hardcoded params
+function ref_tracks = refine_tracks_by_excluding_mitosis_intervals(handles,tracks)
+ref_tracks = {};
+dt = handles.dt*60; % interval between frames in minutes 
+for k=1:numel(tracks)
+    track = tracks{k};
+    FRET_ratio = squeeze(track(:,4));
+    nucleus_size = squeeze(track(:,7));
+    %
+    big_smoothing_window  = round((40*7)/dt);
+    small_smoothing_window  = round((5*7)/dt);
+    correlation_window  = round((15*7)/dt);
+    t = 0.08; % threshold
+    fill_little_gaps_size = round((3*7)/dt);
+    pre_mit = round((3*7)/dt);
+    post_mit = round((5*7)/dt);
+    min_track_length = round((10*7)/dt);
+    %
+    sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]); % small smoothing window - HARDCODED
+    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s1 = sm_s-lf;
+    % repeat for nuclei size
+    sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
+    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s2 = sm_s-lf;
+    %
+    % some black magic ...
+    %
+    % normalize signals
+    s1 = (s1-mean(s1(:)))/(max(s1(:)) - min(s1(:)));
+    s2 = (s2-mean(s2(:)))/(max(s2(:)) - min(s2(:)));    
+    r = movcorr(s1,s2,correlation_window);    
+    r = r.*s1.*abs(s2);
+    r = r > t; % thresholding
+    %
+    r = imclose(r,ones(fill_little_gaps_size,1)); % to fill little gaps - HARDCODED
+    
+%     figure(22);
+%     f=1:length(s1);
+%     plot(f,s1,'r.-',f,s2,'b.-',f,r,'g.-');
+%     hold on
+    
+    excl = zeros(size(r)); % exclusion mask
+    L = bwlabel(r);
+    s = regionprops(L,'Centroid');
+    for m=1:numel(s)
+        c = s(m).Centroid;
+        x = round(c(2));        
+        min_ind = max(1,x-pre_mit);
+        max_ind = min(length(r),x+post_mit);
+        excl(min_ind:max_ind) = 1;
+    end    
+    %
+    indices = 1:length(excl);
+    if 0~=sum(excl(:))
+        L = bwlabel(~excl);
+        for z=1:max(L)
+            s = indices'.*(L==z);
+            s=s(s~=0);
+            part_track = track(min(s):max(s),:);
+            if size(part_track,1) > min_track_length % minimal length of a track - HARDCODED
+                ref_tracks = [ref_tracks; part_track];
+            end
+        end
+    end
+               
+end
+
+
+
+
+

@@ -419,7 +419,39 @@ close(h);
                 cell_density =          clc_res(x,y,7,frame);
                 %              
                 try
-                if 0==nucleus_size % safely use 5x5 vicinity of the orphan point
+                if 0==nucleus_size % first, try to find nearest nucleus and use it as backup
+                    distance = Inf;
+                    TRACK_IND = 0;
+                    FRAME_IND = 0;
+                    for k_b=1:numel(tracks)
+                        track_b = tracks{k_b};
+                        for m_b=1:size(track_b,1)
+                            if ~(k_b==k && m_b==m)
+                                frame_b = track_b(m_b,1)+1;
+                                x_b = round(track_b(m_b,2))+1;
+                                y_b = round(track_b(m_b,3))+1;
+                                d_cur = norm([(x-x_b) (y-y_b)]);
+                                if d_cur < distance 
+                                    distance = d_cur;
+                                    TRACK_IND = k_b;
+                                    FRAME_IND = frame_b;
+                                end
+                            end
+                        end
+                    end
+                    track_b = tracks{TRACK_IND};
+                    x_b = round(track_b(FRAME_IND,2))+1;
+                    y_b = round(track_b(FRAME_IND,3))+1;
+                    nucleus_size =          clc_res(x_b,y_b,1,FRAME_IND);
+                    donor_intensity =       clc_res(x_b,y_b,2,FRAME_IND);
+                    acceptor_intensity =    clc_res(x_b,y_b,3,FRAME_IND);
+                    FRET_ratio =            clc_res(x_b,y_b,4,FRAME_IND);
+                    Pearson_correlation =   clc_res(x_b,y_b,5,FRAME_IND);
+                    nnghb =                 clc_res(x_b,y_b,6,FRAME_IND);
+                    cell_density =          clc_res(x_b,y_b,7,FRAME_IND);
+                    disp(['missed, substituted at distance ' num2str(distance)]);
+                end
+                if 0==nucleus_size % last resort - safely use 5x5 vicinity of the orphan point
                     xl = max(x-2,1);
                     xr = min(x+2,sX);
                     yd = max(y-2,1);
