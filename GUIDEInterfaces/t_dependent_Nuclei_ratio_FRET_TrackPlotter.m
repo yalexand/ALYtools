@@ -380,6 +380,8 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
                 
     handles.dt = dt;
     handles.pixelsize = microns_per_pixel;
+        set(handles.pixel_size_edit,'String',handles.pixelsize);
+        set(handles.delta_t_edit,'String',handles.dt);    
     %
     % convention - the data saved by ALYtools are not refined, so one needs
     % to refine it now
