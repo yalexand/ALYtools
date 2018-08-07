@@ -147,8 +147,6 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter_OutputFcn(hObjec
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
-
-
 function pixel_size_edit_Callback(hObject, eventdata, handles)
 % hObject    handle to pixel_size_edit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -190,8 +188,6 @@ function pixel_size_edit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
 
 function delta_t_edit_Callback(hObject, eventdata, handles)
 % hObject    handle to delta_t_edit (see GCBO)
@@ -235,7 +231,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on selection change in histo2_mode.
 function histo2_mode_Callback(hObject, eventdata, handles)
 % hObject    handle to histo2_mode (see GCBO)
@@ -257,7 +252,6 @@ function histo2_mode_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 % --- Executes on selection change in histo2_Y_feature.
 function histo2_Y_feature_Callback(hObject, eventdata, handles)
@@ -281,7 +275,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on selection change in histo2_X_feature.
 function histo2_X_feature_Callback(hObject, eventdata, handles)
 % hObject    handle to histo2_X_feature (see GCBO)
@@ -303,7 +296,6 @@ function histo2_X_feature_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 % --- Executes on selection change in time_plot_Y_feature.
 function time_plot_Y_feature_Callback(hObject, eventdata, handles)
@@ -327,7 +319,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on selection change in time_plot_colour_feature.
 function time_plot_colour_feature_Callback(hObject, eventdata, handles)
 % hObject    handle to time_plot_colour_feature (see GCBO)
@@ -349,7 +340,6 @@ function time_plot_colour_feature_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 % --------------------------------------------------------------------
 function Untitled_1_Callback(hObject, eventdata, handles)
@@ -478,9 +468,12 @@ for k=1:numel(D)
 %         legend({'nucleus size','FRET ratio'});
 %         disp(k);
 %     end
-        W = 40;
-        sm_s = medfilt2(FRET_ratio,[5 1]);
-        [~,lf] = TD_high_pass_filter(sm_s,W);        
+
+        dt = handles.dt*60; % interval between frames in minutes 
+        big_smoothing_window  = round((40*7)/dt);
+        small_smoothing_window  = round((5*7)/dt);
+        sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]);
+        [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
         s = sm_s-lf;
         track_data(k,7+2) = sqrt(mean(s.*s));    
         
@@ -499,8 +492,64 @@ for k=1:numel(D)
     track_data(k,12+2) = track_data(k,1); % start time
     %
     track_data(k,4+2) = mean_nnghb;
-    track_data(k,5+2) = mean_cell_density/(handles.pixelsize)^2;    
+    track_data(k,5+2) = mean_cell_density/(handles.pixelsize)^2;        
 end
+%
+% proper place to handle trend curves
+%     amin=[];
+%     amax=[];
+%     for k=1:numel(D)
+%         track = D{k};
+%         min_frame = track(1,1);
+%         max_frame = track(size(track,1),1);        
+%         amin = [amin min_frame];
+%         amax = [amax max_frame];        
+%     end
+%     f_min = min(amin);
+%     f_max = max(amax);
+%     frames = f_min:f_max;
+%     %
+%                     %1   'duration [h]', ...
+%                     %2   'XY speed [um/min]', ...
+%                     %3   'XY directionality', ...
+%                     %4*   '#neighbours', ...
+%                     %5*   'cell density', ...
+%                     %6*   'FRET ratio', ...
+%                     %7   'FRET ratio variability', ...
+%                     %8*   'Donor intensity',...
+%                     %9*   'Acc. intensity',...
+%                     %10*   'nucleus size [um^2]',...
+%                     %11*   'D/A Pearson corr.',... 
+%                     %12   't(start) [h]'
+%     s_nnghb = cell(1,numel(frames));
+%     s_cell_density = cell(1,numel(frames));
+%     s_FRET_ratio = cell(1,numel(frames));
+%     s_donor_intensity = cell(1,numel(frames));
+%     s_acc_intensity = cell(1,numel(frames));
+%     s_nucleus_size = cell(1,numel(frames));
+%     s_Pearson = cell(1,numel(frames));
+%     for k=1:numel(D)
+%         track = D{k};
+%         for m=1:size(track,1)
+%             f = track(m,1);
+%                 nnghb = track(m,9);
+%                 cell_density = track(m,10);
+%                 FRET_ratio = track(m,4);
+%                 donor_intensity = track(m,5);
+%                 acc_intensity = track(m,6);
+%                 nucleus_size = track(m,7);
+%                 Pearson = track(m,8);
+%                 %
+%                 s_nnghb{f} = [s_nnghb{f} nnghb];
+%                 s_cell_density{f} = [s_cell_density{f} cell_density];
+%                 s_FRET_ratio{f} = [s_FRET_ratio{f} FRET_ratio];
+%                 s_donor_intensity{f} = [s_donor_intensity{f} donor_intensity];
+%                 s_acc_intensity{f} = [s_acc_intensity{f} acc_intensity];
+%                 s_nucleus_size{f} = [s_nucleus_size{f} nucleus_size];
+%                 s_Pearson{f} = [s_Pearson{f} Pearson];                
+%         end
+%     end
+% proper place to handle trend curves
 
 % --------------------------------------------------------------------
 function visualize_histo2(hObject,handles)
@@ -521,11 +570,88 @@ y_data=y_data(mask==1);
 str = get(handles.histo2_mode,'String');
 mode = str{get(handles.histo2_mode,'Value')};
 
+              switch x_ind
+                    case 2 % #speed
+                        x_min_val = 0;
+                        x_max_val = 40;
+                    case 3 % #directionality
+                        x_min_val = -1;
+                        x_max_val = 1;                  
+                    case 4 % #nghbrs
+                        x_min_val = 1;
+                        x_max_val = 12;
+                    case 5 % cell density
+                        x_min_val = 1e-7;
+                        x_max_val = 0.008;
+                    case 6 % FRET ratio
+                        x_min_val = 0.3;
+                        x_max_val = 1.7;
+                    case 7 % FRET ratio variability
+                        x_min_val = 0;
+                        x_max_val = 0.5;                        
+                    case 8 % donor intensity                     
+                        x_min_val = 0; 
+                        x_max_val = 250;
+                    case 9 % acceptor intensity
+                        x_min_val = 0;
+                        x_max_val = 250;
+                    case 10 % nucleus size
+                        x_min_val = 20;
+                        x_max_val = 400;
+                    case 11 % Pearson
+                        x_min_val = -1;
+                        x_max_val = 1;
+              end                                        
+              switch y_ind
+                    case 2 % #speed
+                        y_min_val = 0;
+                        y_max_val = 40;
+                    case 3 % #directionality
+                        y_min_val = -1;
+                        y_max_val = 1;                  
+                    case 4 % #nghbrs
+                        y_min_val = 1;
+                        y_max_val = 12;
+                    case 5 % cell density
+                        y_min_val = 1e-7;
+                        y_max_val = 0.008;
+                    case 6 % FRET ratio
+                        y_min_val = 0.3;
+                        y_max_val = 1.7;
+                    case 7 % FRET ratio variability
+                        y_min_val = 0;
+                        y_max_val = 0.5;                        
+                    case 8 % donor intensity                     
+                        y_min_val = 0; 
+                        y_max_val = 250;
+                    case 9 % acceptor intensity
+                        y_min_val = 0;
+                        y_max_val = 250;
+                    case 10 % nucleus size
+                        y_min_val = 20;
+                        y_max_val = 400;
+                    case 11 % Pearson
+                        y_min_val = -1;
+                        y_max_val = 1;
+              end                                                          
+
 if strcmp(mode,'scatter')
     plot(handles.histo2_axes,x_data,y_data,'r.');
+    if ismember(x_ind,2:11) && ismember(y_ind,2:11)
+        axis(handles.histo2_axes,[x_min_val x_max_val y_min_val y_max_val]);
+    end
     grid(handles.histo2_axes,'on');
 elseif strcmp(mode,'histo2')
-    corr_map_W = 100;
+    corr_map_W = 100;    
+    if ismember(x_ind,2:11) && ismember(y_ind,2:11)
+        x_data = [x_data; x_min_val; x_max_val];
+        x_data(x_data<x_min_val)=x_min_val;
+        x_data(x_data>x_max_val)=x_max_val;
+        %
+        y_data = [y_data; y_min_val; y_max_val];
+        y_data(y_data<y_min_val)=y_min_val;
+        y_data(y_data>y_max_val)=y_max_val;        
+    end        
     corrmap = correlation_map(x_data,y_data,corr_map_W);       
     AXES = handles.histo2_axes;
     imagesc(corrmap,'Parent',AXES);
@@ -618,6 +744,39 @@ end
 plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
 hold(handles.time_plot_axes,'off');
 
+              switch c_ind                    
+                    case 2 % #speed
+                        min_val = 0;
+                        max_val = 40;
+                    case 3 % #directionality
+                        min_val = -1;
+                        max_val = 1;                  
+                    case 4 % #nghbrs
+                        min_val = 1;
+                        max_val = 12;
+                    case 5 % cell density
+                        min_val = 1e-7;
+                        max_val = 0.008;
+                    case 6 % FRET ratio
+                        min_val = 0.3;
+                        max_val = 1.7;
+                    case 7 % FRET ratio variability
+                        min_val = 0;
+                        max_val = 0.5;                        
+                    case 8 % donor intensity                     
+                        min_val = 0; 
+                        max_val = 250;
+                    case 9 % acceptor intensity
+                        min_val = 0;
+                        max_val = 250;
+                    case 10 % nucleus size
+                        min_val = 20;
+                        max_val = 400;
+                    case 11 % Pearson
+                        min_val = -1;
+                        max_val = 1;
+              end                                        
+
 try % calm down if there is no data,     
     c = colorbar(handles.time_plot_axes,'TickLabels',{linspace(min_val,max_val,11)});    
     c.Label.String = handles.features(c_ind);
@@ -625,6 +784,29 @@ catch
 end
 
 axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
+              switch y_ind                    
+                    case 2 % #speed
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 40]);
+                    case 3 % #directionality
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);                  
+                    case 4 % #nghbrs
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 1 12]);
+                    case 5 % cell density
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 1e-7 0.008]);
+                    case 6 % FRET ratio
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0.3 1.7]);
+                    case 7 % FRET ratio variability
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 0.5]);
+                    case 8 % donor intensity                     
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 250]);
+                    case 9 % acceptor intensity
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 250]);                        
+                    case 10 % nucleus size
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 20 400]);                        
+                    case 11 % Pearson
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);                        
+              end                                        
+
 xlabel(handles.time_plot_axes,'time [h]');
 %str = get(handles.time_plot_Y_feature,'String') 
 %ylabel(handles.time_plot_axes,str{y_ind});
