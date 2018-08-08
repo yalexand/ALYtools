@@ -57,6 +57,8 @@ E = 0.5;
 mean_nnghbs = zeros(1,nFovs);
 mean_cell_density = zeros(1,nFovs);
 
+track_mate_input = zeros(sX,sY,1,1,nFovs);
+
 for k=1:nFovs
     ud = single(fig(:,:,1,1,k));
     ua = single(fig(:,:,2,1,k));
@@ -126,6 +128,8 @@ for k=1:nFovs
                 acceptor_intensity(L==n)=mean_sample_a;
                 intensity_ratio(L==n)=mean_sample_a/mean_sample_d;
                 Pearson_correlation(L==n)=nuc_data(n,3); % Pearson
+                
+                track_mate_input(round(XC(n)),round(YC(n)),1,1,k) = 1;
                 
             end
             
@@ -294,8 +298,12 @@ close(h);
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           
-     dum = 255*fig(:,:,3,1,:);
-     imp = copytoImagePlus(dum,'dimorder','XYCZT');
+     track_mate_input = track_mate_input*10000;
+     smoothing_radius = 1;
+     for k=1:nFovs
+        track_mate_input(:,:,1,1,k)=gsderiv(squeeze(track_mate_input(:,:,1,1,k)),smoothing_radius,0);
+     end                       
+     imp = copytoImagePlus(track_mate_input,'dimorder','XYCZT');
         % test image
         % imp = ij.IJ.openImage('http://fiji.sc/samples/FakeTracks.tif');
      %imp.show();
@@ -319,7 +327,8 @@ close(h);
         settings.detectorFactory = fiji.plugin.trackmate.detection.LogDetectorFactory();
         map = java.util.HashMap();
         map.put('DO_SUBPIXEL_LOCALIZATION', true);
-        map.put('RADIUS', obj.TrackMate_RADIUS);
+        %map.put('RADIUS', obj.TrackMate_RADIUS); % parameter excessive
+            map.put('RADIUS',2);
         map.put('TARGET_CHANNEL', obj.TrackMate_TARGET_CHANNEL);
         map.put('THRESHOLD', obj.TrackMate_THRESHOLD);
         map.put('DO_MEDIAN_FILTERING', obj.TrackMate_DO_MEDIAN_FILTERING);
@@ -343,10 +352,10 @@ close(h);
         % The displacement feature is provided by the TrackDurationAnalyzer.
         settings.addTrackAnalyzer(fiji.plugin.trackmate.features.track.TrackDurationAnalyzer())
 
-        % Configure track filters - We want to get rid of the two immobile spots at 
-        % the bottom right of the image. Track displacement must be above 10 pixels.
-        filter2 = fiji.plugin.trackmate.features.FeatureFilter('TRACK_DISPLACEMENT', obj.TrackMate_TRACK_DISPLACEMENT, true);
-        settings.addTrackFilter(filter2)
+%         % Configure track filters - We want to get rid of the two immobile spots at 
+%         % the bottom right of the image. Track displacement must be above 10 pixels.
+%         filter2 = fiji.plugin.trackmate.features.FeatureFilter('TRACK_DISPLACEMENT', obj.TrackMate_TRACK_DISPLACEMENT, true);
+%         settings.addTrackFilter(filter2)
 
         %-------------------
         % Instantiate plugin
@@ -382,25 +391,24 @@ close(h);
         fullfname = [output_directory filesep fname '_RAW_TRACKMATE_OUTPUT' '.xml'];                        
         file = java.io.File(fullfname);
         fiji.plugin.trackmate.action.ExportTracksToXML.export(model, settings, file);        
-        tracks = importTrackMateTracks(file,false); % use Z slot to store FRET ratio ?
+        tracks = importTrackMateTracks(file,false);         
                         
         % DEBUG
-%         icyvol = fig;                
-%         for k=1:numel(tracks)
-%             track = tracks{k};
-%             for m=1:size(track,1)
-%                 frame = track(m,1)+1;
-%                 x = round(track(m,2))+1;
-%                 y = round(track(m,3))+1;
-%                 try
-%                 icyvol(x,y,3,1,frame) = 255;
-%                 catch
-%                     disp([x y frame]);
-%                 end
-%             end
-%         end                
-%         icy_imshow(uint16(icyvol));    
-
+        icyvol = fig;                
+        for k=1:numel(tracks)
+            track = tracks{k};
+            for m=1:size(track,1)
+                frame = track(m,1)+1;
+                x = round(track(m,2))+1;
+                y = round(track(m,3))+1;
+                try
+                icyvol(x,y,3,1,frame) = 255;
+                catch
+                    disp([x y frame]);
+                end
+            end
+        end                
+        icy_imshow(uint16(icyvol));    
 
 % matching
         for k=1:numel(tracks)
@@ -451,6 +459,10 @@ close(h);
                     cell_density =          clc_res(x_b,y_b,7,FRAME_IND);
                     disp(['missed, substituted at distance ' num2str(distance)]);
                 end
+                catch
+                    disp('error when trying to substitute nearest');
+                end
+                try
                 if 0==nucleus_size % last resort - safely use 5x5 vicinity of the orphan point
                     xl = max(x-2,1);
                     xr = min(x+2,sX);
@@ -494,10 +506,12 @@ save(fullfname,'tracks','dt','microns_per_pixel');
 % matching
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+try
 t_dependent_Nuclei_ratio_FRET_TrackPlotter(tracks,... 
     obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP, ...
     obj.microns_per_pixel);
-
+catch
+    disp('error when trying to initiate t_dependent_Nuclei_ratio_FRET_TrackPlotter');
+end
         fig = uint16(fig);                        
 end
