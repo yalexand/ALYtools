@@ -60,6 +60,7 @@ mean_cell_density = zeros(1,nFovs);
 track_mate_input = zeros(sX,sY,1,1,nFovs);
 
 for k=1:nFovs
+    tic
     ud = single(fig(:,:,1,1,k));
     ua = single(fig(:,:,2,1,k));
     nukes = fig(:,:,3,1,k);
@@ -216,8 +217,8 @@ for k=1:nFovs
         %
         if isempty(nuc_data), continue, end
         %
-        k
         NUCDATA{k} = nuc_data;
+        disp([num2str(k) ' ' num2str(toc)]);
 end
 %save('NUCDATA','NUCDATA'); %??
 
@@ -372,24 +373,28 @@ close(h);
         filter1 = fiji.plugin.trackmate.features.FeatureFilter('QUALITY', obj.TrackMate_QUALITY, true);
         settings.addSpotFilter(filter1)
 
-        % Configure tracker - We want to allow splits and fusions
+        % Configure tracker
         settings.trackerFactory  = fiji.plugin.trackmate.tracking.sparselap.SparseLAPTrackerFactory();
         settings.trackerSettings = fiji.plugin.trackmate.tracking.LAPUtils.getDefaultLAPSettingsMap(); % almost good enough
         settings.trackerSettings.put('ALLOW_TRACK_SPLITTING', obj.TrackMate_ALLOW_TRACK_SPLITTING);
         settings.trackerSettings.put('ALLOW_TRACK_MERGING', obj.TrackMate_ALLOW_TRACK_MERGING);
-
+        %
+        %https://forum.image.sc/t/trackmate-memory-issue-when-run-in-matlab/3424
+        settings.trackerSettings.put('LINKING_MAX_DISTANCE',10);
+        settings.trackerSettings.put('GAP_CLOSING_MAX_DISTANCE',10);
+        settings.trackerSettings.put('MAX_FRAME_GAP', java.lang.Integer(1));        
+                                        
         % Configure track analyzers - Later on we want to filter out tracks 
         % based on their displacement, so we need to state that we want 
         % track displacement to be calculated. By default, out of the GUI, 
         % not features are calculated. 
-
+        %
         % The displacement feature is provided by the TrackDurationAnalyzer.
         settings.addTrackAnalyzer(fiji.plugin.trackmate.features.track.TrackDurationAnalyzer())
-
-%         % Configure track filters - We want to get rid of the two immobile spots at 
-%         % the bottom right of the image. Track displacement must be above 10 pixels.
-%         filter2 = fiji.plugin.trackmate.features.FeatureFilter('TRACK_DISPLACEMENT', obj.TrackMate_TRACK_DISPLACEMENT, true);
-%         settings.addTrackFilter(filter2)
+        % Configure track filters - We want to get rid of the two immobile spots at 
+        % the bottom right of the image. Track displacement must be above 10 pixels.
+        filter2 = fiji.plugin.trackmate.features.FeatureFilter('TRACK_DISPLACEMENT', obj.TrackMate_TRACK_DISPLACEMENT, true);
+        settings.addTrackFilter(filter2)
 
         %-------------------
         % Instantiate plugin
