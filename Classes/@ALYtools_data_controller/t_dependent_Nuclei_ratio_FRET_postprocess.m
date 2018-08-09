@@ -394,21 +394,21 @@ close(h);
         tracks = importTrackMateTracks(file,false);         
                         
         % DEBUG
-        icyvol = fig;                
-        for k=1:numel(tracks)
-            track = tracks{k};
-            for m=1:size(track,1)
-                frame = track(m,1)+1;
-                x = round(track(m,2))+1;
-                y = round(track(m,3))+1;
-                try
-                icyvol(x,y,3,1,frame) = 255;
-                catch
-                    disp([x y frame]);
-                end
-            end
-        end                
-        icy_imshow(uint16(icyvol));    
+%         icyvol = fig;                
+%         for k=1:numel(tracks)
+%             track = tracks{k};
+%             for m=1:size(track,1)
+%                 frame = track(m,1)+1;
+%                 x = round(track(m,2))+1;
+%                 y = round(track(m,3))+1;
+%                 try
+%                 icyvol(x,y,3,1,frame) = 255;
+%                 catch
+%                     disp([x y frame]);
+%                 end
+%             end
+%         end                
+%         icy_imshow(uint16(icyvol));    
 
 % matching
         for k=1:numel(tracks)
