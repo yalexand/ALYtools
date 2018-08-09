@@ -147,6 +147,36 @@ for k=1:nFovs
             NNGHB = sum(AJM_density,1);
             iNNGHB = 1./NNGHB; % matrix containing inverse #nnghb
             %
+            % correct AJM_density for distances that are too long...
+            AJM_density_fixed = AJM_density;
+            dmax = 250/obj.microns_per_pixel; % 250 microns in pixels
+            for kk=1:nnucs
+                for jj=1:nnucs
+                    if DM(kk,jj)>dmax
+                        AJM_density_fixed(kk,jj)=0;
+                    end
+                end
+            end
+%             figure(22+k);
+%             plot(XC,YC,'r.');
+%             for kk=1:nnucs
+%                 for jj=1:nnucs
+%                     if kk<jj && 1==AJM_density(kk,jj)
+%                         v1 = [XC(kk) XC(jj)];
+%                         v2 = [YC(kk) YC(jj)];
+%                         h=line(v1,v2);
+%                         set(h,'Color','red');
+%                     end
+%                     if kk<jj && 1==AJM_density_fixed(kk,jj)
+%                         v1 = [XC(kk) XC(jj)];
+%                         v2 = [YC(kk) YC(jj)];
+%                         h=line(v1,v2);
+%                         set(h,'Color','blue');
+%                     end                            
+%                  end
+%             end
+            % correct AJM_density for distances that are too long...            
+            
             % for "natural" # neighbours
             NNGHB_NNGHB = sum(AJM_nnghb,1);
             %
@@ -156,8 +186,12 @@ for k=1:nFovs
                 % estimate for cell density
                 dstncs = DM(n,:).*AJM_density(n,:);
                 dstncs = dstncs(0~=dstncs); % no zeros
-                davr = mean(dstncs);
-                density = (1 + iNNGHB(n))/(pi*davr^2);                
+                if ~isempty(dstncs)
+                    davr = mean(dstncs);
+                    density = (1 + iNNGHB(n))/(pi*davr^2);
+                else
+                    density = 0;
+                end
                 % assign
                 n_neighbours(L==n) = nnghb;
                 cell_density(L==n) = density;                
