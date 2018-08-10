@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 02-Aug-2018 16:19:33
+% Last Modified by GUIDE v2.5 10-Aug-2018 18:07:49
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0; % to allow multiple instances
+gui_Singleton = 0; % to allow more than one instance
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn, ...
@@ -68,7 +68,8 @@ handles.features = {'duration [h]', ...
                     'Acc. intensity',...
                     'nucleus size [um^2]',...
                     'D/A Pearson corr.',... 
-                    't(start) [h]'
+                    't(start) [h]',...
+                    'FRET ratio c-time [min]'
                     };
 
 handles.mask = [];    
@@ -85,6 +86,7 @@ elseif 3==nargin-3
         % convention - the data saved by ALYtools are not refined, so one needs
         % to refine it now
         handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+        %handles.raw_data = tracks;
     handles.track_data = calculate_track_data(hObject,handles);
 end
 
@@ -105,7 +107,7 @@ minmaxlimits(:,2)=Inf;
 if ~isempty(handles.track_data)
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-       for k=1:12
+       for k=1:13
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
@@ -168,7 +170,7 @@ end
 handles.track_data = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-       for k=1:12
+       for k=1:13
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
@@ -210,7 +212,7 @@ end
 handles.track_data = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-       for k=1:12
+       for k=1:13
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
@@ -376,6 +378,7 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     % convention - the data saved by ALYtools are not refined, so one needs
     % to refine it now
     handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+    %handles.raw_data = tracks;
     % this object is for visualizing       
     handles.track_data = calculate_track_data(hObject,handles);
        
@@ -388,7 +391,7 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     if ~isempty(handles.track_data)
     minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
     minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
-        for k=1:12
+        for k=1:13
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
         end
@@ -482,7 +485,7 @@ for k=1:numel(D)
     y = squeeze(track(:,3));
     z = zeros(size(x));
     [directionality,velocity,velocity_sd] = quantify_track(x',y',z','noZ');
-    track_data(k,2+2) = velocity*handles.pixelsize/(handles.dt*60); % :0
+    track_data(k,2+2) = velocity*handles.pixelsize/dt; % :0
     track_data(k,3+2) = directionality;
     %
     track_data(k,8+2) = mean_donor_intensity;
@@ -493,6 +496,21 @@ for k=1:numel(D)
     %
     track_data(k,4+2) = mean_nnghb;
     track_data(k,5+2) = mean_cell_density/(handles.pixelsize)^2;        
+    %
+    % autocorr. time
+    [ac,lags,bounds] = autocorr(s);
+    t=max(bounds);  
+        for mm=1:length(lags)
+            if ac(mm)<t, break, end
+        end
+    index = mm-1;
+    deix=(ac(index)-t)/(ac(index)-ac(index+1));
+    critlag = lags(index)+deix;
+    critlag=critlag*dt;
+    if critlag < 1, critlag = 1; end
+    if critlag > 120, critlag = 120; end
+    %
+    track_data(k,13+2) = critlag; % autocorr. time
 end
 %
 % proper place to handle trend curves
@@ -573,7 +591,7 @@ mode = str{get(handles.histo2_mode,'Value')};
               switch x_ind
                     case 2 % #speed
                         x_min_val = 0;
-                        x_max_val = 40;
+                        x_max_val = 10;
                     case 3 % #directionality
                         x_min_val = -1;
                         x_max_val = 1;                  
@@ -585,7 +603,7 @@ mode = str{get(handles.histo2_mode,'Value')};
                         x_max_val = 0.008;
                     case 6 % FRET ratio
                         x_min_val = 0.3;
-                        x_max_val = 1.7;
+                        x_max_val = 2;
                     case 7 % FRET ratio variability
                         x_min_val = 0;
                         x_max_val = 0.5;                        
@@ -601,11 +619,14 @@ mode = str{get(handles.histo2_mode,'Value')};
                     case 11 % Pearson
                         x_min_val = -1;
                         x_max_val = 1;
+                    case 13 % autocorr. time
+                        x_min_val = 1;
+                        x_max_val = 120;                        
               end                                        
               switch y_ind
                     case 2 % #speed
                         y_min_val = 0;
-                        y_max_val = 40;
+                        y_max_val = 10;
                     case 3 % #directionality
                         y_min_val = -1;
                         y_max_val = 1;                  
@@ -617,7 +638,7 @@ mode = str{get(handles.histo2_mode,'Value')};
                         y_max_val = 0.008;
                     case 6 % FRET ratio
                         y_min_val = 0.3;
-                        y_max_val = 1.7;
+                        y_max_val = 2;
                     case 7 % FRET ratio variability
                         y_min_val = 0;
                         y_max_val = 0.5;                        
@@ -633,17 +654,20 @@ mode = str{get(handles.histo2_mode,'Value')};
                     case 11 % Pearson
                         y_min_val = -1;
                         y_max_val = 1;
+                    case 13 % autocorr. time
+                        y_min_val = 1;
+                        y_max_val = 120;                                                
               end                                                          
 
 if strcmp(mode,'scatter')
     plot(handles.histo2_axes,x_data,y_data,'r.');
-    if ismember(x_ind,2:11) && ismember(y_ind,2:11)
+    if ismember(x_ind,[2:11 13]) && ismember(y_ind,[2:11 13])
         axis(handles.histo2_axes,[x_min_val x_max_val y_min_val y_max_val]);
     end
     grid(handles.histo2_axes,'on');
 elseif strcmp(mode,'histo2')
     corr_map_W = 100;    
-    if ismember(x_ind,2:11) && ismember(y_ind,2:11)
+    if ismember(x_ind,[2:11 13]) && ismember(y_ind,[2:11 13])
         x_data = [x_data; x_min_val; x_max_val];
         x_data(x_data<x_min_val)=x_min_val;
         x_data(x_data>x_max_val)=x_max_val;
@@ -747,7 +771,7 @@ hold(handles.time_plot_axes,'off');
               switch c_ind                    
                     case 2 % #speed
                         min_val = 0;
-                        max_val = 40;
+                        max_val = 10;
                     case 3 % #directionality
                         min_val = -1;
                         max_val = 1;                  
@@ -759,7 +783,7 @@ hold(handles.time_plot_axes,'off');
                         max_val = 0.008;
                     case 6 % FRET ratio
                         min_val = 0.3;
-                        max_val = 1.7;
+                        max_val = 2;
                     case 7 % FRET ratio variability
                         min_val = 0;
                         max_val = 0.5;                        
@@ -775,6 +799,9 @@ hold(handles.time_plot_axes,'off');
                     case 11 % Pearson
                         min_val = -1;
                         max_val = 1;
+                    case 13 % autocorr. time
+                        min_val = 1;
+                        max_val = 120;                                                
               end                                        
 
 try % calm down if there is no data,     
@@ -786,7 +813,7 @@ end
 axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
               switch y_ind                    
                     case 2 % #speed
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 40]);
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 10]);
                     case 3 % #directionality
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);                  
                     case 4 % #nghbrs
@@ -794,17 +821,19 @@ axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)])
                     case 5 % cell density
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 1e-7 0.008]);
                     case 6 % FRET ratio
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0.3 1.7]);
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0.3 2]);
                     case 7 % FRET ratio variability
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 0.5]);
                     case 8 % donor intensity                     
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 250]);
                     case 9 % acceptor intensity
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 250]);                        
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 250]);
                     case 10 % nucleus size
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 20 400]);                        
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 20 400]);
                     case 11 % Pearson
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);                        
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);
+                    case 13 % autocorr. time
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 120]);
               end                                        
 
 xlabel(handles.time_plot_axes,'time [h]');
@@ -919,10 +948,28 @@ for k=1:numel(tracks)
     %
     r = imclose(r,ones(fill_little_gaps_size,1)); % to fill little gaps - HARDCODED
     
-%     figure(22);
-%     f=1:length(s1);
-%     plot(f,s1,'r.-',f,s2,'b.-',f,r,'g.-');
-%     hold on
+%     if length(s1)>100
+%         figure(22);
+%         f=1:length(s1);
+%         subplot(3,1,1);
+%         plot(f,s1,'r.-',f,s2,'b.-',f,r,'g.-');   
+%         subplot(3,1,2);
+%         acor = xcorr(s1,s1,'coeff');
+%         plot(1:length(acor),acor,'k.-');
+%         h3=subplot(3,1,3);
+%         [ac,lags,bounds] = autocorr(s1);
+%         plot(lags,ac,'k.-',lags,bounds(1)*ones(size(lags)),'b:',lags,bounds(2)*ones(size(lags)),'b:');
+%         t=max(bounds);  
+%          for mm=1:length(lags)
+%             if ac(mm)<t, break, end
+%         end
+%         index = mm-1;
+%         deix=(ac(index)-t)/(ac(index)-ac(index+1));
+%         critlag = lags(index)+deix;
+%         title(h3,num2str(critlag));
+%         grid(h3,'on');
+%         pause(1e-3); % put your breakpoint here
+%     end
     
     excl = zeros(size(r)); % exclusion mask
     L = bwlabel(r);
