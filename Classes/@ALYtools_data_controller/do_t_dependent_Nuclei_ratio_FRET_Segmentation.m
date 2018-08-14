@@ -84,7 +84,7 @@
                k 
             end
             %
-            sgm = uint8(icyvol);
+            sgm = uint16(icyvol);
                                                            
                 if send_to_Icy                
                     try

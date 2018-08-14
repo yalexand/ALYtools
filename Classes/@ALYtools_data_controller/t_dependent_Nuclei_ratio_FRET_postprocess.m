@@ -536,7 +536,7 @@ close(h);
                 end
             end
             tracks{k} = ext_track;
-        end 
+        end
 
 fullfname = [output_directory filesep fname '_FRET_ratio_featured_TRACKMATE_OUTPUT'];
 dt = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
@@ -552,5 +552,5 @@ t_dependent_Nuclei_ratio_FRET_TrackPlotter(tracks,...
 catch
     disp('error when trying to initiate t_dependent_Nuclei_ratio_FRET_TrackPlotter');
 end
-        fig = uint16(fig);                        
+        fig = uint16(reshape(fig,[sX sY sC nFovs sZ]));  % XYCTZ                      
 end
