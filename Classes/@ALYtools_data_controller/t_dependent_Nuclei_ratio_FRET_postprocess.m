@@ -380,9 +380,9 @@ close(h);
         settings.trackerSettings.put('ALLOW_TRACK_MERGING', obj.TrackMate_ALLOW_TRACK_MERGING);
         %
         %https://forum.image.sc/t/trackmate-memory-issue-when-run-in-matlab/3424
-        settings.trackerSettings.put('LINKING_MAX_DISTANCE',10);
-        settings.trackerSettings.put('GAP_CLOSING_MAX_DISTANCE',10);
-        settings.trackerSettings.put('MAX_FRAME_GAP', java.lang.Integer(1));        
+        settings.trackerSettings.put('LINKING_MAX_DISTANCE',obj.TrackMate_LINKING_MAX_DISTA NCE); % pixels
+        settings.trackerSettings.put('GAP_CLOSING_MAX_DISTANCE',obj.TrackMate_GAP_CLOSING_MAX_DISTANCE); % pixels
+        settings.trackerSettings.put('MAX_FRAME_GAP', java.lang.Integer(obj.TrackMate_MAX_FRAME_GAP)); % frames
                                         
         % Configure track analyzers - Later on we want to filter out tracks 
         % based on their displacement, so we need to state that we want 
@@ -393,7 +393,7 @@ close(h);
         settings.addTrackAnalyzer(fiji.plugin.trackmate.features.track.TrackDurationAnalyzer())
         % Configure track filters - We want to get rid of the two immobile spots at 
         % the bottom right of the image. Track displacement must be above 10 pixels.
-        filter2 = fiji.plugin.trackmate.features.FeatureFilter('TRACK_DISPLACEMENT', obj.TrackMate_TRACK_DISPLACEMENT, true);
+        filter2 = fiji.plugin.trackmate.features.FeatureFilter('TRACK_DISPLACEMENT', obj.TrackMate_TRACK_DISPLACEMENT, true); % pixels
         settings.addTrackFilter(filter2)
 
         %-------------------
@@ -526,7 +526,7 @@ close(h);
                     ext_track(m,7) = nucleus_size; 
                     ext_track(m,5) = donor_intensity;
                     ext_track(m,6) = acceptor_intensity; 
-                    ext_track(m,4) = FRET_ratio;
+                    ext_track(m,4) = FRET_ratio; 
                     ext_track(m,8) = Pearson_correlation;
                     ext_track(m,9) = nnghb;
                     ext_track(m,10) = cell_density;                                          

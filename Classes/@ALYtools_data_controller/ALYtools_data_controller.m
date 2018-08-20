@@ -252,7 +252,11 @@ classdef ALYtools_data_controller < handle
             TrackMate_QUALITY = 1.0;
             TrackMate_ALLOW_TRACK_SPLITTING = false;
             TrackMate_ALLOW_TRACK_MERGING = false;
-            TrackMate_TRACK_DISPLACEMENT = 2.0;                               
+            TrackMate_TRACK_DISPLACEMENT = 2.0;    
+            TrackMate_LINKING_MAX_DISTANCE = 10; % pixels
+            TrackMate_GAP_CLOSING_MAX_DISTANCE = 10; % pixels
+            TrackMate_MAX_FRAME_GAP = 1; % frames
+            
     end    
         
     properties(Transient,Hidden)
@@ -2103,6 +2107,9 @@ classdef ALYtools_data_controller < handle
             settings.TrackMate_ALLOW_TRACK_SPLITTING = obj.TrackMate_ALLOW_TRACK_SPLITTING;
             settings.TrackMate_ALLOW_TRACK_MERGING = obj.TrackMate_ALLOW_TRACK_MERGING;
             settings.TrackMate_TRACK_DISPLACEMENT = obj.TrackMate_TRACK_DISPLACEMENT;                               
+            settings.TrackMate_LINKING_MAX_DISTANCE = obj.TrackMate_LINKING_MAX_DISTANCE;
+            settings.TrackMate_GAP_CLOSING_MAX_DISTANCE = obj.TrackMate_GAP_CLOSING_MAX_DISTANCE;
+            settings.TrackMate_MAX_FRAME_GAP = obj.TrackMate_MAX_FRAME_GAP;            
                                                 
             xml_write(fname,settings);
         end
@@ -2266,7 +2273,11 @@ classdef ALYtools_data_controller < handle
                 obj.TrackMate_QUALITY = settings.TrackMate_QUALITY;
                 obj.TrackMate_ALLOW_TRACK_SPLITTING = settings.TrackMate_ALLOW_TRACK_SPLITTING;
                 obj.TrackMate_ALLOW_TRACK_MERGING = settings.TrackMate_ALLOW_TRACK_MERGING;
-                obj.TrackMate_TRACK_DISPLACEMENT = settings.TrackMate_TRACK_DISPLACEMENT;                                                                                                                                               
+                obj.TrackMate_TRACK_DISPLACEMENT = settings.TrackMate_TRACK_DISPLACEMENT;
+                obj.TrackMate_LINKING_MAX_DISTANCE = settings.TrackMate_LINKING_MAX_DISTANCE;
+                obj.TrackMate_GAP_CLOSING_MAX_DISTANCE = settings.TrackMate_GAP_CLOSING_MAX_DISTANCE;
+                obj.TrackMate_MAX_FRAME_GAP = settings.TrackMate_MAX_FRAME_GAP;            
+                
              end
         end
 %-------------------------------------------------------------------------%                
