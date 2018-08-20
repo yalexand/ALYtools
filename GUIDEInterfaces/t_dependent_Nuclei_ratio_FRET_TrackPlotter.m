@@ -79,7 +79,7 @@ if 0==nargin-3
     handles.raw_data = [];
     handles.dt = 1/12; % 5 minutes
     handles.pixelsize = 2; % microns
-elseif 3==nargin-3
+elseif nargin-3 == 4
     tracks = varargin{1};
     handles.dt = varargin{2};
     handles.pixelsize = varargin{3};    
@@ -88,6 +88,9 @@ elseif 3==nargin-3
         handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
         %handles.raw_data = tracks;
     handles.track_data = calculate_track_data(hObject,handles);
+    %
+    % set filename in window title
+    set(handles.figure1, 'Name', [handles.figureName ' : ' varargin{4}]);
 end
 
 set(handles.time_plot_Y_feature,'String',handles.features);

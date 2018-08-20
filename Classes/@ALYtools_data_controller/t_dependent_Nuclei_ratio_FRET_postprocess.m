@@ -548,7 +548,8 @@ save(fullfname,'tracks','dt','microns_per_pixel');
 try
 t_dependent_Nuclei_ratio_FRET_TrackPlotter(tracks,... 
     obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP, ...
-    obj.microns_per_pixel);
+    obj.microns_per_pixel, ...
+    fname);
 catch
     disp('error when trying to initiate t_dependent_Nuclei_ratio_FRET_TrackPlotter');
 end
