@@ -380,7 +380,7 @@ close(h);
         settings.trackerSettings.put('ALLOW_TRACK_MERGING', obj.TrackMate_ALLOW_TRACK_MERGING);
         %
         %https://forum.image.sc/t/trackmate-memory-issue-when-run-in-matlab/3424
-        settings.trackerSettings.put('LINKING_MAX_DISTANCE',obj.TrackMate_LINKING_MAX_DISTA NCE); % pixels
+        settings.trackerSettings.put('LINKING_MAX_DISTANCE',obj.TrackMate_LINKING_MAX_DISTANCE); % pixels
         settings.trackerSettings.put('GAP_CLOSING_MAX_DISTANCE',obj.TrackMate_GAP_CLOSING_MAX_DISTANCE); % pixels
         settings.trackerSettings.put('MAX_FRAME_GAP', java.lang.Integer(obj.TrackMate_MAX_FRAME_GAP)); % frames
                                         
