@@ -81,8 +81,25 @@
                 icyvol(:,:,1,1,k) = ud;
                 icyvol(:,:,2,1,k) = ua;               
                 icyvol(:,:,3,1,k) = nukes;
-               k 
+               % 
+               disp([num2str(k) ' ' num2str(mean(ud(:))) ' ' num2str(mean(ua(:))) ' ' num2str(sum(nukes(:)))]);
             end
+            %
+            % fix possible missing frames by assigning a previous one
+            for k=1:sT
+                nukes = squeeze(icyvol(:,:,3,1,k));
+                if 0==sum(nukes(:)) && k > 1
+                    ud_prev     = squeeze(icyvol(:,:,1,1,k-1));
+                    ua_prev     = squeeze(icyvol(:,:,2,1,k-1));                    
+                    nukes_prev  = squeeze(icyvol(:,:,3,1,k-1));
+                    %
+                    icyvol(:,:,1,1,k) = ud_prev;
+                    icyvol(:,:,2,1,k) = ua_prev;
+                    icyvol(:,:,3,1,k) = nukes_prev;
+                    disp(['fixed missing frame ' num2str(k)]);
+                end
+            end                            
+            % fix possible missed frames by assigning a previous one            
             %
             sgm = uint16(icyvol);
                                                            

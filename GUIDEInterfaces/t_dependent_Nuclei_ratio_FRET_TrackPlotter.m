@@ -79,7 +79,7 @@ if 0==nargin-3
     handles.raw_data = [];
     handles.dt = 1/12; % 5 minutes
     handles.pixelsize = 2; % microns
-elseif nargin-3 == 4
+elseif 4 == nargin-3
     tracks = varargin{1};
     handles.dt = varargin{2};
     handles.pixelsize = varargin{3};    
@@ -91,6 +91,48 @@ elseif nargin-3 == 4
     %
     % set filename in window title
     set(handles.figure1, 'Name', [handles.figureName ' : ' varargin{4}]);
+    %
+    % single mat file full name
+    % CALL SYNTAX - t_dependent_Nuclei_ratio_FRET_TrackPlotter({fname});
+elseif 1 == nargin-3 
+    if 2==exist(char(varargin{1}))
+    [filepath,name,ext] = fileparts(char(varargin{1}));
+    filename = [name ext];
+    %
+    load(char(varargin{1}));
+    %
+    if ~exist('microns_per_pixel','var'), return, end
+                
+        handles.dt = dt;
+        handles.pixelsize = microns_per_pixel;
+            set(handles.pixel_size_edit,'String',handles.pixelsize);
+            set(handles.delta_t_edit,'String',handles.dt);    
+        %
+        % convention - the data saved by ALYtools are not refined, so one needs
+        % to refine it now
+        handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+        %handles.raw_data = tracks;
+        % this object is for visualizing       
+        handles.track_data = calculate_track_data(hObject,handles);
+
+        set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
+
+        str = [{'time'} handles.features];
+        minmaxlimits = zeros(numel(str),2);
+        minmaxlimits(:,1)=-Inf;
+        minmaxlimits(:,2)=Inf;
+        if ~isempty(handles.track_data)
+        minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
+        minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
+            for k=1:13
+                minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
+                minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
+            end
+        end
+        set(handles.filter_table, 'Data', minmaxlimits);
+
+        handles.mask = calculate_mask(hObject,handles);                       
+    end
 end
 
 set(handles.time_plot_Y_feature,'String',handles.features);
@@ -369,6 +411,10 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
     [filename,pathname] = uigetfile({'*.mat','TrackMate+ Files'}, ...
                     'Select data file',pwd);
     if filename == 0, return, end;
+    load_trackmate_plus_data(pathname,filename,hObject,handles);
+            
+% --------------------------------------------------------------------    
+function load_trackmate_plus_data(pathname,filename,hObject,handles)
     load([pathname filesep filename]);
 
     if ~exist('microns_per_pixel','var'), return, end
@@ -405,7 +451,7 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
 
     visualize_histo2(hObject,handles);
     visualize_time_dependence(hObject,handles);
-        
+    
     % Update handles structure
     guidata(hObject, handles);
 
