@@ -437,8 +437,7 @@ classdef ALYtools_data_controller < handle
                     if ~isempty(uppixX)
                         %obj.microns_per_pixel = uppixX;
                     else
-                        disp('No spatial resolution information found, set obj.microns_per_pixel = 1');
-                        obj.microns_per_pixel = 1;
+                        disp('No spatial resolution information found, set obj.microns_per_pixel to settings value');
                     end;
                     obj.per_image_TCSPC_FLIM_nonimaging = false;
                 catch

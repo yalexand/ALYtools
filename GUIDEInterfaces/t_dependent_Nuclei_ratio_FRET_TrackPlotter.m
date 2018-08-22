@@ -658,10 +658,10 @@ mode = str{get(handles.histo2_mode,'Value')};
                         x_max_val = 0.5;                        
                     case 8 % donor intensity                     
                         x_min_val = 0; 
-                        x_max_val = 250;
+                        x_max_val = 1000;
                     case 9 % acceptor intensity
                         x_min_val = 0;
-                        x_max_val = 250;
+                        x_max_val = 1000;
                     case 10 % nucleus size
                         x_min_val = 20;
                         x_max_val = 400;
@@ -693,10 +693,10 @@ mode = str{get(handles.histo2_mode,'Value')};
                         y_max_val = 0.5;                        
                     case 8 % donor intensity                     
                         y_min_val = 0; 
-                        y_max_val = 250;
+                        y_max_val = 1000;
                     case 9 % acceptor intensity
                         y_min_val = 0;
-                        y_max_val = 250;
+                        y_max_val = 1000;
                     case 10 % nucleus size
                         y_min_val = 20;
                         y_max_val = 400;
@@ -838,10 +838,10 @@ hold(handles.time_plot_axes,'off');
                         max_val = 0.5;                        
                     case 8 % donor intensity                     
                         min_val = 0; 
-                        max_val = 250;
+                        max_val = 1000;
                     case 9 % acceptor intensity
                         min_val = 0;
-                        max_val = 250;
+                        max_val = 1000;
                     case 10 % nucleus size
                         min_val = 20;
                         max_val = 400;
@@ -874,9 +874,9 @@ axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)])
                     case 7 % FRET ratio variability
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 0.5]);
                     case 8 % donor intensity                     
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 250]);
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 1000]);
                     case 9 % acceptor intensity
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 250]);
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 1000]);
                     case 10 % nucleus size
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 20 400]);
                     case 11 % Pearson
