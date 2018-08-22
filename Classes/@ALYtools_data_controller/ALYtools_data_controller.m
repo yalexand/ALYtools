@@ -945,7 +945,7 @@ classdef ALYtools_data_controller < handle
                     
                     dirname = [];           
                     cmnxlsname = [];
-                    if obj.save_analysis_output_as_OMEtiff || obj.save_analysis_output_as_xls
+                    if obj.save_analysis_output_as_OMEtiff || obj.save_analysis_output_as_xls || strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET')
                         timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');                        
                         mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
                         dirname = [obj.RootDirectory filesep ['ALYtools Analysis ' timestamp]];
@@ -990,12 +990,7 @@ classdef ALYtools_data_controller < handle
                                 [data, caption, table_name, fig] = obj.analyze_Sparks;
                             elseif strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET')
                                 [data, caption, table_name, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;
-                                timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
-                                output_dir = [obj.RootDirectory filesep 'ALYtools Analysis ' timestamp];
-                                if ~exist(output_dir,'dir')
-                                    mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
-                                end
-                                fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,output_dir);
+                                fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dirname);
                             end
                         catch
                             disp(['failed to analyze the file ' obj.current_filename]);
