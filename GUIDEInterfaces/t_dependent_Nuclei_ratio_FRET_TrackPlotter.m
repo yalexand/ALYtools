@@ -75,14 +75,16 @@ handles.features = {'duration [h]', ...
 handles.mask = [];    
 handles.track_data = [];
                 
-if 0==nargin-3
+if 1 == nargin-3
     handles.raw_data = [];
     handles.dt = 1/12; % 5 minutes
     handles.pixelsize = 2; % microns
-elseif 4 == nargin-3
+    handles.track_breaking_flag = varargin{1};
+elseif 5 == nargin-3
     tracks = varargin{1};
     handles.dt = varargin{2};
-    handles.pixelsize = varargin{3};    
+    handles.pixelsize = varargin{3};
+    handles.track_breaking_flag = varargin{5};
         % convention - the data saved by ALYtools are not refined, so one needs
         % to refine it now
         handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
@@ -94,8 +96,9 @@ elseif 4 == nargin-3
     %
     % single mat file full name
     % CALL SYNTAX - t_dependent_Nuclei_ratio_FRET_TrackPlotter({fname});
-elseif 1 == nargin-3 
+elseif 2 == nargin-3 
     if 2==exist(char(varargin{1}))
+    handles.track_breaking_flag = varargin{2};
     [filepath,name,ext] = fileparts(char(varargin{1}));
     filename = [name ext];
     %
@@ -109,9 +112,12 @@ elseif 1 == nargin-3
             set(handles.delta_t_edit,'String',handles.dt);    
         %
         % convention - the data saved by ALYtools are not refined, so one needs
-        % to refine it now
-        handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
-        %handles.raw_data = tracks;
+        % to refine it now optionally
+        if handles.track_breaking_flag    
+            handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+        else
+            handles.raw_data = tracks;
+        end
         % this object is for visualizing       
         handles.track_data = calculate_track_data(hObject,handles);
 
@@ -133,7 +139,12 @@ elseif 1 == nargin-3
 
         handles.mask = calculate_mask(hObject,handles);                       
     end
+else
+    disp('wrong arguments, cant start');
+    return;
 end
+
+guidata(hObject, handles);
 
 set(handles.time_plot_Y_feature,'String',handles.features);
 set(handles.time_plot_colour_feature,'String',handles.features);
@@ -425,9 +436,12 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
         set(handles.delta_t_edit,'String',handles.dt);    
     %
     % convention - the data saved by ALYtools are not refined, so one needs
-    % to refine it now
-    handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
-    %handles.raw_data = tracks;
+    % to refine it now - optionally
+    if handles.track_breaking_flag
+        handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+    else
+        handles.raw_data = tracks;
+    end
     % this object is for visualizing       
     handles.track_data = calculate_track_data(hObject,handles);
        

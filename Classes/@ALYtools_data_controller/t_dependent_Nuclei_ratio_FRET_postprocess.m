@@ -546,10 +546,12 @@ save(fullfname,'tracks','dt','microns_per_pixel');
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 try
+    track_breaking_flag = true;
 t_dependent_Nuclei_ratio_FRET_TrackPlotter(tracks,... 
     obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP, ...
     obj.microns_per_pixel, ...
-    fname);
+    fname, ...
+    track_breaking_flag);
 catch
     disp('error when trying to initiate t_dependent_Nuclei_ratio_FRET_TrackPlotter');
 end
