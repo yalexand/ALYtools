@@ -94,7 +94,7 @@ for k=1:nFovs
             stats = regionprops(L,'Centroid');
             nnucs = max(L(:));
             %
-            nuc_data = zeros(nnucs,8); 
+            nuc_data = zeros(nnucs,10); 
             XC = zeros(1,nnucs);
             YC = zeros(1,nnucs);
             
@@ -106,7 +106,7 @@ for k=1:nFovs
 %                 Z_cur = Z_cur(~isnan(Z_cur));
 %                 Z_cur(Z_cur<Zmin)=Zmin;
 %                 Z_cur(Z_cur>Zmax)=Zmax;                
-%                 nuc_data(n,1)=length(sample_a(:)); % area
+                 nuc_data(n,1)=length(sample_a(:)); % area
 %                 z_cur = mean(Z_cur(:));                
 %                 nuc_data(n,2)=(z_cur-Zmin)/(Zmax-Zmin-E*(Zmax-z_cur));
                 nuc_data(n,2)=0;
@@ -195,7 +195,10 @@ for k=1:nFovs
                 end
                 % assign
                 n_neighbours(L==n) = nnghb;
-                cell_density(L==n) = density;                
+                cell_density(L==n) = density; 
+                %
+                nuc_data(n,9) = nnghb;
+                nuc_data(n,10) = density;                
             end
             %
             % mean #nnghb and density - for safety
@@ -221,6 +224,29 @@ for k=1:nFovs
         disp([num2str(k) ' ' num2str(toc)]);
 end
 %save('NUCDATA','NUCDATA'); %??
+
+% gather statistics on frames
+% 1 nuc_size 1
+% 3 Pearson 2
+% 6 D 3
+% 5 A 4
+% 4 FRET ratio 5
+% 9 nnghb 6
+% 10 cell density 7
+indices = [1 3 6 5 4 9 10];
+NUC_STATS = zeros(nFovs,7,5); % mean, std, median, 025Q, 075Q
+for k=1:nFovs
+    nuc_data = NUCDATA{k};
+    for j=1:numel(indices)
+        index = indices(j);
+        s = squeeze(nuc_data(:,index)); %sample
+        s = s(~isinf(s));
+        s = s(~isnan(s));        
+        NUC_STATS(k,j,:) = [mean(s) std(s) median(s) quantile(s,.25) quantile(s,.75)];
+    end
+end
+% gather statistics on frames - end
+
 
 % MOVIE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -541,7 +567,7 @@ close(h);
 fullfname = [output_directory filesep fname '_FRET_ratio_featured_TRACKMATE_OUTPUT'];
 dt = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
 microns_per_pixel = obj.microns_per_pixel;
-save(fullfname,'tracks','dt','microns_per_pixel');
+save(fullfname,'tracks','dt','microns_per_pixel','NUC_STATS','cell_nums');
 % matching
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

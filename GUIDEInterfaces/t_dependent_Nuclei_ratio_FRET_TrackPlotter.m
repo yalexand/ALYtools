@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 10-Aug-2018 18:07:49
+% Last Modified by GUIDE v2.5 23-Aug-2018 17:41:17
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0; % to allow more than one instance
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn, ...
@@ -429,6 +429,11 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     load([pathname filesep filename]);
 
     if ~exist('microns_per_pixel','var'), return, end
+    
+    if exist('NUC_STATS','var')
+        handles.NUC_STATS = NUC_STATS;
+        handles.cell_nums = cell_nums;
+    end
                 
     handles.dt = dt;
     handles.pixelsize = microns_per_pixel;
@@ -829,6 +834,63 @@ for k = 1:numel(y_data)
     end
 end
 plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
+
+% try to plot stats curve if possible
+if isfield(handles,'NUC_STATS')    
+              index = 0;
+              switch y_ind                    
+                    case 4 % #nghbrs
+                        index = 6;
+                    case 5 % cell density
+                        index = 7;
+                    case 6 % FRET ratio
+                        index = 5;
+                    case 8 % donor intensity                     
+                        index = 3;
+                    case 9 % acceptor intensity
+                        index = 4;
+                    case 10 % nucleus size
+                        index = 1;
+                    case 11 % Pearson
+                        index = 2;                        
+              end
+              
+    if 0==index, return,end;
+    
+    mean_std = true;
+    if mean_std
+        meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
+        stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
+        taxis = handles.dt*(1:numel(meanvals));
+        if 1==index
+            meanvals = meanvals*(handles.pixelsize)^2;
+            stdvals = stdvals*(handles.pixelsize)^2;        
+        end
+        if 7==index
+            meanvals = meanvals/(handles.pixelsize)^2;
+            stdvals = stdvals/(handles.pixelsize)^2;      
+        end                
+        errorbar(taxis,meanvals,stdvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %    
+    else
+        medvals = squeeze(handles.NUC_STATS(:,index,3)); % median
+        negvals = squeeze(handles.NUC_STATS(:,index,4)); % 025Q
+        posvals = squeeze(handles.NUC_STATS(:,index,5)); % 075Q        
+        taxis = handles.dt*(1:numel(medvals));
+        if 1==index
+            medvals = medvals*(handles.pixelsize)^2;
+            negvals = negvals*(handles.pixelsize)^2;
+            posvals = posvals*(handles.pixelsize)^2;
+        end
+        if 7==index
+            medvals = medvals/(handles.pixelsize)^2;
+            negvals = negvals/(handles.pixelsize)^2;
+            posvals = posvals/(handles.pixelsize)^2;
+        end                
+        errorbar(taxis,medvals,negvals,posvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %            
+    end
+    hold(handles.time_plot_axes,'on');    
+end
+
 hold(handles.time_plot_axes,'off');
 
               switch c_ind                    
@@ -1061,6 +1123,44 @@ for k=1:numel(tracks)
 end
 
 
+% --------------------------------------------------------------------
+function Tools_Callback(hObject, eventdata, handles)
+% hObject    handle to Tools (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+
+% --------------------------------------------------------------------
+function show_cell_numbers_Callback(hObject, eventdata, handles)
+% hObject    handle to show_cell_numbers (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function average_pixel_brightness_Callback(hObject, eventdata, handles)
+% hObject    handle to average_pixel_brightness (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+if ~isfield(handles,'NUC_STATS'), return, end
+
+don  = squeeze(handles.NUC_STATS(:,3,1));
+acc  = squeeze(handles.NUC_STATS(:,4,1));
+t = handles.dt*(0:numel(acc)-1);
+h = figure;
+plot(t,don,'b.-',t,acc,'r.-');
+xlabel('time [h]');
+ylabel('intensity');
+legend({'donor','acceptor'});
+grid on;
+ax_new=gca;
+set(ax_new,'Position','default');
+legend(ax_new,'-DynamicLegend');
+%
+figurename = get(handles.figure1,'Name');
+set(h,'Name',figurename);
+
+        
+        
 
 
