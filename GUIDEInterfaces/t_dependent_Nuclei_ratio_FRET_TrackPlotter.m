@@ -1139,12 +1139,16 @@ if ~isfield(handles,'cell_nums'), return, end
 t = handles.dt*(0:numel(handles.cell_nums)-1);
 h=figure;
 plot(t,handles.cell_nums,'k.-');
-grid on;
 axis([t(1) t(numel(handles.cell_nums)) min(handles.cell_nums) max(handles.cell_nums)]);
-xlabel('time [h]');
-ylabel('#cells');
+    xlabel('time [h]');
+    ylabel('#cells');
+grid on;    
+%
 figurename = get(handles.figure1,'Name');
+str = strsplit(figurename,(' : '));
+figurename = char(str(2));
 set(h,'Name',figurename);
+
 
 % --------------------------------------------------------------------
 function average_pixel_brightness_Callback(hObject, eventdata, handles)
@@ -1152,24 +1156,20 @@ function average_pixel_brightness_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 if ~isfield(handles,'NUC_STATS'), return, end
-
 don  = squeeze(handles.NUC_STATS(:,3,1));
 acc  = squeeze(handles.NUC_STATS(:,4,1));
 t= handles.dt*(0:numel(acc)-1);
 h = figure;
 plot(t,don,'b.-',t,acc,'r.-');
-xlabel('time [h]');
-ylabel('intensity');
-legend({'donor','acceptor'});
+    xlabel('time [h]');
+    ylabel('intensity');
+        legend({'donor','acceptor'});
 grid on;
 ax_new=gca;
 set(ax_new,'Position','default');
 legend(ax_new,'-DynamicLegend');
 %
 figurename = get(handles.figure1,'Name');
+str = strsplit(figurename,(' : '));
+figurename = char(str(2));
 set(h,'Name',figurename);
-
-        
-        
-
-
