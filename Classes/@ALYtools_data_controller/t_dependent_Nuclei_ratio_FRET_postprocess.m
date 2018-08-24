@@ -322,7 +322,7 @@ for k = 1 : numel(NUCDATA)
         semilogy(t(1:numel(cell_num)),cell_num,'k.-','markersize',markersize,'linewidth',linewidth); %
         xlabel('time [h]','fontsize',fontsize);
         ylabel('cell number','fontsize',fontsize);
-        axis([t(1) t(numel(cell_num)) min(cell_nums) max(cell_nums)]);
+        axis([t(1) t(numel(cell_nums)) min(cell_nums) max(cell_nums)]);
         set(gca,'FontSize',fontsize);        
             grid on;    
 

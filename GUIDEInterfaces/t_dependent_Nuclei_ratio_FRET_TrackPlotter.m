@@ -1135,7 +1135,16 @@ function show_cell_numbers_Callback(hObject, eventdata, handles)
 % hObject    handle to show_cell_numbers (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+if ~isfield(handles,'cell_nums'), return, end
+t = handles.dt*(0:numel(handles.cell_nums)-1);
+h=figure;
+plot(t,handles.cell_nums,'k.-');
+grid on;
+axis([t(1) t(numel(handles.cell_nums)) min(handles.cell_nums) max(handles.cell_nums)]);
+xlabel('time [h]');
+ylabel('#cells');
+figurename = get(handles.figure1,'Name');
+set(h,'Name',figurename);
 
 % --------------------------------------------------------------------
 function average_pixel_brightness_Callback(hObject, eventdata, handles)
@@ -1146,7 +1155,7 @@ if ~isfield(handles,'NUC_STATS'), return, end
 
 don  = squeeze(handles.NUC_STATS(:,3,1));
 acc  = squeeze(handles.NUC_STATS(:,4,1));
-t = handles.dt*(0:numel(acc)-1);
+t= handles.dt*(0:numel(acc)-1);
 h = figure;
 plot(t,don,'b.-',t,acc,'r.-');
 xlabel('time [h]');
