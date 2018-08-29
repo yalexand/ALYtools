@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 23-Aug-2018 17:41:17
+% Last Modified by GUIDE v2.5 29-Aug-2018 11:04:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -857,7 +857,7 @@ if isfield(handles,'NUC_STATS')
               
     if 0==index, return,end;
     
-    mean_std = true;
+    mean_std = get(handles.show_per_frame_mean_std,'Value');
     if mean_std
         meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
         stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
@@ -872,21 +872,21 @@ if isfield(handles,'NUC_STATS')
         end                
         errorbar(taxis,meanvals,stdvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %    
     else
-        medvals = squeeze(handles.NUC_STATS(:,index,3)); % median
-        negvals = squeeze(handles.NUC_STATS(:,index,4)); % 025Q
-        posvals = squeeze(handles.NUC_STATS(:,index,5)); % 075Q        
-        taxis = handles.dt*(1:numel(medvals));
-        if 1==index
-            medvals = medvals*(handles.pixelsize)^2;
-            negvals = negvals*(handles.pixelsize)^2;
-            posvals = posvals*(handles.pixelsize)^2;
-        end
-        if 7==index
-            medvals = medvals/(handles.pixelsize)^2;
-            negvals = negvals/(handles.pixelsize)^2;
-            posvals = posvals/(handles.pixelsize)^2;
-        end                
-        errorbar(taxis,medvals,negvals,posvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %            
+%         medvals = squeeze(handles.NUC_STATS(:,index,3)); % median
+%         negvals = squeeze(handles.NUC_STATS(:,index,4)); % 025Q
+%         posvals = squeeze(handles.NUC_STATS(:,index,5)); % 075Q        
+%         taxis = handles.dt*(1:numel(medvals));
+%         if 1==index
+%             medvals = medvals*(handles.pixelsize)^2;
+%             negvals = negvals*(handles.pixelsize)^2;
+%             posvals = posvals*(handles.pixelsize)^2;
+%         end
+%         if 7==index
+%             medvals = medvals/(handles.pixelsize)^2;
+%             negvals = negvals/(handles.pixelsize)^2;
+%             posvals = posvals/(handles.pixelsize)^2;
+%         end                
+%         errorbar(taxis,medvals,negvals,posvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %            
     end
     hold(handles.time_plot_axes,'on');    
 end
@@ -1173,3 +1173,13 @@ figurename = get(handles.figure1,'Name');
 str = strsplit(figurename,(' : '));
 figurename = char(str(2));
 set(h,'Name',figurename);
+
+% --------------------------------------------------------------------
+% --- Executes on button press in show_per_frame_mean_std.
+function show_per_frame_mean_std_Callback(hObject, eventdata, handles)
+% hObject    handle to show_per_frame_mean_std (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of show_per_frame_mean_std
+visualize_time_dependence(hObject,handles);
