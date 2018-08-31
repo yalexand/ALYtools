@@ -25,7 +25,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 % Last Modified by GUIDE v2.5 29-Aug-2018 11:04:02
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn, ...
@@ -105,6 +105,11 @@ elseif 2 == nargin-3
     load(char(varargin{1}));
     %
     if ~exist('microns_per_pixel','var'), return, end
+    
+    if exist('NUC_STATS','var')
+        handles.NUC_STATS = NUC_STATS;
+        handles.cell_nums = cell_nums;
+    end
                 
         handles.dt = dt;
         handles.pixelsize = microns_per_pixel;
