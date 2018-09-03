@@ -524,6 +524,7 @@ for k=1:numel(D)
 %         [~,lf] = TD_high_pass_filter(sm_s,W);        
 %         subplot(3,1,1);
 %         plot(1:length(s),s,'b.-',1:length(s),lf,'r-',1:length(s),sm_s,'k-');
+%         axis([0 length(s)-1 0.5 1.8])
 %         legend({'FRET ratio - original','LF','smoothed'});                
 %         grid on;
 %         
@@ -543,7 +544,7 @@ for k=1:numel(D)
 %         grid on;
 %         legend({'nucleus size','FRET ratio'});
 %         disp(k);
-%     end
+%      end
 
         dt = handles.dt*60; % interval between frames in minutes 
         big_smoothing_window  = round((40*7)/dt);
@@ -584,6 +585,14 @@ for k=1:numel(D)
     if critlag > 120, critlag = 120; end
     %
     track_data(k,13+2) = critlag; % autocorr. time
+    %
+%         figure(22);
+%         plot(lags,ac/ac(1),'k.-',[0 length(lags)-1],[t/ac(1) t/ac(1)],'r:','linewidth',2)
+%         axis([0 length(lags) -1 1]);
+%         grid on;
+%         legend({'autocorrelation','up.confidence bound'},'fontsize',16);
+%         disp(k);
+    %
 end
 %
 % proper place to handle trend curves
@@ -1073,22 +1082,22 @@ for k=1:numel(tracks)
     s1 = (s1-mean(s1(:)))/(max(s1(:)) - min(s1(:)));
     s2 = (s2-mean(s2(:)))/(max(s2(:)) - min(s2(:)));    
     r = movcorr(s1,s2,correlation_window);    
-    r = r.*s1.*abs(s2);
+    r = r.*s1.*s2.*(s1>0 & s2>0); % where both local signals are positive
     r = r > t; % thresholding
     %
     r = imclose(r,ones(fill_little_gaps_size,1)); % to fill little gaps - HARDCODED
     
-%     if length(s1)>100
+%      if length(s1)>200
 %         figure(22);
 %         f=1:length(s1);
-%         subplot(3,1,1);
-%         plot(f,s1,'r.-',f,s2,'b.-',f,r,'g.-');   
-%         subplot(3,1,2);
-%         acor = xcorr(s1,s1,'coeff');
-%         plot(1:length(acor),acor,'k.-');
-%         h3=subplot(3,1,3);
+%         h1 = subplot(2,1,1);
+%         plot(f,s1,'k.-');   
+%         grid(h1,'on');
+%         legend(h1,{'trend-subtracted FRET ratio'},'fontsize',14);
+%         axis(h1,[0 199 -0.8 0.8]);
+%         h3=subplot(2,1,2);
 %         [ac,lags,bounds] = autocorr(s1);
-%         plot(lags,ac,'k.-',lags,bounds(1)*ones(size(lags)),'b:',lags,bounds(2)*ones(size(lags)),'b:');
+%         plot(lags,ac,'k.-',lags,max(bounds)*ones(size(lags)),'r:','linewidth',2);
 %         t=max(bounds);  
 %          for mm=1:length(lags)
 %             if ac(mm)<t, break, end
@@ -1096,8 +1105,9 @@ for k=1:numel(tracks)
 %         index = mm-1;
 %         deix=(ac(index)-t)/(ac(index)-ac(index+1));
 %         critlag = lags(index)+deix;
-%         title(h3,num2str(critlag));
+%         title(h3,[ num2str(critlag) ' [frame]']);
 %         grid(h3,'on');
+%         legend(h3,{'autocorrelation','up. confidence bound'},'fontsize',14);
 %         pause(1e-3); % put your breakpoint here
 %     end
     

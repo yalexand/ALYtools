@@ -158,7 +158,8 @@ for k=1:nFovs
                     end
                 end
             end
-%             figure(22+k);
+%             figure(22+k);            
+%             ax=gca;
 %             plot(XC,YC,'r.');
 %             for kk=1:nnucs
 %                 for jj=1:nnucs
@@ -167,15 +168,33 @@ for k=1:nFovs
 %                         v2 = [YC(kk) YC(jj)];
 %                         h=line(v1,v2);
 %                         set(h,'Color','red');
+%                         set(h,'LineStyle',':');
+%                         set(h,'LineWidth',1);
+%                         hold(ax,'on');
 %                     end
 %                     if kk<jj && 1==AJM_density_fixed(kk,jj)
 %                         v1 = [XC(kk) XC(jj)];
 %                         v2 = [YC(kk) YC(jj)];
 %                         h=line(v1,v2);
 %                         set(h,'Color','blue');
-%                     end                            
+%                         hold(ax,'on');
+%                     end
+%                     if kk<jj && 1==AJM_nnghb(kk,jj)
+%                         v1 = [XC(kk) XC(jj)];
+%                         v2 = [YC(kk) YC(jj)];
+%                         h=line(v1,v2);
+%                         set(h,'Color','black');
+%                         set(h,'LineStyle',':');
+%                         set(h,'LineWidth',2);
+%                         hold(ax,'on');
+%                     end                           
 %                  end
 %             end
+%             plot(ax,XC,YC,'r.');
+%             hold(ax,'off');
+%             daspect(ax,[1 1 1]);
+%             axis(ax,[1 1024 1 1024])
+%             disp('');
             % correct AJM_density for distances that are too long...            
             
             % for "natural" # neighbours
