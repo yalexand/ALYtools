@@ -1,5 +1,7 @@
         function sgm = do_t_dependent_Nuclei_ratio_FRET_Segmentation(obj,send_to_Icy,~) 
-                       
+                 
+            % all mask sizes are tuned for 1.66 microns/pixel
+            
             [sX,sY,sZ,sC,sT] = size(obj.imgdata);
             if sZ~=1
                 obj.imgdata = reshape(obj.imgdata,[sX,sY,sT,sC,sZ]);
@@ -55,11 +57,11 @@
                %%%%%%%%%%%%%%%%%
                z = sgm_d | sgm_a;
                  
-                    % break nuclear clumps
+                    % break nuclear clumps - start
                     z = imdilate(z,strel('disk',2,0));
                     z2 = bwlabel(z);
                     D = bwdist(~z2,'euclidean'); %distance map 
-                       nuc_breacking_distmap_smoothing_scale = 4;
+                       nuc_breacking_distmap_smoothing_scale = 6;
                        D = medfilt2(D,[nuc_breacking_distmap_smoothing_scale nuc_breacking_distmap_smoothing_scale]);
                     D = -D;
                     D(~z2) = -Inf;                                        
@@ -68,12 +70,17 @@
                     stats = regionprops(L,'Area');    
                     bckgind = find([stats.Area]==max([stats.Area]));
                     L(L==bckgind) = 0;
-                    z = (L>0);
-                    % break nuclear clumps - end                    
-                    %            
-                 nukes = z;
+                    nukes = (L>0);
                     %
-                 nukes = bwareaopen(nukes,100); % safety               
+                    % this paragraph corrects for excessive clump-breaking
+                    stats = regionprops(z2, 'Area','ConvexArea'); 
+                    area_ratio_threshold = 0.9; % looks alright
+                    dont_break = ismember(z2,find([stats.Area]./[stats.ConvexArea]>area_ratio_threshold));  
+                    % icy_imshow(z+dont_break); % to see what is going on                   
+                    nukes = nukes | dont_break; % print the "dont_break" over, undoing excessive breaks
+                    % break nuclear clumps - end                                               
+                    %
+                nukes = bwareaopen(nukes,100); % safety               
 
                 nukes = imresize(double(nukes),[sX sY],'bicubic');
                 nukes = (nukes>0.8); % binarize this way
