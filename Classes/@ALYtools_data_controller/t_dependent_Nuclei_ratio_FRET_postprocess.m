@@ -73,6 +73,9 @@ B = (t_A/t_D)*E/Q_D;
 % # neighbours (by SOI)
 % cell density (by Delaunay) 
 % FRET molar fraction 
+
+obj.imgdata = []; % helps with memory
+
 clc_res = zeros(sX,sY,8,nFovs);
 
 % all Z calculateions are bound to the frame
