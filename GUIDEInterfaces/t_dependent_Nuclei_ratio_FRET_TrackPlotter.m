@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 29-Aug-2018 11:04:02
+% Last Modified by GUIDE v2.5 13-Sep-2018 16:22:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -69,7 +69,8 @@ handles.features = {'duration [h]', ...
                     'nucleus size [um^2]',...
                     'D/A Pearson corr.',... 
                     't(start) [h]',...
-                    'FRET ratio c-time [min]'
+                    'FRET ratio c-time [min]',...
+                    'FRET molar fraction'
                     };
 
 handles.mask = [];    
@@ -135,7 +136,7 @@ elseif 2 == nargin-3
         if ~isempty(handles.track_data)
         minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
         minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
-            for k=1:13
+            for k=1:numel(handles.features)
                 minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
                 minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
             end
@@ -168,7 +169,7 @@ minmaxlimits(:,2)=Inf;
 if ~isempty(handles.track_data)
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-       for k=1:13
+       for k=1:numel(handles.features)
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
@@ -231,7 +232,7 @@ end
 handles.track_data = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-       for k=1:13
+       for k=1:numel(handles.features)
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
@@ -273,7 +274,7 @@ end
 handles.track_data = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
-       for k=1:13
+       for k=1:numel(handles.features)
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
        end
@@ -464,7 +465,7 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     if ~isempty(handles.track_data)
     minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
     minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
-        for k=1:13
+        for k=1:numel(handles.features)
             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
         end
@@ -502,6 +503,12 @@ for k=1:numel(D)
         nnghb = squeeze(track(:,9));
         cell_density = squeeze(track(:,10));            
     end
+    beta_FRET = 0;            
+    if 11==size(track,2)
+        nnghb = squeeze(track(:,9));
+        cell_density = squeeze(track(:,10));
+        beta_FRET = squeeze(track(:,11));        
+    end    
     %
     mean_FRET_ratio = mean(FRET_ratio);
     mean_donor_intensity = mean(donor_intensity);
@@ -509,7 +516,8 @@ for k=1:numel(D)
     mean_nucleus_size = mean(nucleus_size);
     mean_Pearson_correlation = mean(Pearson_correlation);
     mean_nnghb = mean(nnghb);
-    mean_cell_density = mean(cell_density);
+    mean_cell_density = mean(cell_density);    
+    mean_beta_FRET = mean(beta_FRET);    
     %
     track_data(k,6+2) = mean_FRET_ratio;
     %
@@ -585,6 +593,7 @@ for k=1:numel(D)
     if critlag > 120, critlag = 120; end
     %
     track_data(k,13+2) = critlag; % autocorr. time
+    track_data(k,14+2) = mean_beta_FRET;
     %
 %         figure(22);
 %         plot(lags,ac/ac(1),'k.-',[0 length(lags)-1],[t/ac(1) t/ac(1)],'r:','linewidth',2)
@@ -704,6 +713,9 @@ mode = str{get(handles.histo2_mode,'Value')};
                     case 13 % autocorr. time
                         x_min_val = 1;
                         x_max_val = 120;                        
+                    case 14 % autocorr. time
+                        x_min_val = 0;
+                        x_max_val = 1;                                                
               end                                        
               switch y_ind
                     case 2 % #speed
@@ -738,18 +750,21 @@ mode = str{get(handles.histo2_mode,'Value')};
                         y_max_val = 1;
                     case 13 % autocorr. time
                         y_min_val = 1;
-                        y_max_val = 120;                                                
+                        y_max_val = 120;
+                    case 14 % autocorr. time
+                        y_min_val = 0;
+                        y_max_val = 1;                                                
               end                                                          
 
 if strcmp(mode,'scatter')
     plot(handles.histo2_axes,x_data,y_data,'r.');
-    if ismember(x_ind,[2:11 13]) && ismember(y_ind,[2:11 13])
+    if ismember(x_ind,[2:11 13 14]) && ismember(y_ind,[2:11 13 14])
         axis(handles.histo2_axes,[x_min_val x_max_val y_min_val y_max_val]);
     end
     grid(handles.histo2_axes,'on');
 elseif strcmp(mode,'histo2')
     corr_map_W = 100;    
-    if ismember(x_ind,[2:11 13]) && ismember(y_ind,[2:11 13])
+    if ismember(x_ind,[2:11 13 14]) && ismember(y_ind,[2:11 13 14])
         x_data = [x_data; x_min_val; x_max_val];
         x_data(x_data<x_min_val)=x_min_val;
         x_data(x_data>x_max_val)=x_max_val;
@@ -789,7 +804,7 @@ min_val = min(c_data);
 max_val = max(c_data);
 
 show_actual_dependence = false;
-if ismember(y_ind,[4 5 6 8 9 10 11])
+if ismember(y_ind,[4 5 6 8 9 10 11 14])
     show_actual_dependence = true;
 end
 
@@ -836,6 +851,11 @@ for k = 1:numel(y_data)
                         Y = squeeze(track(:,7))*(handles.pixelsize)^2;
                     case 11 % Pearson                      
                         Y = squeeze(track(:,8));
+                    case 14 % FRET molar fraction
+                        try
+                        Y = squeeze(track(:,11));
+                        catch
+                        end
                 end                                        
             %
         end
@@ -866,13 +886,15 @@ if isfield(handles,'NUC_STATS')
                     case 10 % nucleus size
                         index = 1;
                     case 11 % Pearson
-                        index = 2;                        
+                        index = 2;
+                    case 14 % FRET molar fraction
+                        index = 8;                                                                        
               end
               
     if 0==index, return,end;
     
     mean_std = get(handles.show_per_frame_mean_std,'Value');
-    if mean_std
+    if mean_std && index <= size(handles.NUC_STATS,2)
         meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
         stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
         taxis = handles.dt*(1:numel(meanvals));
@@ -940,7 +962,10 @@ hold(handles.time_plot_axes,'off');
                         max_val = 1;
                     case 13 % autocorr. time
                         min_val = 1;
-                        max_val = 120;                                                
+                        max_val = 120;
+                    case 14 % autocorr. time
+                        min_val = 0;
+                        max_val = 1;                                                                        
               end                                        
 
 try % calm down if there is no data,     
@@ -949,7 +974,11 @@ try % calm down if there is no data,
 catch
 end
 
+try
 axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
+catch 
+end
+
               switch y_ind                    
                     case 2 % #speed
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 10]);
@@ -973,6 +1002,8 @@ axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)])
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);
                     case 13 % autocorr. time
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 120]);
+                    case 14 % FRET molar fraction
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 1]);
               end                                        
 
 xlabel(handles.time_plot_axes,'time [h]');

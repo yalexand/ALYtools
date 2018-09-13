@@ -40,6 +40,31 @@ saveName = [output_directory filesep fname '_segmented_intensities'];
 saveas(h,saveName,'fig');
 close(h);
 
+% PARAMETERS USED TO CALCULATE FRET MOLAR FRACTION
+% excitation exctinction coefficient
+eps_A = obj.t_dependent_Nuclei_ratio_FRET_eps_A;
+eps_D = obj.t_dependent_Nuclei_ratio_FRET_eps_D;
+% optical system transmission
+t_A  = obj.t_dependent_Nuclei_ratio_FRET_t_A;
+t_D  = obj.t_dependent_Nuclei_ratio_FRET_t_D;
+% quantum yield at room temperature
+Q_A = obj.t_dependent_Nuclei_ratio_FRET_Q_A; % [ns] EYFP  
+Q_D = obj.t_dependent_Nuclei_ratio_FRET_Q_D; % [ns] ECFP  
+% lifetimes
+tau_A = obj.t_dependent_Nuclei_ratio_FRET_tau_A; % [ns] EYFP  
+tau_D = obj.t_dependent_Nuclei_ratio_FRET_tau_D; % [ns] ECFP 
+% FRETting donor lifetime
+tau_FRET = obj.t_dependent_Nuclei_ratio_FRET_tau_FRET; % [ns] - HIGH FRET
+% spectral leakage coefficients
+K_DA = obj.t_dependent_Nuclei_ratio_FRET_K_DA;
+K_AD = obj.t_dependent_Nuclei_ratio_FRET_K_AD;
+%
+E = 1 - tau_FRET/tau_D;
+A = (t_A/t_D)*(eps_A/eps_D)*(Q_A/Q_D);
+B = (t_A/t_D)*E/Q_D;
+% then beta_FRET = (Z-A)./(B+Z*E); where Z is FRET ratio calculated with bleed-through corrected intensities
+% PARAMETERS USED TO CALCULATE FRET MOLAR FRACTION
+
 % nucleus size
 % donor intensity
 % acceptor intensity
@@ -47,11 +72,11 @@ close(h);
 % Pearson correlation
 % # neighbours (by SOI)
 % cell density (by Delaunay) 
-clc_res = zeros(sX,sY,7,nFovs);
+% FRET molar fraction 
+clc_res = zeros(sX,sY,8,nFovs);
 
 % all Z calculateions are bound to the frame
 NUCDATA = cell(1,nFovs);
-E = 0.5;
 
 % for safety
 mean_nnghbs = zeros(1,nFovs);
@@ -65,21 +90,7 @@ for k=1:nFovs
     ua = single(fig(:,:,2,1,k));
     nukes = fig(:,:,3,1,k);
     %
-%         a_data = ua(nukes==1);
-%         d_data = ud(nukes==1);
-%         IA_min = quantile(a_data(:),0.01);
-%         ID_min = quantile(d_data(:),0.01);
-%         Z = (ua - IA_min)./(ud - ID_min);
-%             sample = Z(Z>0);
-%             sample = sample(~isinf(sample));
-%             sample = sample(~isnan(sample));
-%             Zmin = quantile(sample(:),0.01);
-%             Zmax = quantile(sample(:),0.99);        
-        %                    
-        try        
-            %
-            %ratrefXY = zeros(sX,sY);
-            
+        try                    
             nucleus_size = zeros(sX,sY);
             donor_intensity = zeros(sX,sY);
             acceptor_intensity = zeros(sX,sY);
@@ -88,13 +99,13 @@ for k=1:nFovs
             %
             n_neighbours = zeros(sX,sY);
             cell_density = zeros(sX,sY);
-            
+            FRET_molar_fracton = zeros(sX,sY);
             %
             L = bwlabel(nukes);
             stats = regionprops(L,'Centroid');
             nnucs = max(L(:));
             %
-            nuc_data = zeros(nnucs,10); 
+            nuc_data = zeros(nnucs,11); % 11-th is molar fraction estimate 
             XC = zeros(1,nnucs);
             YC = zeros(1,nnucs);
             
@@ -102,13 +113,7 @@ for k=1:nFovs
                 sample_a = single(ua(L==n));
                 sample_d = single(ud(L==n));
                 %
-%                 Z_cur = Z(L==n);
-%                 Z_cur = Z_cur(~isnan(Z_cur));
-%                 Z_cur(Z_cur<Zmin)=Zmin;
-%                 Z_cur(Z_cur>Zmax)=Zmax;                
-                 nuc_data(n,1)=length(sample_a(:)); % area
-%                 z_cur = mean(Z_cur(:));                
-%                 nuc_data(n,2)=(z_cur-Zmin)/(Zmax-Zmin-E*(Zmax-z_cur));
+                nuc_data(n,1)=length(sample_a(:)); % area
                 nuc_data(n,2)=0;
                 %
                 nuc_data(n,3)=corr(sample_a(:),sample_d(:),'type','Pearson');
@@ -120,7 +125,6 @@ for k=1:nFovs
                 nuc_data(n,7) = stats(n).Centroid(2);
                 nuc_data(n,8) = stats(n).Centroid(1);                
                 %
-                %ratrefXY(L==n)=100*nuc_data(n,4); % A/D ratio multiplied by 100
                 XC(n)=stats(n).Centroid(2);
                 YC(n)=stats(n).Centroid(1);
                 %
@@ -129,9 +133,20 @@ for k=1:nFovs
                 acceptor_intensity(L==n)=mean_sample_a;
                 intensity_ratio(L==n)=mean_sample_a/mean_sample_d;
                 Pearson_correlation(L==n)=nuc_data(n,3); % Pearson
+
+                % via corrected intensities
+                IA = mean_sample_a - K_DA*mean_sample_d;
+                ID = mean_sample_d - K_AD*mean_sample_a;
+                Z = IA/ID;
+                try
+                    beta_FRET = (Z-A)./(B+Z*E);
+                catch
+                    beta_FRET = 0;
+                end
+                FRET_molar_fracton(L==n) = beta_FRET;
+                nuc_data(n,11) = beta_FRET;                
                 
-                track_mate_input(round(XC(n)),round(YC(n)),1,1,k) = 1;
-                
+                track_mate_input(round(XC(n)),round(YC(n)),1,1,k) = 1;                
             end
             
             % adjacency matrices (symmetric)
@@ -233,6 +248,7 @@ for k=1:nFovs
             clc_res(:,:,5,k)=Pearson_correlation;
             clc_res(:,:,6,k)=n_neighbours;
             clc_res(:,:,7,k)=cell_density;
+            clc_res(:,:,8,k)=FRET_molar_fracton; 
         catch
             disp(['glitch at index ' num2str(k)]);
         end
@@ -252,8 +268,9 @@ end
 % 4 FRET ratio 5
 % 9 nnghb 6
 % 10 cell density 7
-indices = [1 3 6 5 4 9 10];
-NUC_STATS = zeros(nFovs,7,5); % mean, std, median, 025Q, 075Q
+% 11 FRET fraction 8
+indices = [1 3 6 5 4 9 10 11];
+NUC_STATS = zeros(nFovs,8,5); % mean, std, median, 025Q, 075Q
 for k=1:nFovs
     nuc_data = NUCDATA{k};
     for j=1:numel(indices)
@@ -497,7 +514,7 @@ close(h);
 % matching
         for k=1:numel(tracks)
             track = tracks{k};
-            ext_track = zeros(size(track,1),10); %frame,x,y+7 params
+            ext_track = zeros(size(track,1),11); %frame,x,y+8 params
             for m=1:size(track,1)
                 frame = track(m,1)+1;
                 x = round(track(m,2))+1;
@@ -509,6 +526,7 @@ close(h);
                 Pearson_correlation =   clc_res(x,y,5,frame);
                 nnghb =                 clc_res(x,y,6,frame);
                 cell_density =          clc_res(x,y,7,frame);
+                beta_FRET =             clc_res(x,y,8,frame);                
                 %              
                 try
                 if 0==nucleus_size % first, try to find nearest nucleus and use it as backup
@@ -541,6 +559,7 @@ close(h);
                     Pearson_correlation =   clc_res(x_b,y_b,5,FRAME_IND);
                     nnghb =                 clc_res(x_b,y_b,6,FRAME_IND);
                     cell_density =          clc_res(x_b,y_b,7,FRAME_IND);
+                    beta_FRET =             clc_res(x_b,y_b,8,FRAME_IND);
                     disp(['missed, substituted at distance ' num2str(distance)]);
                 end
                 catch
@@ -554,13 +573,23 @@ close(h);
                     yu = min(y+2,sY);
                     d_sample = fig(xl:xr,yd:yu,1,1,frame);
                     a_sample = fig(xl:xr,yd:yu,2,1,frame);
-                    FRET_ratio = mean(a_sample(:))/mean(d_sample(:));
                     nucleus_size = 25; %:)         
                     donor_intensity = mean(d_sample(:));      
                     acceptor_intensity = mean(a_sample(:));       
+                    FRET_ratio = acceptor_intensity/donor_intensity;                    
                     Pearson_correlation = corr(a_sample(:),d_sample(:),'type','Pearson');
                     nnghb = mean_nnghbs(frame);
                     cell_density = mean_cell_density(frame);
+                    %
+                    % via corrected intensities
+                    IA = acceptor_intensity - K_DA*donor_intensity;
+                    ID = donor_intensity - K_AD*acceptor_intensity;
+                    Z = IA/ID;
+                    try
+                        beta_FRET = (Z-A)./(B+Z*E);
+                    catch
+                        beta_FRET = 0;
+                    end
                     %
                     disp(['fixing orphan TrackMate point at ' num2str(x) ' ' num2str(y) ' ' num2str(frame) ' ' num2str(FRET_ratio)]);
                     %                    
@@ -574,7 +603,8 @@ close(h);
                     ext_track(m,4) = FRET_ratio; 
                     ext_track(m,8) = Pearson_correlation;
                     ext_track(m,9) = nnghb;
-                    ext_track(m,10) = cell_density;                                          
+                    ext_track(m,10) = cell_density;
+                    ext_track(m,11) = beta_FRET;                    
                 catch
                     disp('glitch');
                     disp([x y frame]);

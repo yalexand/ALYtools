@@ -256,7 +256,27 @@ classdef ALYtools_data_controller < handle
             TrackMate_LINKING_MAX_DISTANCE = 10; % pixels
             TrackMate_GAP_CLOSING_MAX_DISTANCE = 10; % pixels
             TrackMate_MAX_FRAME_GAP = 1; % frames
-            
+            %
+            t_dependent_Nuclei_ratio_FRET_
+            %
+            % PARAMETERS USED TO CALCULATE FRET MOLAR FRACTION
+            % excitation exctinction coefficient
+            t_dependent_Nuclei_ratio_FRET_eps_A = 3000;       %   %% 83400;       % EYFP - this is on peak
+            t_dependent_Nuclei_ratio_FRET_eps_D = 32500;       % ECFP [M-1 cm-1]
+            % optical system transmission
+            t_dependent_Nuclei_ratio_FRET_t_A  = 1;
+            t_dependent_Nuclei_ratio_FRET_t_D  = 1;
+            % quantum yield at room temperature
+            t_dependent_Nuclei_ratio_FRET_Q_A = 0.61; % [ns] EYFP  
+            t_dependent_Nuclei_ratio_FRET_Q_D = 0.40; % [ns] ECFP  
+            % lifetimes
+            t_dependent_Nuclei_ratio_FRET_tau_A = 3.100; % [ns] EYFP  
+            t_dependent_Nuclei_ratio_FRET_tau_D = 3.000; % [ns] ECFP 
+            % FRETting donor lifetime
+            t_dependent_Nuclei_ratio_FRET_tau_FRET = 0.700; % [ns] - HIGH FRET
+            % spectral leakage coefficients
+            t_dependent_Nuclei_ratio_FRET_K_DA = 0;
+            t_dependent_Nuclei_ratio_FRET_K_AD = 0;                                                
     end    
         
     properties(Transient,Hidden)
@@ -2104,7 +2124,19 @@ classdef ALYtools_data_controller < handle
             settings.TrackMate_LINKING_MAX_DISTANCE = obj.TrackMate_LINKING_MAX_DISTANCE;
             settings.TrackMate_GAP_CLOSING_MAX_DISTANCE = obj.TrackMate_GAP_CLOSING_MAX_DISTANCE;
             settings.TrackMate_MAX_FRAME_GAP = obj.TrackMate_MAX_FRAME_GAP;            
-                                                
+                        
+            settings.t_dependent_Nuclei_ratio_FRET_eps_A = obj.t_dependent_Nuclei_ratio_FRET_eps_A; 
+            settings.t_dependent_Nuclei_ratio_FRET_eps_D = obj.t_dependent_Nuclei_ratio_FRET_eps_D; 
+            settings.t_dependent_Nuclei_ratio_FRET_t_A  = obj.t_dependent_Nuclei_ratio_FRET_t_A ; 
+            settings.t_dependent_Nuclei_ratio_FRET_t_D  = obj.t_dependent_Nuclei_ratio_FRET_t_D ; 
+            settings.t_dependent_Nuclei_ratio_FRET_Q_A = obj.t_dependent_Nuclei_ratio_FRET_Q_A; 
+            settings.t_dependent_Nuclei_ratio_FRET_Q_D = obj.t_dependent_Nuclei_ratio_FRET_Q_D; 
+            settings.t_dependent_Nuclei_ratio_FRET_tau_A = obj.t_dependent_Nuclei_ratio_FRET_tau_A; 
+            settings.t_dependent_Nuclei_ratio_FRET_tau_D = obj.t_dependent_Nuclei_ratio_FRET_tau_D; 
+            settings.t_dependent_Nuclei_ratio_FRET_tau_FRET = obj.t_dependent_Nuclei_ratio_FRET_tau_FRET; 
+            settings.t_dependent_Nuclei_ratio_FRET_K_AD = obj.t_dependent_Nuclei_ratio_FRET_K_AD;
+            settings.t_dependent_Nuclei_ratio_FRET_K_DA = obj.t_dependent_Nuclei_ratio_FRET_K_DA;
+                                                            
             xml_write(fname,settings);
         end
 %-------------------------------------------------------------------------%                        
@@ -2272,6 +2304,18 @@ classdef ALYtools_data_controller < handle
                 obj.TrackMate_GAP_CLOSING_MAX_DISTANCE = settings.TrackMate_GAP_CLOSING_MAX_DISTANCE;
                 obj.TrackMate_MAX_FRAME_GAP = settings.TrackMate_MAX_FRAME_GAP;            
                 
+                obj.t_dependent_Nuclei_ratio_FRET_eps_A = settings.t_dependent_Nuclei_ratio_FRET_eps_A; 
+                obj.t_dependent_Nuclei_ratio_FRET_eps_D = settings.t_dependent_Nuclei_ratio_FRET_eps_D; 
+                obj.t_dependent_Nuclei_ratio_FRET_t_A  = settings.t_dependent_Nuclei_ratio_FRET_t_A ; 
+                obj.t_dependent_Nuclei_ratio_FRET_t_D  = settings.t_dependent_Nuclei_ratio_FRET_t_D ; 
+                obj.t_dependent_Nuclei_ratio_FRET_Q_A = settings.t_dependent_Nuclei_ratio_FRET_Q_A; 
+                obj.t_dependent_Nuclei_ratio_FRET_Q_D = settings.t_dependent_Nuclei_ratio_FRET_Q_D; 
+                obj.t_dependent_Nuclei_ratio_FRET_tau_A = settings.t_dependent_Nuclei_ratio_FRET_tau_A; 
+                obj.t_dependent_Nuclei_ratio_FRET_tau_D = settings.t_dependent_Nuclei_ratio_FRET_tau_D; 
+                obj.t_dependent_Nuclei_ratio_FRET_tau_FRET = settings.t_dependent_Nuclei_ratio_FRET_tau_FRET; 
+                obj.t_dependent_Nuclei_ratio_FRET_K_AD = settings.t_dependent_Nuclei_ratio_FRET_K_AD;
+                obj.t_dependent_Nuclei_ratio_FRET_K_DA = settings.t_dependent_Nuclei_ratio_FRET_K_DA;
+                                
              end
         end
 %-------------------------------------------------------------------------%                
