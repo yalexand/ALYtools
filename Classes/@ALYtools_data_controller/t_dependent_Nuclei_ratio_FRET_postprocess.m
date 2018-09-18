@@ -58,11 +58,17 @@ tau_FRET = obj.t_dependent_Nuclei_ratio_FRET_tau_FRET; % [ns] - HIGH FRET
 % spectral leakage coefficients
 K_DA = obj.t_dependent_Nuclei_ratio_FRET_K_DA;
 K_AD = obj.t_dependent_Nuclei_ratio_FRET_K_AD;
+% ratio of excitation intensities in the donor and acceptor absorption bands, phi = IexD/IexA
+phi = obj.t_dependent_Nuclei_ratio_FRET_phi;
+% fraction of functional donor and acceptor
+b_A = obj.t_dependent_Nuclei_ratio_FRET_b_A; 
+b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D;
 %
 E = 1 - tau_FRET/tau_D;
-A = (t_A/t_D)*(eps_A/eps_D)*(Q_A/Q_D);
-B = (t_A/t_D)*E/Q_D;
-% then beta_FRET = (Z-A)./(B+Z*E); where Z is FRET ratio calculated with bleed-through corrected intensities
+A = 1/phi*(b_A/b_D)*(t_A/t_D)*(eps_A/eps_D)*(Q_A/Q_D);
+B = (t_A/t_D)*E/Q_D*b_A;
+C = (1-(1-E)*b_A);
+% then beta_FRET = (Z-A)./(B+Z*C); where Z is FRET ratio calculated with bleed-through corrected intensities
 % PARAMETERS USED TO CALCULATE FRET MOLAR FRACTION
 
 % nucleus size
@@ -142,7 +148,7 @@ for k=1:nFovs
                 ID = mean_sample_d - K_AD*mean_sample_a;
                 Z = IA/ID;
                 try
-                    beta_FRET = (Z-A)./(B+Z*E);
+                    beta_FRET = (Z-A)./(B+Z*C);
                 catch
                     beta_FRET = 0;
                 end
@@ -589,7 +595,7 @@ close(h);
                     ID = donor_intensity - K_AD*acceptor_intensity;
                     Z = IA/ID;
                     try
-                        beta_FRET = (Z-A)./(B+Z*E);
+                        beta_FRET = (Z-A)./(B+Z*C);
                     catch
                         beta_FRET = 0;
                     end

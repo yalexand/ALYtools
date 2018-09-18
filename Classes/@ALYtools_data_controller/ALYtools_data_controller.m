@@ -276,7 +276,13 @@ classdef ALYtools_data_controller < handle
             t_dependent_Nuclei_ratio_FRET_tau_FRET = 0.700; % [ns] - HIGH FRET
             % spectral leakage coefficients
             t_dependent_Nuclei_ratio_FRET_K_DA = 0;
-            t_dependent_Nuclei_ratio_FRET_K_AD = 0;                                                
+            t_dependent_Nuclei_ratio_FRET_K_AD = 0;
+            % ratio of excitation intensities in the donor and acceptor absorption bands
+            % phi = IexD/IexA
+            t_dependent_Nuclei_ratio_FRET_phi = 1;
+            % fraction of functional donor and acceptor
+            t_dependent_Nuclei_ratio_FRET_b_A = 1; 
+            t_dependent_Nuclei_ratio_FRET_b_D = 1;
     end    
         
     properties(Transient,Hidden)
@@ -2135,8 +2141,10 @@ classdef ALYtools_data_controller < handle
             settings.t_dependent_Nuclei_ratio_FRET_tau_D = obj.t_dependent_Nuclei_ratio_FRET_tau_D; 
             settings.t_dependent_Nuclei_ratio_FRET_tau_FRET = obj.t_dependent_Nuclei_ratio_FRET_tau_FRET; 
             settings.t_dependent_Nuclei_ratio_FRET_K_AD = obj.t_dependent_Nuclei_ratio_FRET_K_AD;
-            settings.t_dependent_Nuclei_ratio_FRET_K_DA = obj.t_dependent_Nuclei_ratio_FRET_K_DA;
-                                                            
+            settings.t_dependent_Nuclei_ratio_FRET_K_DA = obj.t_dependent_Nuclei_ratio_FRET_K_DA;            
+            settings.t_dependent_Nuclei_ratio_FRET_phi = obj.t_dependent_Nuclei_ratio_FRET_phi;
+            settings.t_dependent_Nuclei_ratio_FRET_b_A = obj.t_dependent_Nuclei_ratio_FRET_b_A;  
+            settings.t_dependent_Nuclei_ratio_FRET_b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D;                                                                                                            
             xml_write(fname,settings);
         end
 %-------------------------------------------------------------------------%                        
@@ -2315,7 +2323,10 @@ classdef ALYtools_data_controller < handle
                 obj.t_dependent_Nuclei_ratio_FRET_tau_FRET = settings.t_dependent_Nuclei_ratio_FRET_tau_FRET; 
                 obj.t_dependent_Nuclei_ratio_FRET_K_AD = settings.t_dependent_Nuclei_ratio_FRET_K_AD;
                 obj.t_dependent_Nuclei_ratio_FRET_K_DA = settings.t_dependent_Nuclei_ratio_FRET_K_DA;
-                                
+                
+                obj.t_dependent_Nuclei_ratio_FRET_phi = settings.t_dependent_Nuclei_ratio_FRET_phi;
+                obj.t_dependent_Nuclei_ratio_FRET_b_A = settings.t_dependent_Nuclei_ratio_FRET_b_A;  
+                obj.t_dependent_Nuclei_ratio_FRET_b_D = settings.t_dependent_Nuclei_ratio_FRET_b_D;
              end
         end
 %-------------------------------------------------------------------------%                
