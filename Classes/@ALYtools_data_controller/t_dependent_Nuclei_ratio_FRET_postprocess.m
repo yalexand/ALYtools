@@ -61,7 +61,7 @@ K_AD = obj.t_dependent_Nuclei_ratio_FRET_K_AD;
 % ratio of excitation intensities in the donor and acceptor absorption bands, phi = IexD/IexA
 phi = obj.t_dependent_Nuclei_ratio_FRET_phi;
 % fraction of functional donor and acceptor
-b_A = obj.t_dependent_Nuclei_ratio_FRET_b_A; 
+b_A = obj.t_dependent_Nuclei_ratio_FRET_b_A ; 
 b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D;
 %
 E = 1 - tau_FRET/tau_D;
@@ -312,94 +312,98 @@ t = (0:numel(NUCDATA)-1)*obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
 % save N(t) curve
 xlswrite([output_directory filesep fname ' cell numbers curve'],[t' cell_nums']);
 
-h=figure; 
-movegui(h, 'onscreen');
-
-vidObj = VideoWriter([output_directory filesep fname]);
-
-vidObj.Quality = 100;
-open(vidObj);
-
-% get the figure and axes handles
- hFig = gcf;
- hAx  = gca;
- % set the figure to full screen
- set(hFig,'units','normalized','outerposition',[0 0 1 1]);
- % set the axes to full screen
- set(hAx,'Unit','normalized','Position',[0 0 1 1]);
- % hide the toolbar
- set(hFig,'menubar','none')
- % to hide the title
- set(hFig,'NumberTitle','off');
-
-set(h,'Units','pixels'); 
-rect = get(h,'Position');
-rect(1:2) = [0 0]; 
-
-mean_x = [];
-std_x = [];
-cell_num = [];
-
-fontsize = 18;
-markersize = 12;
-linewidth = 2;
-
-for k = 1 : numel(NUCDATA)
-    
-    try
-        nuc_data = NUCDATA{k};
-        nuc_size = nuc_data(:,1);
-        corr_nuc_FRET_ratio = nuc_data(:,3);
-        corr_nuc_FRET_ratio = corr_nuc_FRET_ratio(~isnan(corr_nuc_FRET_ratio));        
-        nuc_FRET_ratio = nuc_data(:,4);
-        %        
-        subplot(2,2,1);    
-        histogram(nuc_FRET_ratio,200,'Normalization','probability'); % should display pdf
-        xlabel('FRET ratio','fontsize',fontsize);
-        ylabel('PDF value','fontsize',fontsize);
-        axis([0 2 0 0.1]);        
-        set(gca,'FontSize',fontsize);
-        title(['frame ' num2str(k)]);
-            grid on;
-
-        subplot(2,2,3);
-        cell_num = [cell_num numel(nuc_size)];
-        semilogy(t(1:numel(cell_num)),cell_num,'k.-','markersize',markersize,'linewidth',linewidth); %
-        xlabel('time [h]','fontsize',fontsize);
-        ylabel('cell number','fontsize',fontsize);
-        axis([t(1) t(numel(cell_nums)) min(cell_nums) max(cell_nums)]);
-        set(gca,'FontSize',fontsize);        
-            grid on;    
-
-        subplot(2,2,4);
-        mean_x = [mean_x mean(nuc_FRET_ratio)];
-        std_x = [std_x std(nuc_FRET_ratio)];
-        errorbar(t(1:numel(mean_x)),mean_x,std_x,'Color','red','Marker','o','MarkerFaceColor','green'); %
-        %mseb(t(1:numel(mean_x)),mean_x,std_x); %
-        xlabel('time [h]','fontsize',fontsize);
-        ylabel('FRET ratio','fontsize',fontsize);
-        set(gca,'FontSize',fontsize);        
-            grid on;            
-            
-        subplot(2,2,2);
-        nuc_FRET_ratio = nuc_FRET_ratio(~isnan(corr_nuc_FRET_ratio)); % because may be different size
-        histogram2(nuc_FRET_ratio,corr_nuc_FRET_ratio,0:0.1:2,-1:0.1:1,'Normalization','probability','DisplayStyle','tile');
-        xlabel('FRET ratio');
-        ylabel('Donor-Acceptor pixel correlation (Pearson)','fontsize',fontsize);
-        axis([0 2 -1 1]);
-        set(gca,'FontSize',fontsize);
-        title(strrep(fname,'_',' '));
-             grid on;            
-    catch
-        disp(['glitch at ' num2str(k)]);
-    end              
+try % may fail on some versions of Matlab
+    h=figure; 
     movegui(h, 'onscreen');
-    hold all;
-    drawnow;
-    writeVideo(vidObj,getframe(gcf,rect));
+
+    vidObj = VideoWriter([output_directory filesep fname]);
+
+    vidObj.Quality = 100;
+    open(vidObj);
+
+    % get the figure and axes handles
+     hFig = gcf;
+     hAx  = gca;
+     % set the figure to full screen
+     set(hFig,'units','normalized','outerposition',[0 0 1 1]);
+     % set the axes to full screen
+     set(hAx,'Unit','normalized','Position',[0 0 1 1]);
+     % hide the toolbar
+     set(hFig,'menubar','none')
+     % to hide the title
+     set(hFig,'NumberTitle','off');
+
+    set(h,'Units','pixels'); 
+    rect = get(h,'Position');
+    rect(1:2) = [0 0]; 
+
+    mean_x = [];
+    std_x = [];
+    cell_num = [];
+
+    fontsize = 18;
+    markersize = 12;
+    linewidth = 2;
+
+    for k = 1 : numel(NUCDATA)
+
+        try
+            nuc_data = NUCDATA{k};
+            nuc_size = nuc_data(:,1);
+            corr_nuc_FRET_ratio = nuc_data(:,3);
+            corr_nuc_FRET_ratio = corr_nuc_FRET_ratio(~isnan(corr_nuc_FRET_ratio));        
+            nuc_FRET_ratio = nuc_data(:,4);
+            %        
+            subplot(2,2,1);    
+            histogram(nuc_FRET_ratio,200,'Normalization','probability'); % should display pdf
+            xlabel('FRET ratio','fontsize',fontsize);
+            ylabel('PDF value','fontsize',fontsize);
+            axis([0 2 0 0.1]);        
+            set(gca,'FontSize',fontsize);
+            title(['frame ' num2str(k)]);
+                grid on;
+
+            subplot(2,2,3);
+            cell_num = [cell_num numel(nuc_size)];
+            semilogy(t(1:numel(cell_num)),cell_num,'k.-','markersize',markersize,'linewidth',linewidth); %
+            xlabel('time [h]','fontsize',fontsize);
+            ylabel('cell number','fontsize',fontsize);
+            axis([t(1) t(numel(cell_nums)) min(cell_nums) max(cell_nums)]);
+            set(gca,'FontSize',fontsize);        
+                grid on;    
+
+            subplot(2,2,4);
+            mean_x = [mean_x mean(nuc_FRET_ratio)];
+            std_x = [std_x std(nuc_FRET_ratio)];
+            errorbar(t(1:numel(mean_x)),mean_x,std_x,'Color','red','Marker','o','MarkerFaceColor','green'); %
+            %mseb(t(1:numel(mean_x)),mean_x,std_x); %
+            xlabel('time [h]','fontsize',fontsize);
+            ylabel('FRET ratio','fontsize',fontsize);
+            set(gca,'FontSize',fontsize);        
+                grid on;            
+
+            subplot(2,2,2);
+            nuc_FRET_ratio = nuc_FRET_ratio(~isnan(corr_nuc_FRET_ratio)); % because may be different size
+            histogram2(nuc_FRET_ratio,corr_nuc_FRET_ratio,0:0.1:2,-1:0.1:1,'Normalization','probability','DisplayStyle','tile');
+            xlabel('FRET ratio');
+            ylabel('Donor-Acceptor pixel correlation (Pearson)','fontsize',fontsize);
+            axis([0 2 -1 1]);
+            set(gca,'FontSize',fontsize);
+            title(strrep(fname,'_',' '));
+                 grid on;            
+        catch
+            disp(['glitch at ' num2str(k)]);
+        end              
+        movegui(h, 'onscreen');
+        hold all;
+        drawnow;
+        writeVideo(vidObj,getframe(gcf,rect));
+    end
+    close(vidObj);  
+    close(h);
+catch
+    disp('no movie.. well, whatever.')
 end
-close(vidObj);  
-close(h);
 % MOVIE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -625,8 +629,9 @@ close(h);
 fullfname = [output_directory filesep fname '_FRET_ratio_featured_TRACKMATE_OUTPUT'];
 dt = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
 microns_per_pixel = obj.microns_per_pixel;
+%
+
 save(fullfname,'tracks','dt','microns_per_pixel','NUC_STATS','cell_nums');
-% matching
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 try

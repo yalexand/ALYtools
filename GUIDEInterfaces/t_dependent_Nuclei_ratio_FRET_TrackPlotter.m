@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 13-Sep-2018 16:22:40
+% Last Modified by GUIDE v2.5 23-Sep-2018 12:54:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -103,7 +103,8 @@ elseif 2 == nargin-3
     [filepath,name,ext] = fileparts(char(varargin{1}));
     filename = [name ext];
     %
-    load(char(varargin{1}));
+    load(char(varargin{1}));    
+    handles.fullfilename = char(varargin{1});
     %
     if ~exist('microns_per_pixel','var'), return, end
     
@@ -419,6 +420,7 @@ function filter_check_callback(hObject,callbackdata)
         guidata(hObject, handles);    
     visualize_histo2(hObject,handles);
     visualize_time_dependence(hObject,handles);
+    update_possible_visualizer(hObject,handles);
 
 % --------------------------------------------------------------------
 function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
@@ -432,7 +434,9 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
             
 % --------------------------------------------------------------------    
 function load_trackmate_plus_data(pathname,filename,hObject,handles)
+
     load([pathname filesep filename]);
+    handles.fullfilename = [pathname filesep filename];
 
     if ~exist('microns_per_pixel','var'), return, end
     
@@ -1032,7 +1036,23 @@ function mask = calculate_mask(hObject,handles)
         cur_mask = cur_vals>=cur_min_val & cur_vals<=cur_max_val;
         mask = mask & cur_mask;
     end
-
+    
+function update_possible_visualizer(hObject,handles)    
+FIGS = findobj(0, 'type', 'figure');
+for k=1:size(FIGS,1)
+    h = FIGS(k,1);
+    cur_handles = guidata(h);
+    if ~strcmp(cur_handles.figure1.Name,handles.figure1.Name)
+        try
+        if strcmp(cur_handles.TrackPlotter_handles.fullfilename,handles.fullfilename) % mine
+            %@(hObject,eventdata)t_dependent_Nuclei_ratio_FRET_visualizer('update_button_Callback',hObject,eventdata,guidata(hObject));  
+            t_dependent_Nuclei_ratio_FRET_visualizer('update_button_Callback',cur_handles.update_button,[],cur_handles);
+        end
+        catch
+        end
+    end
+end
+     
 % --------------------------------------------------------------------
 function save_settings_as_matfile_Callback(hObject, eventdata, handles)
 % hObject    handle to save_settings_as_matfile (see GCBO)
@@ -1229,3 +1249,15 @@ function show_per_frame_mean_std_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of show_per_frame_mean_std
 visualize_time_dependence(hObject,handles);
+
+
+% --------------------------------------------------------------------
+function visualize_selection_Callback(hObject, eventdata, handles)
+% hObject    handle to visualize_selection (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+t_dependent_Nuclei_ratio_FRET_visualizer(handles);
+
+
+
+
