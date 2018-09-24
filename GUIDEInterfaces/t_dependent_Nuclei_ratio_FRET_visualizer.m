@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_visualizer(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_visualizer
 
-% Last Modified by GUIDE v2.5 23-Sep-2018 18:15:54
+% Last Modified by GUIDE v2.5 24-Sep-2018 11:13:58
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -286,11 +286,3 @@ for k=1:size(FIGS,1)
     catch
     end
 end
-
-
-% --------------------------------------------------------------------
-function image_zoom_OffCallback(hObject, eventdata, handles)
-% hObject    handle to image_zoom (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-hObject

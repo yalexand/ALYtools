@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 23-Sep-2018 12:54:31
+% Last Modified by GUIDE v2.5 24-Sep-2018 10:51:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -1037,7 +1037,9 @@ function mask = calculate_mask(hObject,handles)
         mask = mask & cur_mask;
     end
     
-function update_possible_visualizer(hObject,handles)    
+function update_possible_visualizer(hObject,handles)  
+if ~get(handles.update_vidi_immediately,'Value'), return, end;
+
 FIGS = findobj(0, 'type', 'figure');
 for k=1:size(FIGS,1)
     h = FIGS(k,1);
@@ -1261,3 +1263,12 @@ t_dependent_Nuclei_ratio_FRET_visualizer(handles);
 
 
 
+
+
+% --- Executes on button press in update_vidi_immediately.
+function update_vidi_immediately_Callback(hObject, eventdata, handles)
+% hObject    handle to update_vidi_immediately (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of update_vidi_immediately
