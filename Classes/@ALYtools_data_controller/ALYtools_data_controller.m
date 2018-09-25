@@ -320,7 +320,7 @@ classdef ALYtools_data_controller < handle
             catch
             end
             
-            obj.OPT_data_controller = ic_OPTtools_data_controller(true,[]); %headless
+            %obj.OPT_data_controller = ic_OPTtools_data_controller(true,[]); %headless
             
             obj.RootDirectory = pwd;
             
@@ -574,15 +574,16 @@ classdef ALYtools_data_controller < handle
         function show_data(obj,send_original_to_Icy,~)
 
             [~,~,~,sC,~] = size(obj.imgdata);
-            I = double(obj.imgdata);
             
             switch obj.problem
                 
                 case 'Fungus Dependent Granule Release'
-                    if 3~=sC, obj.imgdata = []; cla(obj.scene_axes); errordlg('3 channel image is expected'); return; end;
+                    I = double(obj.imgdata);
+                    if 3~=sC, obj.imgdata = []; cla(obj.scene_axes); errordlg('3 channel image is expected'); return; end
                     image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes); 
                     
-                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' 't_dependent_Nuclei_ratio_FRET'}
+                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks'}
+                    I = double(obj.imgdata);
                     if 3 == sC || 4 == sC
                         image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes);
                     elseif 1 == sC || 2 == sC
@@ -590,7 +591,8 @@ classdef ALYtools_data_controller < handle
                     end  
                 case {'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'}
                     image(uint8(map(squeeze(sum(I,5)),0,255)),'Parent',obj.scene_axes);
-                    
+                case 't_dependent_Nuclei_ratio_FRET'                    
+                    image(uint8(map(double(squeeze(obj.imgdata(:,:,1,1,1))),0,255)),'Parent',obj.scene_axes);                    
             end
             %
             daspect(obj.scene_axes,[1 1 1]);

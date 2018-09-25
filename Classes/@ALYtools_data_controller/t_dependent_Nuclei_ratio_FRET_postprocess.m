@@ -82,7 +82,13 @@ C = (1-(1-E)*b_A);
 
 obj.imgdata = []; % helps with memory
 
-clc_res = zeros(sX,sY,8,nFovs);
+use_memmap = false; %X*sY*8*nFovs <= 1024*1024*8*780/2;
+if use_memmap   
+    [mapfile_name_clc_res,memmap_clc_res] = initialize_memmap([sX,sY,8,nFovs],1,'pixels','single');                 
+    clc_res = memmap_clc_res.Data.pixels; % reference
+else
+    clc_res = zeros(sX,sY,8,nFovs);
+end
 
 % all Z calculateions are bound to the frame
 NUCDATA = cell(1,nFovs);
@@ -97,6 +103,7 @@ for k=1:nFovs
     tic
     ud = single(fig(:,:,1,1,k));
     ua = single(fig(:,:,2,1,k));
+    %    
     nukes = fig(:,:,3,1,k);
     %
         try                    
@@ -632,6 +639,11 @@ microns_per_pixel = obj.microns_per_pixel;
 %
 
 save(fullfname,'tracks','dt','microns_per_pixel','NUC_STATS','cell_nums');
+
+if use_memmap
+    clear('memmap_clc_res');
+    delete(mapfile_name_clc_res);
+end
 
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 try

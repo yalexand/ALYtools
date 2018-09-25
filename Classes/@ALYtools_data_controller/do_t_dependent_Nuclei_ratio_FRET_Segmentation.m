@@ -11,7 +11,7 @@
             
             % segment
             % sT = 6; % .. for debugging
-            icyvol = zeros(sX,sY,3,1,sT);
+            icyvol = zeros(sX,sY,3,1,sT,'single');
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,1,k)));
                ua = single(squeeze(obj.imgdata(:,:,1,2,k)));
