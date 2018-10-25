@@ -122,6 +122,10 @@ elseif 2 == nargin-3
         % to refine it now optionally
         if handles.track_breaking_flag    
             handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+            if isempty(handles.raw_data)
+                disp('refine_tracks_by_excluding_mitosis_intervals - failed');
+                handles.raw_data = tracks;                
+            end
         else
             handles.raw_data = tracks;
         end
@@ -454,6 +458,10 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     % to refine it now - optionally
     if handles.track_breaking_flag
         handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+        if isempty(handles.raw_data)
+            disp('refine_tracks_by_excluding_mitosis_intervals - failed');
+            handles.raw_data = tracks;
+        end            
     else
         handles.raw_data = tracks;
     end
@@ -503,7 +511,7 @@ for k=1:numel(D)
     %
     nnghb = zeros(size(FRET_ratio));
     cell_density = zeros(size(FRET_ratio));
-    if 10==size(track,2)
+    if 10==size(track,2) || 11==size(track,2)
         nnghb = squeeze(track(:,9));
         cell_density = squeeze(track(:,10));            
     end
@@ -838,11 +846,11 @@ for k = 1:numel(y_data)
                     %12   't(start) [h]'            
                 switch y_ind                    
                     case 4 % #nghbrs                    
-                        if 10==size(track,2)                        
+                        if 10==size(track,2) || 11==size(track,2)
                             Y = squeeze(track(:,9));
                         end
                     case 5 % cell density
-                        if 10==size(track,2)                        
+                        if 10==size(track,2) || 11==size(track,2)
                             Y = squeeze(track(:,10))/(handles.pixelsize)^2;
                         end
                     case 6 % FRET ratio
@@ -867,11 +875,16 @@ for k = 1:numel(y_data)
             X = [tb_data(k) te_data(k)];            
             Y = [y_data(k) y_data(k)];
         end
-        plot(handles.time_plot_axes,X,Y,'Color',Colors(index,:));        
+        plot(handles.time_plot_axes,X,Y,'Color',Colors(index,:));
         hold(handles.time_plot_axes,'on');
+        plot(handles.time_plot_axes,X(1),Y(1),'k.');
+        hold(handles.time_plot_axes,'on');        
     end
 end
-plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
+
+if ~(show_actual_dependence && get(handles.actual_dependence_checkbox,'Value')) 
+    plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
+end
 
 % try to plot stats curve if possible
 if isfield(handles,'NUC_STATS')    

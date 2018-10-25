@@ -257,8 +257,6 @@ classdef ALYtools_data_controller < handle
             TrackMate_GAP_CLOSING_MAX_DISTANCE = 10; % pixels
             TrackMate_MAX_FRAME_GAP = 1; % frames
             %
-            t_dependent_Nuclei_ratio_FRET_
-            %
             % PARAMETERS USED TO CALCULATE FRET MOLAR FRACTION
             % excitation exctinction coefficient
             t_dependent_Nuclei_ratio_FRET_eps_A = 3000;       %   %% 83400;       % EYFP - this is on peak

@@ -82,15 +82,15 @@ C = (1-(1-E)*b_A);
 
 obj.imgdata = []; % helps with memory
 
-use_memmap = false; %X*sY*8*nFovs <= 1024*1024*8*780/2;
+use_memmap = sX*sY*8*nFovs >= 1024*1024*8*780/2;
 if use_memmap   
     [mapfile_name_clc_res,memmap_clc_res] = initialize_memmap([sX,sY,8,nFovs],1,'pixels','single');                 
     clc_res = memmap_clc_res.Data.pixels; % reference
 else
-    clc_res = zeros(sX,sY,8,nFovs);
+    clc_res = zeros(sX,sY,8,nFovs,'single');
 end
 
-% all Z calculateions are bound to the frame
+% all Z calculations are bound to the frame
 NUCDATA = cell(1,nFovs);
 
 % for safety
