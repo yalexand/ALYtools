@@ -11,6 +11,7 @@ function fig = t_dependent_Nuclei_ratio_FRET_postprocess(obj,in_fig,output_direc
         fname = strrep(fname,'.OME.tiff','');
         fname = strrep(fname,'.OME.tif','');
         fname = strrep(fname,'.tif','');
+        fname = strrep(fname,'.lsm','');        
           
 % % % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % plot intensity

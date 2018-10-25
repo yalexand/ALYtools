@@ -281,6 +281,8 @@ classdef ALYtools_data_controller < handle
             % fraction of functional donor and acceptor
             t_dependent_Nuclei_ratio_FRET_b_A = 1; 
             t_dependent_Nuclei_ratio_FRET_b_D = 1;
+            %
+            t_dependent_Nuclei_ratio_FRET_donor_channel = 1;
     end    
         
     properties(Transient,Hidden)
@@ -2144,7 +2146,9 @@ classdef ALYtools_data_controller < handle
             settings.t_dependent_Nuclei_ratio_FRET_K_DA = obj.t_dependent_Nuclei_ratio_FRET_K_DA;            
             settings.t_dependent_Nuclei_ratio_FRET_phi = obj.t_dependent_Nuclei_ratio_FRET_phi;
             settings.t_dependent_Nuclei_ratio_FRET_b_A = obj.t_dependent_Nuclei_ratio_FRET_b_A;  
-            settings.t_dependent_Nuclei_ratio_FRET_b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D;                                                                                                            
+            settings.t_dependent_Nuclei_ratio_FRET_b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D; 
+            %
+            settings.t_dependent_Nuclei_ratio_FRET_donor_channel = obj.t_dependent_Nuclei_ratio_FRET_donor_channel;
             xml_write(fname,settings);
         end
 %-------------------------------------------------------------------------%                        
@@ -2327,6 +2331,8 @@ classdef ALYtools_data_controller < handle
                 obj.t_dependent_Nuclei_ratio_FRET_phi = settings.t_dependent_Nuclei_ratio_FRET_phi;
                 obj.t_dependent_Nuclei_ratio_FRET_b_A = settings.t_dependent_Nuclei_ratio_FRET_b_A;  
                 obj.t_dependent_Nuclei_ratio_FRET_b_D = settings.t_dependent_Nuclei_ratio_FRET_b_D;
+                %
+                obj.t_dependent_Nuclei_ratio_FRET_donor_channel = settings.t_dependent_Nuclei_ratio_FRET_donor_channel;
              end
         end
 %-------------------------------------------------------------------------%                
