@@ -706,7 +706,7 @@ mode = str{get(handles.histo2_mode,'Value')};
                         x_max_val = 0.008;
                     case 6 % FRET ratio
                         x_min_val = 0.3;
-                        x_max_val = 2;
+                        x_max_val = 3;
                     case 7 % FRET ratio variability
                         x_min_val = 0;
                         x_max_val = 0.5;                        
@@ -744,7 +744,7 @@ mode = str{get(handles.histo2_mode,'Value')};
                         y_max_val = 0.008;
                     case 6 % FRET ratio
                         y_min_val = 0.3;
-                        y_max_val = 2;
+                        y_max_val = 3;
                     case 7 % FRET ratio variability
                         y_min_val = 0;
                         y_max_val = 0.5;                        
@@ -961,7 +961,7 @@ hold(handles.time_plot_axes,'off');
                         max_val = 0.008;
                     case 6 % FRET ratio
                         min_val = 0.3;
-                        max_val = 2;
+                        max_val = 3;
                     case 7 % FRET ratio variability
                         min_val = 0;
                         max_val = 0.5;                        
@@ -1006,7 +1006,7 @@ end
                     case 5 % cell density
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 1e-7 0.008]);
                     case 6 % FRET ratio
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0.3 2]);
+                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0.3 3]);
                     case 7 % FRET ratio variability
                         axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 0.5]);
                     case 8 % donor intensity                     

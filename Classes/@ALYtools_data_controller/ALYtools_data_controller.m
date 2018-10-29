@@ -456,8 +456,7 @@ classdef ALYtools_data_controller < handle
                     errordlg('*.txt file seems to be corrupt - can not load');
                     return;
                 end               
-            else
-                          
+            else                          
                 try
                     [uppixX,uppixZ,I] = bfopen_v(full_filename);
                     if ~isempty(uppixX)

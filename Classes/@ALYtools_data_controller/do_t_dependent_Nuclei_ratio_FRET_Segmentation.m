@@ -18,7 +18,7 @@
             % to reduce to "T" dependence
             
             % segment
-            % sT = 6; % .. for debugging
+            %sT = 96; % .. for debugging
             icyvol = zeros(sX,sY,3,1,sT,'single');
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,D_channel,k)));
