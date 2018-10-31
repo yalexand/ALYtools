@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 31-Oct-2018 09:23:58
+% Last Modified by GUIDE v2.5 31-Oct-2018 21:19:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -759,6 +759,10 @@ tb_data = squeeze(D(:,1));
 te_data = squeeze(D(:,2));
 
 mask = handles.mask;
+
+n1=numel(y_data);
+n2=sum(mask);
+set(handles.track_numbers,'String',[num2str(n1) ' : ' num2str(n2)]);
 
 % define colors
 Ngrades = 256;

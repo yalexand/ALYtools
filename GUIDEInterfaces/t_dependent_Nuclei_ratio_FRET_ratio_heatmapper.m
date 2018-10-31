@@ -170,13 +170,15 @@ function visualize(handles)
             shift = locmaxpeaks(indices(k));
             c = Ldiv2+1;
             range = c-shift:c+l-shift-1;
-            try
+            if range(1)>0
                 M(k,range)=FRET_ratio';
-            catch
-                disp([shift l L]);
+            else
+                r2=range(range>0);
+                M(k,r2)=FRET_ratio(-range(1)+1+r2)'; % hopefully
             end
        end    
        s=M(M~=0);M(M==0)=min(s(:)); 
+       M=M(:,1:L-1);
         
 %     import bioma.data.*
 %     M=map(M,0,1);
@@ -186,6 +188,6 @@ imagesc(handles.heatmap_axes,M);
 xlabel(handles.heatmap_axes,'time [h]');
 str = get(handles.features_chooser,'String'); 
 ylabel(handles.heatmap_axes,str{par_ind});
-tax =  handles.TrackPlotter_handles.dt*(1:L);
+tax =  handles.TrackPlotter_handles.dt*(1:size(M,2));
 set(handles.heatmap_axes, 'xticklabel', {linspace(min(tax),max(tax),11)}, ... 
     'yticklabel', {flip(linspace(min(sortarr),max(sortarr),11))});
