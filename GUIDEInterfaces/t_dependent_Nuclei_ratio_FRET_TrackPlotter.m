@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 24-Sep-2018 10:51:51
+% Last Modified by GUIDE v2.5 31-Oct-2018 09:23:58
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -75,7 +75,26 @@ handles.features = {'duration [h]', ...
 
 handles.mask = [];    
 handles.track_data = [];
-                
+  
+% ranges for visualization
+handles.rng_duration = [0 0]; % defined in calculate_track_data
+handles.rng_start_time = [0 0]; % ditto
+handles.rng_speed = [0 10];
+handles.rng_directionality = [-1 1];
+handles.rng_nghbrs = [1 12];
+handles.rng_cell_density = [1e-7 0.008];
+handles.rng_FRET_ratio = [0.3 3];
+handles.rng_FRET_ratio_variability = [0 0.5];
+handles.rng_intensity = [0 1000];
+handles.rng_nucleus_size = [20 750];
+handles.rng_Pearson_corr = [-1 1];
+handles.rng_autocorr_time = [0 120];
+handles.rng_FRET_molar_fraction = [0 1];
+% ranges for visualization
+
+%handles.mitotic_intervals_option = 'EXCLUDE';
+handles.mitotic_intervals_option = 'LEAVE ONLY';
+
 if 1 == nargin-3
     handles.raw_data = [];
     handles.dt = 1/12; % 5 minutes
@@ -88,7 +107,7 @@ elseif 5 == nargin-3
     handles.track_breaking_flag = varargin{5};
         % convention - the data saved by ALYtools are not refined, so one needs
         % to refine it now
-        handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+        handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
         %handles.raw_data = tracks;
     handles.track_data = calculate_track_data(hObject,handles);
     %
@@ -121,9 +140,9 @@ elseif 2 == nargin-3
         % convention - the data saved by ALYtools are not refined, so one needs
         % to refine it now optionally
         if handles.track_breaking_flag    
-            handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+            handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
             if isempty(handles.raw_data)
-                disp('refine_tracks_by_excluding_mitosis_intervals - failed');
+                disp('refine_tracks_by_sorting_mitotic_intervals - failed');
                 handles.raw_data = tracks;                
             end
         else
@@ -457,9 +476,9 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     % convention - the data saved by ALYtools are not refined, so one needs
     % to refine it now - optionally
     if handles.track_breaking_flag
-        handles.raw_data = refine_tracks_by_excluding_mitosis_intervals(handles,tracks);
+        handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
         if isempty(handles.raw_data)
-            disp('refine_tracks_by_excluding_mitosis_intervals - failed');
+            disp('refine_tracks_by_sorting_mitotic_intervals - failed');
             handles.raw_data = tracks;
         end            
     else
@@ -572,7 +591,7 @@ for k=1:numel(D)
         sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]);
         [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
         s = sm_s-lf;
-        track_data(k,7+2) = sqrt(mean(s.*s));    
+        track_data(k,7+2) = sqrt(mean(s.*s)); % FRET ratio variability   
         
     %quantify tracks XY trajectory
     x = squeeze(track(:,2));
@@ -615,6 +634,12 @@ for k=1:numel(D)
 %         disp(k);
     %
 end
+
+dur = squeeze(track_data(:,1+2));
+stt = squeeze(track_data(:,12+2));
+handles.rng_duration = [min(dur) max(dur)];
+handles.rng_start_time = [min(stt) max(stt)];
+
 %
 % proper place to handle trend curves
 %     amin=[];
@@ -691,83 +716,9 @@ y_data=y_data(mask==1);
 str = get(handles.histo2_mode,'String');
 mode = str{get(handles.histo2_mode,'Value')};
 
-              switch x_ind
-                    case 2 % #speed
-                        x_min_val = 0;
-                        x_max_val = 10;
-                    case 3 % #directionality
-                        x_min_val = -1;
-                        x_max_val = 1;                  
-                    case 4 % #nghbrs
-                        x_min_val = 1;
-                        x_max_val = 12;
-                    case 5 % cell density
-                        x_min_val = 1e-7;
-                        x_max_val = 0.008;
-                    case 6 % FRET ratio
-                        x_min_val = 0.3;
-                        x_max_val = 3;
-                    case 7 % FRET ratio variability
-                        x_min_val = 0;
-                        x_max_val = 0.5;                        
-                    case 8 % donor intensity                     
-                        x_min_val = 0; 
-                        x_max_val = 1000;
-                    case 9 % acceptor intensity
-                        x_min_val = 0;
-                        x_max_val = 1000;
-                    case 10 % nucleus size
-                        x_min_val = 20;
-                        x_max_val = 400;
-                    case 11 % Pearson
-                        x_min_val = -1;
-                        x_max_val = 1;
-                    case 13 % autocorr. time
-                        x_min_val = 1;
-                        x_max_val = 120;                        
-                    case 14 % autocorr. time
-                        x_min_val = 0;
-                        x_max_val = 1;                                                
-              end                                        
-              switch y_ind
-                    case 2 % #speed
-                        y_min_val = 0;
-                        y_max_val = 10;
-                    case 3 % #directionality
-                        y_min_val = -1;
-                        y_max_val = 1;                  
-                    case 4 % #nghbrs
-                        y_min_val = 1;
-                        y_max_val = 12;
-                    case 5 % cell density
-                        y_min_val = 1e-7;
-                        y_max_val = 0.008;
-                    case 6 % FRET ratio
-                        y_min_val = 0.3;
-                        y_max_val = 3;
-                    case 7 % FRET ratio variability
-                        y_min_val = 0;
-                        y_max_val = 0.5;                        
-                    case 8 % donor intensity                     
-                        y_min_val = 0; 
-                        y_max_val = 1000;
-                    case 9 % acceptor intensity
-                        y_min_val = 0;
-                        y_max_val = 1000;
-                    case 10 % nucleus size
-                        y_min_val = 20;
-                        y_max_val = 400;
-                    case 11 % Pearson
-                        y_min_val = -1;
-                        y_max_val = 1;
-                    case 13 % autocorr. time
-                        y_min_val = 1;
-                        y_max_val = 120;
-                    case 14 % autocorr. time
-                        y_min_val = 0;
-                        y_max_val = 1;                                                
-              end                                                          
-
+[x_min_val, x_max_val] = visualization_range(handles,x_ind);
+[y_min_val, y_max_val] = visualization_range(handles,y_ind);
+                                                         
 if strcmp(mode,'scatter')
     plot(handles.histo2_axes,x_data,y_data,'r.');
     if ismember(x_ind,[2:11 13 14]) && ismember(y_ind,[2:11 13 14])
@@ -814,13 +765,16 @@ Ngrades = 256;
 Colors = jet(Ngrades);
 min_val = min(c_data);
 max_val = max(c_data);
+% ??? [min_val, max_val] = visualization_range(handles,c_ind);
 
 show_actual_dependence = false;
 if ismember(y_ind,[4 5 6 8 9 10 11 14])
     show_actual_dependence = true;
 end
 
+cla(handles.time_plot_axes,'reset');
 axes(handles.time_plot_axes);
+
 for k = 1:numel(y_data)
     if 1==mask(k)
         index = max(1,round((c_data(k) - min_val)/(max_val - min_val)*Ngrades));
@@ -908,83 +862,46 @@ if isfield(handles,'NUC_STATS')
                         index = 8;                                                                        
               end
               
-    if 0==index, return,end;
-    
-    mean_std = get(handles.show_per_frame_mean_std,'Value');
-    if mean_std && index <= size(handles.NUC_STATS,2)
-        meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
-        stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
-        taxis = handles.dt*(1:numel(meanvals));
-        if 1==index
-            meanvals = meanvals*(handles.pixelsize)^2;
-            stdvals = stdvals*(handles.pixelsize)^2;        
+    if 0~=index  
+        mean_std = get(handles.show_per_frame_mean_std,'Value');
+        if mean_std && index <= size(handles.NUC_STATS,2)
+            meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
+            stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
+            taxis = handles.dt*(1:numel(meanvals));
+            if 1==index
+                meanvals = meanvals*(handles.pixelsize)^2;
+                stdvals = stdvals*(handles.pixelsize)^2;        
+            end
+            if 7==index
+                meanvals = meanvals/(handles.pixelsize)^2;
+                stdvals = stdvals/(handles.pixelsize)^2;      
+            end                
+            errorbar(taxis,meanvals,stdvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %    
+        else
+    %         medvals = squeeze(handles.NUC_STATS(:,index,3)); % median
+    %         negvals = squeeze(handles.NUC_STATS(:,index,4)); % 025Q
+    %         posvals = squeeze(handles.NUC_STATS(:,index,5)); % 075Q        
+    %         taxis = handles.dt*(1:numel(medvals));
+    %         if 1==index
+    %             medvals = medvals*(handles.pixelsize)^2;
+    %             negvals = negvals*(handles.pixelsize)^2;
+    %             posvals = posvals*(handles.pixelsize)^2;
+    %         end
+    %         if 7==index
+    %             medvals = medvals/(handles.pixelsize)^2;
+    %             negvals = negvals/(handles.pixelsize)^2;
+    %             posvals = posvals/(handles.pixelsize)^2;
+    %         end                
+    %         errorbar(taxis,medvals,negvals,posvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %            
         end
-        if 7==index
-            meanvals = meanvals/(handles.pixelsize)^2;
-            stdvals = stdvals/(handles.pixelsize)^2;      
-        end                
-        errorbar(taxis,meanvals,stdvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %    
-    else
-%         medvals = squeeze(handles.NUC_STATS(:,index,3)); % median
-%         negvals = squeeze(handles.NUC_STATS(:,index,4)); % 025Q
-%         posvals = squeeze(handles.NUC_STATS(:,index,5)); % 075Q        
-%         taxis = handles.dt*(1:numel(medvals));
-%         if 1==index
-%             medvals = medvals*(handles.pixelsize)^2;
-%             negvals = negvals*(handles.pixelsize)^2;
-%             posvals = posvals*(handles.pixelsize)^2;
-%         end
-%         if 7==index
-%             medvals = medvals/(handles.pixelsize)^2;
-%             negvals = negvals/(handles.pixelsize)^2;
-%             posvals = posvals/(handles.pixelsize)^2;
-%         end                
-%         errorbar(taxis,medvals,negvals,posvals,'Color','black','Marker','o','MarkerFaceColor','magenta','linewidth',1); %            
     end
     hold(handles.time_plot_axes,'on');    
 end
 
 hold(handles.time_plot_axes,'off');
 
-              switch c_ind                    
-                    case 2 % #speed
-                        min_val = 0;
-                        max_val = 10;
-                    case 3 % #directionality
-                        min_val = -1;
-                        max_val = 1;                  
-                    case 4 % #nghbrs
-                        min_val = 1;
-                        max_val = 12;
-                    case 5 % cell density
-                        min_val = 1e-7;
-                        max_val = 0.008;
-                    case 6 % FRET ratio
-                        min_val = 0.3;
-                        max_val = 3;
-                    case 7 % FRET ratio variability
-                        min_val = 0;
-                        max_val = 0.5;                        
-                    case 8 % donor intensity                     
-                        min_val = 0; 
-                        max_val = 1000;
-                    case 9 % acceptor intensity
-                        min_val = 0;
-                        max_val = 1000;
-                    case 10 % nucleus size
-                        min_val = 20;
-                        max_val = 400;
-                    case 11 % Pearson
-                        min_val = -1;
-                        max_val = 1;
-                    case 13 % autocorr. time
-                        min_val = 1;
-                        max_val = 120;
-                    case 14 % autocorr. time
-                        min_val = 0;
-                        max_val = 1;                                                                        
-              end                                        
-
+[min_val, max_val] = visualization_range(handles,c_ind);
+                            
 try % calm down if there is no data,     
     c = colorbar(handles.time_plot_axes,'TickLabels',{linspace(min_val,max_val,11)});    
     c.Label.String = handles.features(c_ind);
@@ -996,32 +913,8 @@ axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)])
 catch 
 end
 
-              switch y_ind                    
-                    case 2 % #speed
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 10]);
-                    case 3 % #directionality
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);                  
-                    case 4 % #nghbrs
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 1 12]);
-                    case 5 % cell density
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 1e-7 0.008]);
-                    case 6 % FRET ratio
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0.3 3]);
-                    case 7 % FRET ratio variability
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 0.5]);
-                    case 8 % donor intensity                     
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 1000]);
-                    case 9 % acceptor intensity
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 1000]);
-                    case 10 % nucleus size
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 20 400]);
-                    case 11 % Pearson
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) -1 1]);
-                    case 13 % autocorr. time
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 120]);
-                    case 14 % FRET molar fraction
-                        axis(handles.time_plot_axes,[min(tb_data) max(te_data) 0 1]);
-              end                                        
+[y_min_val, y_max_val] = visualization_range(handles,y_ind);
+axis(handles.time_plot_axes,[min(tb_data) max(te_data) y_min_val y_max_val]);                                      
 
 xlabel(handles.time_plot_axes,'time [h]');
 %str = get(handles.time_plot_Y_feature,'String') 
@@ -1117,7 +1010,7 @@ visualize_time_dependence(hObject,handles);
 
 % this is highly specific function that exploits correlation between
 % FRET_ratio(t) and nuclear_size(t) during mitosis, relying on many hardcoded params
-function ref_tracks = refine_tracks_by_excluding_mitosis_intervals(handles,tracks)
+function ref_tracks = refine_tracks_by_sorting_mitotic_intervals(handles,tracks)
 ref_tracks = {};
 dt = handles.dt*60; % interval between frames in minutes 
 for k=1:numel(tracks)
@@ -1133,6 +1026,12 @@ for k=1:numel(tracks)
     pre_mit = round((3*7)/dt);
     post_mit = round((5*7)/dt);
     min_track_length = round((10*7)/dt);
+    
+    % interested in mitotic intervals
+    if ~strcmpi('exclude',handles.mitotic_intervals_option)
+        pre_mit = pre_mit*2;
+        post_mit = post_mit*2;        
+    end
     %
     sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]); % small smoothing window - HARDCODED
     [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
@@ -1152,6 +1051,16 @@ for k=1:numel(tracks)
     r = r > t; % thresholding
     %
     r = imclose(r,ones(fill_little_gaps_size,1)); % to fill little gaps - HARDCODED
+    
+%      if length(s1)>200
+%         figure(22);
+%         f=1:length(s1);
+%         h1=gca;
+%         plot(f,s1,'k.-',f,s2,'b.-',f,r,'g-');   
+%         grid(h1,'on');
+%         pause(1e-3); % put your breakpoint here
+%     end   
+    
     
 %      if length(s1)>200
 %         figure(22);
@@ -1176,8 +1085,8 @@ for k=1:numel(tracks)
 %         legend(h3,{'autocorrelation','up. confidence bound'},'fontsize',14);
 %         pause(1e-3); % put your breakpoint here
 %     end
-    
-    excl = zeros(size(r)); % exclusion mask
+
+    excl = zeros(size(r)); % exclusion mask   
     L = bwlabel(r);
     s = regionprops(L,'Centroid');
     for m=1:numel(s)
@@ -1187,6 +1096,21 @@ for k=1:numel(tracks)
         max_ind = min(length(r),x+post_mit);
         excl(min_ind:max_ind) = 1;
     end    
+    %
+%      if length(s1)>200
+%         figure(22);
+%         f=1:length(s1);
+%         h1=gca;
+%         plot(f,s1,'k.-',f,s2,'b.-',f,excl,'g-');   
+%         grid(h1,'on');
+%         pause(1e-3); % put your breakpoint here
+%     end       
+    
+    if strcmpi('exclude',handles.mitotic_intervals_option)
+        continue;
+    else
+        excl = ~excl;
+    end
     %
     indices = 1:length(excl);
     if 0~=sum(excl(:))
@@ -1199,8 +1123,7 @@ for k=1:numel(tracks)
                 ref_tracks = [ref_tracks; part_track];
             end
         end
-    end
-               
+    end          
 end
 
 
@@ -1216,6 +1139,7 @@ function show_cell_numbers_Callback(hObject, eventdata, handles)
 % hObject    handle to show_cell_numbers (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
 if ~isfield(handles,'cell_nums'), return, end
 t = handles.dt*(0:numel(handles.cell_nums)-1);
 h=figure;
@@ -1229,7 +1153,6 @@ figurename = get(handles.figure1,'Name');
 str = strsplit(figurename,(' : '));
 figurename = char(str(2));
 set(h,'Name',figurename);
-
 
 % --------------------------------------------------------------------
 function average_pixel_brightness_Callback(hObject, eventdata, handles)
@@ -1274,10 +1197,6 @@ function visualize_selection_Callback(hObject, eventdata, handles)
 t_dependent_Nuclei_ratio_FRET_visualizer(handles);
 
 
-
-
-
-
 % --- Executes on button press in update_vidi_immediately.
 function update_vidi_immediately_Callback(hObject, eventdata, handles)
 % hObject    handle to update_vidi_immediately (see GCBO)
@@ -1285,3 +1204,59 @@ function update_vidi_immediately_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of update_vidi_immediately
+
+
+function [minval, maxval] = visualization_range(handles,index)
+             switch index
+                     case 2 % #speed
+                        minval = min(handles.rng_speed);
+                        maxval = max(handles.rng_speed);
+                    case 3 % #directionality
+                        minval = min(handles.rng_directionality);
+                        maxval = max(handles.rng_directionality);                  
+                    case 4 % #nghbrs
+                        minval = min(handles.rng_nghbrs);
+                        maxval = max(handles.rng_nghbrs);  
+                    case 5 % cell density
+                        minval = min(handles.rng_cell_density);
+                        maxval = max(handles.rng_cell_density);  
+                    case 6 % FRET ratio
+                        minval = min(handles.rng_FRET_ratio);
+                        maxval = max(handles.rng_FRET_ratio);  
+                    case 7 % FRET ratio variability
+                        minval = min(handles.rng_FRET_ratio_variability);
+                        maxval = max(handles.rng_FRET_ratio_variability);  
+                    case {8,9} % donor intensity                     
+                        minval = min(handles.rng_intensity);
+                        maxval = max(handles.rng_intensity);  
+                    case 10 % nucleus size
+                        minval = min(handles.rng_nucleus_size);
+                        maxval = max(handles.rng_nucleus_size);  
+                    case 11 % Pearson
+                        minval = min(handles.rng_Pearson_corr);
+                        maxval = max(handles.rng_Pearson_corr);  
+                    case 13 % autocorr. time
+                        minval = min(handles.rng_autocorr_time);
+                        maxval = max(handles.rng_autocorr_time);  
+                    case 14 % FRET molar fraction
+                        minval = min(handles.rng_FRET_molar_fraction);
+                        maxval = max(handles.rng_FRET_molar_fraction);
+                     case 1 % duration
+                        minval = min(handles.rng_duration);
+                        maxval = max(handles.rng_duration);                    
+                    case 12 % start time
+                        minval = min(handles.rng_start_time);
+                        maxval = max(handles.rng_start_time);                   
+             end
+
+
+% --------------------------------------------------------------------
+function mitotic_interval_FRET_ratio_heatmap_Callback(hObject, eventdata, handles)
+% hObject    handle to mitotic_interval_FRET_ratio_heatmap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp(handles.mitotic_intervals_option,'LEAVE ONLY')
+    t_dependent_Nuclei_ratio_FRET_ratio_heatmapper(handles);
+end
+
