@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_ratio_heatmapper(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_ratio_heatmapper
 
-% Last Modified by GUIDE v2.5 31-Oct-2018 12:27:11
+% Last Modified by GUIDE v2.5 01-Nov-2018 16:00:21
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_ratio_heatmapper_OpeningFcn, ...
@@ -113,6 +113,22 @@ function visualize(handles)
     locmaxpeaks = zeros(1,numel(tracks));
     %peakstrengthindicator = zeros(1,numel(tracks));
     maxlength = -Inf;
+
+    if get(handles.selection_only,'Value')
+        mask = handles.TrackPlotter_handles.mask;
+        tracks = tracks(mask~=0);    
+        Dall = handles.TrackPlotter_handles.track_data;
+        D = [];
+        for k=1:numel(mask)
+            rec = Dall(k,:);
+            if 1==mask(k)
+                D=[D;rec];
+            end
+        end
+    else
+        D = handles.TrackPlotter_handles.track_data; % impose mask on D in a loop
+    end
+    
     for k=1:numel(tracks)
         track = tracks{k};
         FRET_ratio = squeeze(track(:,4));
@@ -139,8 +155,7 @@ function visualize(handles)
     %[~,indices]=sort(peakstrengthindicator);
     
     par_ind = get(handles.features_chooser,'Value');
-    
-     D = handles.TrackPlotter_handles.track_data;
+         
 %      par_ind = 1; % duration
 %      par_ind = 2; % velocity 
 %      par_ind = 3; % directionality
@@ -191,3 +206,13 @@ ylabel(handles.heatmap_axes,str{par_ind});
 tax =  handles.TrackPlotter_handles.dt*(1:size(M,2));
 set(handles.heatmap_axes, 'xticklabel', {linspace(min(tax),max(tax),11)}, ... 
     'yticklabel', {flip(linspace(min(sortarr),max(sortarr),11))});
+
+
+% --- Executes on button press in selection_only.
+function selection_only_Callback(hObject, eventdata, handles)
+% hObject    handle to selection_only (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of selection_only
+visualize(handles);

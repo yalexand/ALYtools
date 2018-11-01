@@ -75,9 +75,20 @@ set(handles.filter_table, 'ColumnFormat', {'numeric','numeric'} );
 % pos_7_post.OME.tif_analysis_output.OME.tiff
 % pos_7_post_FRET_ratio_featured_TRACKMATE_OUTPUT.mat
 %
-tiffname  = strrep(handles.TrackPlotter_handles.fullfilename, ...
+tiffname1  = strrep(handles.TrackPlotter_handles.fullfilename, ...
             '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat', ...
             '.OME.tif_analysis_output.OME.tiff');
+tiffname2  = strrep(handles.TrackPlotter_handles.fullfilename, ...
+            '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat', ...
+            '.tif_analysis_output.OME.tiff');
+        
+if isfile(tiffname1)        
+    tiffname = tiffname1;
+elseif isfile(tiffname2)            
+    tiffname = tiffname2;    
+else
+    tiffname = tiffname1; % ??
+end
         
 try
     hw = waitbar(0,'Loading image file..');
@@ -87,10 +98,12 @@ try
     
     handles.image = squeeze(I(:,:,1,3,:));
 
+    numSteps = size(handles.image,3);
     set(handles.theslider,'Min',1);
-    set(handles.theslider,'Max',size(handles.image,3));
+    set(handles.theslider,'Max',numSteps);
     set(handles.theslider,'Value',1);
-    
+    set(handles.theslider, 'SliderStep', [1/(numSteps-1) , 1/(numSteps-1) ]);    
+              
     A = I(:,:,1,3,:);
     lowestValue = min(A(A(:)>0));  
     highestValue = quantile(A(A(:)~=0),0.9);
