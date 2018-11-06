@@ -183,8 +183,12 @@ function show_frame(hObject, eventdata, handles)
         u = v_min + (v_max-v_min)*u/3;
         imagesc(u,'Parent',AXES);
     end
-    
+           
     caxis(AXES,[handles.lowestValue-2/256, handles.highestValue]);
+    cmap = jet(256);       
+    cmap(1,:)=[0,0,0];
+    colormap(AXES,cmap);    
+        
     daspect(AXES,[1 1 1]);
     set(AXES,'XTick',[]);
     set(AXES,'YTick',[]);

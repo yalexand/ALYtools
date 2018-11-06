@@ -739,6 +739,11 @@ elseif strcmp(mode,'histo2')
     corrmap = correlation_map(x_data,y_data,corr_map_W);       
     AXES = handles.histo2_axes;
     imagesc(corrmap,'Parent',AXES);
+    
+    cmap = jet(256);       
+    cmap(1,:)=[0,0,0];
+    colormap(AXES,cmap);         
+        
     daspect(AXES,[1 1 1]);
     set(AXES, 'xticklabel', [], 'yticklabel', []);
 end
@@ -907,8 +912,11 @@ hold(handles.time_plot_axes,'off');
 [min_val, max_val] = visualization_range(handles,c_ind);
                             
 try % calm down if there is no data,     
-    c = colorbar(handles.time_plot_axes,'TickLabels',{linspace(min_val,max_val,11)});    
-    c.Label.String = handles.features(c_ind);
+    c = colorbar(handles.time_plot_axes,'TickLabels',{linspace(min_val,max_val,11)});        
+    caxis(handles.time_plot_axes,[min_val,max_val]);
+    cmap = jet(256);       
+    colormap(handles.time_plot_axes,cmap);                
+    c.Label.String = handles.features(c_ind);            
 catch
 end
 

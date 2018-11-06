@@ -129,6 +129,8 @@ function visualize(handles)
         D = handles.TrackPlotter_handles.track_data; % impose mask on D in a loop
     end
     
+    dt=handles.TrackPlotter_handles.dt;
+    
     for k=1:numel(tracks)
         track = tracks{k};
         FRET_ratio = squeeze(track(:,4));
@@ -146,6 +148,25 @@ function visualize(handles)
             maxpks=max(FRET_ratio);
             locmaxpeaks(k) = find(FRET_ratio==maxpks(1));
         end
+        % exceptional case when after-peak is stronger than the first peak
+        if ~isempty(maxpks) && numel(pks)>=2
+            sortedpks = flip(sort(pks));
+            p1=sortedpks(1);
+            p2=sortedpks(2);
+            if abs(p1-p2)/max(p1,p2)<0.02 % 2% only if difference in peaks
+                loc1 = find(FRET_ratio==p1);
+                loc2 = find(FRET_ratio==p2);
+                loc1=loc1(1);
+                loc2=loc2(1);
+                d=abs(loc1-loc2)*dt;
+                preferred_location = min(loc1,loc2);
+                if d<1.2 && preferred_location ~= locmaxpeaks(k) % 1.2 of an hour
+                    %[locmaxpeaks(k) preferred_location d p1 p2]
+                    locmaxpeaks(k) = preferred_location; % first peak                    
+                end
+            end
+        end        
+        % exceptional case when after-peak is stronger than the first peak
         l=numel(FRET_ratio);
         if l>maxlength
             maxlength=l;
@@ -200,6 +221,11 @@ function visualize(handles)
 %     DMobj = DataMatrix(M);
 %     hmo = HeatMap(DMobj,'Colormap',redgreencmap);
 imagesc(handles.heatmap_axes,M);
+
+    cmap = jet(256);       
+    cmap(1,:)=[0,0,0];
+    colormap(handles.heatmap_axes,cmap);
+
 xlabel(handles.heatmap_axes,'time [h]');
 str = get(handles.features_chooser,'String'); 
 ylabel(handles.heatmap_axes,str{par_ind});
