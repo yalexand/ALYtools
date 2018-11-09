@@ -955,7 +955,8 @@ end
                          gpu_volm = [];
                          
                          for y = 1 : YL                                       
-                            sinogram = squeeze(gpu_proj(:,y,:));                             
+                            sinogram = squeeze(gpu_proj(:,y,:)); 
+                            sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                             reconstruction = RF(sinogram);
                             if isempty(gpu_volm)
                                 [sizeR1,sizeR2] = size(reconstruction);
@@ -983,6 +984,7 @@ end
                          %
                          for y = 1 : szY_r 
                             sinogram = squeeze(gpu_proj_r(:,y,:));
+                            sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                             reconstruction = RF(sinogram);                            
                             if isempty(gpu_volm)
                                 [sizeR1,sizeR2] = size(reconstruction);
@@ -1001,6 +1003,12 @@ end
                          
                          tic
                                 sinogram = squeeze(double(obj.proj(:,y_min,:)));
+                                 %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
+                                    [Nlines,~] = size(sinogram);
+                                    Ladd = fix(0.1*Nlines);
+                                    sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'pre');
+                                    sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'post');
+                                 %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);                            
                                 reconstruction = RF(sinogram);
                                 [sizeR1,sizeR2] = size(reconstruction);
                                 V = zeros(sizeR1,sizeR2,YL,'single'); % XYZ                        
@@ -1018,6 +1026,12 @@ end
                          end
                          parfor y = 1 : YL
                             sinogram = squeeze(double(PR(:,y_min+y-1,:)));
+                             %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
+                                [Nlines,~] = size(sinogram);
+                                Ladd = fix(0.1*Nlines);
+                                sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'pre');
+                                sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'post');
+                             %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);                            
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
                             V(:,:,y) = reconstruction;
                             if verbose hbar.iterate(20); end
@@ -1038,6 +1052,7 @@ end
                          %
                          tic
                          sinogram = squeeze(double(proj_r(:,1,:)));
+                         sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                          reconstruction = RF(sinogram);                                                        
                          [sizeR1,sizeR2] = size(reconstruction);                         
                          V = zeros(sizeR1,sizeR2,szY_r,'single'); % XYZ
@@ -1053,7 +1068,13 @@ end
                             hbar = []; 
                          end
                          parfor y = 1 : szY_r
-                            sinogram = squeeze(double(proj_r(:,y,:)));                             
+                            sinogram = squeeze(double(proj_r(:,y,:)));
+                             %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
+                                [Nlines,~] = size(sinogram);
+                                Ladd = fix(0.1*Nlines);
+                                sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'pre');
+                                sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'post');
+                             %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);                            
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
                             V(:,:,y) = reconstruction;
                             if verbose hbar.iterate(20); end
@@ -1070,6 +1091,7 @@ end
                                                                            
                          for y = 1 : YL                                       
                             sinogram = squeeze(double(obj.proj(:,y_min+y-1,:)));
+                            sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                             % 
                             reconstruction = RF(sinogram);
                             if isempty(V)
@@ -1094,7 +1116,8 @@ end
                          end
                          %
                          for y = 1 : szY_r 
-                            sinogram = squeeze(double(proj_r(:,y,:)));                             
+                            sinogram = squeeze(double(proj_r(:,y,:))); 
+                            sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                             reconstruction = RF(sinogram);                                                        
                             if isempty(V)
                                 [sizeR1,sizeR2] = size(reconstruction);
@@ -1116,6 +1139,17 @@ end
              
              obj.on_new_volm_set;
         end
+%-------------------------------------------------------------------------%         
+function padded_sinogram = pad_sinogram_by_width_percentage(obj,sinogram,p,~)
+    if p < 0.01 || p >0.5 
+        padded_sinogram = sinogram;
+        return;
+    end
+    [N,~] = size(sinogram);
+    L = fix(p*N);
+    R = padarray(sinogram,[L 0], 'replicate' ,'pre');
+    padded_sinogram = padarray(R,[L 0], 'replicate' ,'post');
+end
 %-------------------------------------------------------------------------% 
 function padded_sinogram = pad_sinogram_for_iradon(obj,sinogram,~)
             
@@ -1160,12 +1194,13 @@ end
              end             
                                                         
              % to define reconstruction size
-             if strcmp(obj.Reconstruction_GPU,'ON') && obj.isGPU                                          
-                         gpu_sinogram = squeeze(gpuArray(cast(PROJ(:,1,:),'single')));
+             sinogram = squeeze(cast(PROJ(:,1,:),'single'));
+             sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);             
+             if strcmp(obj.Reconstruction_GPU,'ON') && obj.isGPU  
+                         gpu_sinogram = squeeze(gpuArray(sinogram));
                          reconstruction = gather(RF(gpu_sinogram));
                          [size_volm_X,size_volm_Y] = size(reconstruction);                                               
              elseif strcmp(obj.Reconstruction_GPU,'OFF')                                                                                                                     
-                         sinogram = squeeze(cast(PROJ(:,1,:),'single'));
                          reconstruction = RF(sinogram);
                          [size_volm_X,size_volm_Y] = size(reconstruction);
              end                     
@@ -1190,7 +1225,9 @@ end
              %                       
              if strcmp(obj.Reconstruction_GPU,'ON') && obj.isGPU                                                           
                  for y = 1 : sizeY
-                    gpu_sinogram = squeeze(gpuArray(cast(PROJ(:,y,:),'single')));
+                    sinogram = squeeze(cast(PROJ(:,y,:),'single'));
+                    sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
+                    gpu_sinogram = squeeze(gpuArray(sinogram));
                     gpu_recon = RF(gpu_sinogram);
                     gpu_recon( gpu_recon < 0 ) = 0;
                     reconstruction = gather(gpu_recon);
@@ -1202,6 +1239,12 @@ end
                  % parfor case
                          tic
                          sinogram = squeeze(cast(PROJ(:,1,:),'single'));
+                         %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
+                            [Nlines,~] = size(sinogram);
+                            Ladd = fix(0.1*Nlines);
+                            sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'pre');
+                            sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'post');
+                         %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);                                                                                                       
                          reconstruction = RF(sinogram);                                                        
                          [sizeR1,sizeR2] = size(reconstruction);
                          obj.volm = [];
@@ -1219,6 +1262,12 @@ end
                          end
                          parfor y = 1 : sizeY
                             sinogram = squeeze(cast(PROJ(:,y,:),'single'));
+                             %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
+                                [Nlines,~] = size(sinogram);
+                                Ladd = fix(0.1*Nlines);
+                                sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'pre');
+                                sinogram = padarray(sinogram,[Ladd 0], 'replicate' ,'post');
+                             %sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);                            
                             reconstruction = iradon(sinogram,acting_angles,interp,filter,fscaling);
                             reconstruction( reconstruction <= 0 ) = 0; 
                             V(:,:,y) = cast(reconstruction,output_datatype);
@@ -1230,6 +1279,7 @@ end
              elseif strcmp(obj.Reconstruction_GPU,'OFF')                                                                                                                     
                  for y = 1 : sizeY
                     sinogram = squeeze(cast(PROJ(:,y,:),'single'));
+                    sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                     reconstruction = RF(sinogram);
                     reconstruction( reconstruction <= 0 ) = 0;
                     obj.volm(:,:,y) = cast(reconstruction,output_datatype);
@@ -1658,7 +1708,8 @@ end
                          gpu_volm = [];
                          
                          for y = 1 : YL                                       
-                            sinogram = squeeze(gpu_proj(:,y,:));                             
+                            sinogram = squeeze(gpu_proj(:,y,:));
+                            sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                             reconstruction = RF(sinogram);
                             if isempty(gpu_volm)
                                 [sizeR1,sizeR2] = size(reconstruction);
@@ -1672,6 +1723,7 @@ end
                                                                                                                      
                          for y = 1 : YL                                       
                             sinogram = squeeze(double(obj.proj(:,y_min+y-1,:)));
+                            sinogram = obj.pad_sinogram_by_width_percentage(sinogram,0.1);
                             % 
                             reconstruction = RF(sinogram);
                             if isempty(obj.volm)
