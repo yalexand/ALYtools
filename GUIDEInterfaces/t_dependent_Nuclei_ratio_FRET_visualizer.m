@@ -81,11 +81,16 @@ tiffname1  = strrep(handles.TrackPlotter_handles.fullfilename, ...
 tiffname2  = strrep(handles.TrackPlotter_handles.fullfilename, ...
             '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat', ...
             '.tif_analysis_output.OME.tiff');
+tiffname3  = strrep(handles.TrackPlotter_handles.fullfilename, ...
+            '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat', ...
+            '.lsm_analysis_output.OME.tiff');        
         
-if isfile(tiffname1)        
+if isa(tiffname1,'file')        
     tiffname = tiffname1;
-elseif isfile(tiffname2)            
-    tiffname = tiffname2;    
+elseif isa(tiffname2,'file')
+    tiffname = tiffname2;
+elseif isa(tiffname3,'file')
+    tiffname = tiffname3;        
 else
     tiffname = tiffname1; % ??
 end
@@ -200,6 +205,18 @@ function image_mask = calculate_image_mask(hObject, eventdata, handles)
     D = handles.TrackPlotter_handles.track_data;
     mask = handles.TrackPlotter_handles.mask;
     %
+    %
+%     minmaxlimits = get(handles.filter_table, 'Data');
+%     minmaxlimits = minmaxlimits(2:size(minmaxlimits,1),:);
+%     D = D(:,3:size(D,2));
+%     dur_min_val = minmaxlimits(1,1);
+%     dur_max_val = minmaxlimits(1,2);
+%     dur_vals = squeeze(D(:,1));
+%     dur_vals(isnan(dur_vals)) = dur_min_val; % safety
+%     dur_mask = dur_vals>=dur_min_val & dur_vals<=dur_max_val;    
+%     %
+%     mask = mask |~ dur_mask;  % not good in all cases but may be useful sometimes
+    %
     hw = waitbar(0,'Labeling..');    
     %
     L = zeros(size(handles.image));
@@ -220,7 +237,7 @@ function image_mask = calculate_image_mask(hObject, eventdata, handles)
     for k=1:N
         if ~isempty(hw), waitbar(k/N,hw); drawnow, end;
             track = DR{k};
-            frames = round(track(:,1));                
+            frames = round(track(:,1));
             x = round(track(:,2));
             y = round(track(:,3));
                 x(0==x)=1;
