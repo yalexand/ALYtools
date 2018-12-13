@@ -421,7 +421,7 @@ classdef ALYtools_menu_controller < handle
              value = enter_value();
              if isempty(value) || ~isnumeric(value) || value==obj.data_controller.microns_per_pixel || value <=0, return, end;
              obj.data_controller.microns_per_pixel = value;            
-             set(obj.menu_settings_microns_per_pixel,'Label',['Microns per pixel ' num2str(obj.data_controller.microns_per_pixel)]);                                                 
+             set(obj.menu_settings_microns_per_pixel,'Label',['Microns per pixel ' num2str(obj.data_controller.microns_per_pixel)]);
         end        
         
          %------------------------------------------------------------------                                                                           
@@ -442,6 +442,7 @@ classdef ALYtools_menu_controller < handle
              filespec = fullfile(fpath,fname);
              try
                 obj.data_controller.load_settings(filespec);
+                set(obj.menu_settings_microns_per_pixel,'Label',['Microns per pixel ' num2str(obj.data_controller.microns_per_pixel)]);
              catch
                 errordlg('Error while trying to load settings file');
              end
