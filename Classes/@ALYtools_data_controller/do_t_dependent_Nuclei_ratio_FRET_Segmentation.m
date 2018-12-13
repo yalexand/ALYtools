@@ -18,18 +18,31 @@
             % to reduce to "T" dependence
             
             % segment
-            %sT = 96; % .. for debugging
+            %sT = 32; % .. for debugging
             icyvol = zeros(sX,sY,3,1,sT,'single');
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,D_channel,k)));
                ua = single(squeeze(obj.imgdata(:,:,1,A_channel,k)));
+                                             
                if 0==sum(ud(:)) || 0==sum(ud(:)) , continue, end % ??
                  
-               %S = 16;  
                S = ceil(16*fac);
                smooth_scale = ceil(4*fac);
                max_hole_size = smooth_scale^2;
-               
+                              
+               % mask zeros that may occur due to usage of warp transform
+               if 0~=sum(sum((0==ud)))
+                   z = imdilate(ud,strel('disk',S));
+                   s = z(0==ud);
+                   ud(0==ud) = min(s(:))/1.75;
+               end
+               if 0~=sum(sum((0==ua)))
+                   z = imdilate(ua,strel('disk',S));
+                   s = z(0==ua);
+                   ua(0==ua) = min(s(:))/1.75;
+               end               
+               % mask zeros that may occur due to usage of warp transform
+                                             
                K  = 2.5;
                % t = 0.055; % good for multiphoton data
                t = 0.1; % less generous
@@ -48,7 +61,7 @@
                  % fill small holes - ends                                
                %               
                nukes = z;               
-               nukes = bwareaopen(nukes,100); % safety
+               nukes = bwareaopen(nukes,ceil(100*fac*fac)); % safety
                sgm_d = nukes;
                % another one - acceptor
                z = imresize(ua,[2*sX 2*sY],'bicubic');

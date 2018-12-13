@@ -37,7 +37,7 @@ grid on;
 ax_new=gca;
 set(ax_new,'Position','default');
 legend(ax_new,'-DynamicLegend');
-saveName = [output_directory filesep fname '_segmented_intensities'];
+saveName = [output_directory filesep fname '_segmented_intensities.fig'];
 saveas(h,saveName,'fig');
 close(h);
 
@@ -81,7 +81,7 @@ C = (1-(1-E)*b_A);
 % cell density (by Delaunay) 
 % FRET molar fraction 
 
-obj.imgdata = []; % helps with memory
+%obj.imgdata = []; % helps with memory
 
 use_memmap = sX*sY*8*nFovs >= 1024*1024*8*780/2;
 if use_memmap   
@@ -634,7 +634,7 @@ end
             tracks{k} = ext_track;
         end
 
-fullfname = [output_directory filesep fname '_FRET_ratio_featured_TRACKMATE_OUTPUT'];
+fullfname = [output_directory filesep fname '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat'];
 dt = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
 microns_per_pixel = obj.microns_per_pixel;
 %
