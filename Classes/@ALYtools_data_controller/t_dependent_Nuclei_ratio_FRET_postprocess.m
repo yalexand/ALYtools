@@ -81,7 +81,7 @@ C = (1-(1-E)*b_A);
 % cell density (by Delaunay) 
 % FRET molar fraction 
 
-%obj.imgdata = []; % helps with memory
+obj.imgdata = []; % helps with memory
 
 use_memmap = sX*sY*8*nFovs >= 1024*1024*8*780/2;
 if use_memmap   
@@ -318,7 +318,7 @@ end
 t = (0:numel(NUCDATA)-1)*obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
 
 % save N(t) curve
-xlswrite([output_directory filesep fname ' cell numbers curve'],[t' cell_nums']);
+xlswrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_nums']);
 
 try % may fail on some versions of Matlab
     h=figure; 

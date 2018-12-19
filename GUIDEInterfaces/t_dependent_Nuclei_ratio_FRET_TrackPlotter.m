@@ -215,6 +215,8 @@ set(handles.histo2_mode,'Value',2);
 set(handles.time_plot_Y_feature,'Value',6);
 set(handles.time_plot_colour_feature,'Value',7);
 
+set(handles.actual_dependence_checkbox,'Value',true);
+
 visualize_histo2(hObject,handles);
 visualize_time_dependence(hObject,handles);
 
