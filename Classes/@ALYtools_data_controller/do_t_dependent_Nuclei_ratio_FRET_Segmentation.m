@@ -17,6 +17,11 @@
             end
             % to reduce to "T" dependence
             
+            z = sum(obj.imgdata,5);
+            i1 = squeeze(z(:,:,:,1));
+            i2 = squeeze(z(:,:,:,2));
+            registration_exclusion_mask = (i1==0) | (i2==0);
+                        
             % segment
             %sT = 32; % .. for debugging
             icyvol = zeros(sX,sY,3,1,sT,'single');
@@ -105,12 +110,15 @@
                     % icy_imshow(z+dont_break); % to see what is going on                   
                     nukes = nukes | dont_break; % print the "dont_break" over, undoing excessive breaks
                     % break nuclear clumps - end                                               
-                    %
+                    %                    
                 nukes = bwareaopen(nukes,ceil(100*fac*fac)); % safety               
 
                 nukes = imresize(double(nukes),[sX sY],'bicubic');
                 nukes = (nukes>0.8); % binarize this way
-                                             
+                     
+                nukes = nukes &~ registration_exclusion_mask;     
+                nukes = bwareaopen(nukes,ceil(100/4*fac*fac)); % 100 divided by 4, because resized back
+                
                 icyvol(:,:,1,1,k) = ud;
                 icyvol(:,:,2,1,k) = ua;               
                 icyvol(:,:,3,1,k) = nukes;

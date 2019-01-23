@@ -3387,7 +3387,7 @@ end
                 hw = waitbar(0,['Conducting ' obj.PR_mode ' segmentation, please wait']);
                 for x=1:size(u,1)
                     if ~isempty(hw), waitbar(x/size(u,1),hw); drawnow, end;                            
-                    for y=1:size(u,2)
+                     for y=1:size(u,2)
                         H = [uxx1(x,y) uxy1(x,y); uxy1(x,y) uyy1(x,y)];
                         [~,D] = eig(H); 
                         upp = D(1,1); 
