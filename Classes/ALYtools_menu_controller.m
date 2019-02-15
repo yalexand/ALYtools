@@ -78,6 +78,7 @@ classdef ALYtools_menu_controller < handle
     menu_settings_problem_per_image_TCSPC_FLIM;
     menu_settings_problem_per_image_TCSPC_FLIM_PHASOR;
     menu_settings_problem_t_dependent_Nuclei_ratio_FRET;
+    menu_settings_problem_Image_Tiling;    
         
     %================================= visualization    
     menu_visualization_setup_Icy_directory;
@@ -247,7 +248,8 @@ classdef ALYtools_menu_controller < handle
             if isempty(filenames), return, end;       
             if isnumeric(filenames) && 0==filenames, return, end;
                         
-            obj.data_controller.load_multiple(filenames,pathname,true); % verbose true
+            %obj.data_controller.load_multiple(filenames,pathname,true); % verbose true
+            obj.data_controller.load_multiple(filenames,pathname,false); % verbose true
             set(obj.menu_settings_microns_per_pixel,'Label',['Microns per pixel ' num2str(obj.data_controller.microns_per_pixel)]);
         end                 %------------------------------------------------------------------                
          
@@ -355,7 +357,12 @@ classdef ALYtools_menu_controller < handle
          set(obj.menu_settings_problem,'Label',['Problem = ' 't_dependent_Nuclei_ratio_FRET']);        
          obj.data_controller.problem = 't_dependent_Nuclei_ratio_FRET';
          set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
-    end                        
+     end                        
+    function menu_settings_problem_Image_Tiling_callback(obj, ~, ~) 
+         set(obj.menu_settings_problem,'Label',['Problem = ' 'Image_Tiling']);        
+         obj.data_controller.problem = 'Image_Tiling';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+    end             
          %------------------------------------------------------------------                    
     
     function menu_settings_problem_dependent_callback(obj, ~, ~)
@@ -376,6 +383,8 @@ classdef ALYtools_menu_controller < handle
              MPHG_Problem_Specific_settings(obj.data_controller);                                           
         elseif strcmp(obj.data_controller.problem,'per_image_TCSPC_FLIM') || strcmp(obj.data_controller.problem,'per_image_TCSPC_FLIM_PHASOR') 
              per_image_TCSPC_FLIM_Problem_Specific_settings(obj.data_controller);                                                        
+        elseif strcmp(obj.data_controller.problem,'Image_Tiling')
+             ImageTiling_Problem_Specific_settings(obj.data_controller);                                                        
         end
                         
     end        

@@ -55,7 +55,7 @@ function handles = setup_menu(obj,handles)
     
     %================================= segmentation
     
-    menu_segmentation = uimenu(obj.window,'Label','Segmentation');   
+    menu_segmentation = uimenu(obj.window,'Label','Segmentation');
     handles.menu_segmentation_adjust = uimenu(menu_segmentation,'Label','Adjust');
     handles.menu_segmentation_save = uimenu(menu_segmentation,'Label','Make and save','Separator','on');
     handles.menu_segmentation_load = uimenu(menu_segmentation,'Label','Load and use');
@@ -85,6 +85,7 @@ function handles = setup_menu(obj,handles)
     handles.menu_settings_problem_per_image_TCSPC_FLIM = uimenu(handles.menu_settings_problem,'Label','per_image_TCSPC_FLIM','Separator','on');
     handles.menu_settings_problem_per_image_TCSPC_FLIM_PHASOR = uimenu(handles.menu_settings_problem,'Label','per_image_TCSPC_FLIM_PHASOR','Separator','on');
     handles.menu_settings_problem_t_dependent_Nuclei_ratio_FRET = uimenu(handles.menu_settings_problem,'Label','t_dependent_Nuclei_ratio_FRET','Separator','on');
+    handles.menu_settings_problem_Image_Tiling = uimenu(handles.menu_settings_problem,'Label','Image_Tiling','Separator','on');    
     
     handles.menu_settings_problem_dependent = uimenu(menu_settings,'Label','Problem-Specific','Separator','on');                    
     handles.menu_settings_general = uimenu(menu_settings,'Label','General','Separator','on');                        

@@ -165,24 +165,23 @@ classdef ALYtools_gui
             
             % verify that enough memory is allocated
             bfCheckJavaMemory();
-          
+                                   
             % load both bioformats & OMERO
             autoloadBioFormats = 1;
-
             % load the Bio-Formats library into the MATLAB environment
             status = bfCheckJavaPath(autoloadBioFormats);
             assert(status, ['Missing Bio-Formats library. Either add loci_tools.jar '...
                 'to the static Java path or add it to the Matlab path.']);
-
+                        
             % initialize logging
             loci.common.DebugTools.enableLogging('INFO');
             java.lang.System.setProperty('javax.xml.transform.TransformerFactory', 'com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl');            
             
             FijiScriptsDirectory = handles.data_controller.FijiScriptsDirectory;
-            if isdir(FijiScriptsDirectory)
+            if isfolder(FijiScriptsDirectory)
                 addpath(FijiScriptsDirectory);
                 Miji(false);
-            end;
+            end
             
             close all;
             

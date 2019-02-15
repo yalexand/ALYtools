@@ -283,6 +283,13 @@ classdef ALYtools_data_controller < handle
             t_dependent_Nuclei_ratio_FRET_b_D = 1;
             %
             t_dependent_Nuclei_ratio_FRET_donor_channel = 1;
+            %
+            ImageTiling_Ncols = 0;
+            ImageTiling_Nrows = 0;
+            ImageTiling_Ovlp_X = 0.5;
+            ImageTiling_Ovlp_Y = 0.5;            
+            ImageTiling_QT = 0;
+            ImageTiling_mode = 'bleached_fluor'; %'brightfield'
     end    
         
     properties(Transient,Hidden)
@@ -386,13 +393,15 @@ classdef ALYtools_data_controller < handle
                 obj.show_data(obj.send_original_to_Icy_on_show);
                 obj.M_filenames{1} = filenames;                
             else
-                hw = waitbar(0,'Loading files, please wait');
-                for k=1:numel(filenames)                
-                    if ~obj.open_image([pathname char(filenames(k))]), break, end;
+                obj.imgdata = [];
+                hw = [];
+                if verbose, hw = waitbar(0,'Loading files, please wait'); end;
+                for k=1:numel(filenames)       
+                    if ~obj.open_image([pathname filesep char(filenames(k))]), break, end;
                     obj.M_imgdata{k} = obj.imgdata;
                     obj.M_filenames{k} = filenames(k);
                     % obj.current_filename = filename;  
-                    obj.show_data(obj.send_original_to_Icy_on_show);                
+                    if ~obj.run_headless, obj.show_data(obj.send_original_to_Icy_on_show); end;
                     if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end; 
                 end
                 if ~isempty(hw), delete(hw), drawnow; end;
@@ -403,7 +412,8 @@ classdef ALYtools_data_controller < handle
             
         end      
 %-------------------------------------------------------------------------%        
-        function load(obj,filename,pathname,verbose,~)                        
+        function load(obj,filename,pathname,verbose,~)
+            obj.M_imgdata = [];
             obj.open_image([pathname filesep filename]);                 
             obj.current_filename = filename; 
             if ~isempty(obj.scene_axes)
@@ -513,7 +523,7 @@ classdef ALYtools_data_controller < handle
                              obj.HL1_ref_channel = 1;
                          end                                               
                          
-                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' 't_dependent_Nuclei_ratio_FRET' }
+                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' 't_dependent_Nuclei_ratio_FRET', 'Image_Tiling'}
                     
                      % if sT<6, don't believe it is T, reinterpret as channels
                      if sT < 6 && sC ==1
@@ -581,7 +591,7 @@ classdef ALYtools_data_controller < handle
                     if 3~=sC, obj.imgdata = []; cla(obj.scene_axes); errordlg('3 channel image is expected'); return; end
                     image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes); 
                     
-                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks'}
+                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks','Image_Tiling'}
                     I = double(obj.imgdata);
                     if 3 == sC || 4 == sC
                         image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes);
@@ -591,7 +601,7 @@ classdef ALYtools_data_controller < handle
                 case {'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'}
                     image(uint8(map(squeeze(sum(I,5)),0,255)),'Parent',obj.scene_axes);
                 case 't_dependent_Nuclei_ratio_FRET'                    
-                    image(uint8(map(double(squeeze(obj.imgdata(:,:,1,1,1))),0,255)),'Parent',obj.scene_axes);                    
+                    image(uint8(map(double(squeeze(obj.imgdata(:,:,1,1,1))),0,255)),'Parent',obj.scene_axes);                                        
             end
             %
             daspect(obj.scene_axes,[1 1 1]);
@@ -765,6 +775,8 @@ classdef ALYtools_data_controller < handle
                 case 't_dependent_Nuclei_ratio_FRET'
                     % t_dependent_Nuclei_ratio_FRET_Segmentation_settings(obj);
                     
+                case 'Image_Tiling'
+                    obj.do_ImageTiling_Segmentation(true);                    
             end
 
         end    
@@ -871,7 +883,9 @@ classdef ALYtools_data_controller < handle
                 case 'per_image_TCSPC_FLIM_PHASOR'
                     [datas, captions, table_names, fig] = obj.analyze_per_image_TCSPC_FLIM_PHASOR;
                 case 't_dependent_Nuclei_ratio_FRET'
-                    [datas, captions, table_names, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;                                        
+                    [datas, captions, table_names, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;
+                case 'Image_Tiling'
+                    [datas, captions, table_names, fig] = obj.analyze_ImageTiling;
             end % switch
 
             timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
@@ -900,7 +914,8 @@ classdef ALYtools_data_controller < handle
                     elseif strcmp(obj.problem,'CIDR') || strcmp(obj.problem,'TTO') ... 
                             || strcmp(obj.problem,'PR') || strcmp(obj.problem,'NucCyt') ...
                             || strcmp(obj.problem,'MPHG') || strcmp(obj.problem,'Experimental') ...
-                            || strcmp(obj.problem,'Sparks') || strcmp(obj.problem,'per_image_TCSPC_FLIM') 
+                            || strcmp(obj.problem,'Sparks') || strcmp(obj.problem,'per_image_TCSPC_FLIM') ... 
+                            || strcmp(obj.problem,'Image_Tiling')                        
                         if obj.save_analysis_output_as_xls && ~isempty(datas)
                             if ~isempty(obj.current_filename)
                                 xlsname = [dirname filesep '_' obj.problem '_' obj.current_filename '_analysis_data.xls'];
@@ -1018,6 +1033,8 @@ classdef ALYtools_data_controller < handle
                             elseif strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET')
                                 [data, caption, table_name, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;
                                 fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dirname);
+                            elseif strcmp(obj.problem,'Image_Tiling')
+                                [data, caption, table_name, fig] = obj.analyze_ImageTiling;                                
                             end
                         catch
                             disp(['failed to analyze the file ' obj.current_filename]);
@@ -2148,6 +2165,14 @@ classdef ALYtools_data_controller < handle
             settings.t_dependent_Nuclei_ratio_FRET_b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D; 
             %
             settings.t_dependent_Nuclei_ratio_FRET_donor_channel = obj.t_dependent_Nuclei_ratio_FRET_donor_channel;
+            
+            settings.ImageTiling_Ncols = obj.ImageTiling_Ncols;
+            settings.ImageTiling_Nrows = obj.ImageTiling_Nrows;
+            settings.ImageTiling_Ovlp_X = obj.ImageTiling_Ovlp_X;
+            settings.ImageTiling_Ovlp_Y = obj.ImageTiling_Ovlp_Y;
+            settings.ImageTiling_QT = obj.ImageTiling_QT;
+            settings.ImageTiling_mode = obj.ImageTiling_mode;
+            
             xml_write(fname,settings);
         end
 %-------------------------------------------------------------------------%                        
@@ -2332,6 +2357,16 @@ classdef ALYtools_data_controller < handle
                 obj.t_dependent_Nuclei_ratio_FRET_b_D = settings.t_dependent_Nuclei_ratio_FRET_b_D;
                 %
                 obj.t_dependent_Nuclei_ratio_FRET_donor_channel = settings.t_dependent_Nuclei_ratio_FRET_donor_channel;
+                %
+                try
+                    obj.ImageTiling_Ncols = settings.ImageTiling_Ncols;
+                    obj.ImageTiling_Nrows = settings.ImageTiling_Nrows;
+                    obj.ImageTiling_Ovlp_X = settings.ImageTiling_Ovlp_X;
+                    obj.ImageTiling_Ovlp_Y = settings.ImageTiling_Ovlp_Y;
+                    obj.ImageTiling_QT = settings.ImageTiling_QT;
+                    obj.ImageTiling_mode = settings.ImageTiling_mode;                    
+                catch
+                end                
              end
         end
 %-------------------------------------------------------------------------%                
@@ -2834,7 +2869,8 @@ classdef ALYtools_data_controller < handle
             %[datas, captions, table_names, fig] = obj.analyze_FIBERTHICKNESS; 
             %[datas, captions, table_names, fig] = obj.analyze_OPT_Mouse_Lung;
             %[datas, captions, table_names, fig] = obj.analyze_MNEPR; 
-            [datas, captions, table_names, fig] = obj.analyze_DarkNuclei;                         
+            %[datas, captions, table_names, fig] = obj.analyze_DarkNuclei;
+            [datas, captions, table_names, fig] = obj.analyze_ImageTiling;            
         end 
 %-------------------------------------------------------------------------%  also see the function above
         function sgm = do_Experimental_Segmentation(obj,send_to_Icy,~)                                    
@@ -2843,7 +2879,8 @@ classdef ALYtools_data_controller < handle
             %sgm = obj.do_FIBERTHICKNESS_Segmentation(send_to_Icy); % special program to address fibers in SIM images
             %sgm = obj.do_OPT_Mouse_Lung_Segmentation(send_to_Icy);
             %sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
-            sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
+            %sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
+            sgm = obj.do_ImageTiling_Segmentation(send_to_Icy);            
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
