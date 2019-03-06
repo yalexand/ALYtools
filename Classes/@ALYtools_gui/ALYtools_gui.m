@@ -178,9 +178,16 @@ classdef ALYtools_gui
             java.lang.System.setProperty('javax.xml.transform.TransformerFactory', 'com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl');            
             
             FijiScriptsDirectory = handles.data_controller.FijiScriptsDirectory;
-            if isfolder(FijiScriptsDirectory)
-                addpath(FijiScriptsDirectory);
-                Miji(false);
+            if contains(version,'2018')
+                if isfolder(FijiScriptsDirectory)
+                    addpath(FijiScriptsDirectory);
+                    Miji(false);
+                end
+            else
+                if isdir(FijiScriptsDirectory)
+                    addpath(FijiScriptsDirectory);
+                    Miji(false);
+                end                
             end
             
             close all;
