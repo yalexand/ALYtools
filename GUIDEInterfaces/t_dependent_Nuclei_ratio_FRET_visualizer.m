@@ -75,26 +75,29 @@ set(handles.filter_table, 'ColumnFormat', {'numeric','numeric'} );
 % pos_7_post.OME.tif_analysis_output.OME.tiff
 % pos_7_post_FRET_ratio_featured_TRACKMATE_OUTPUT.mat
 %
-tiffname1  = strrep(handles.TrackPlotter_handles.fullfilename, ...
+
+tiffname = handles.TrackPlotter_handles.fullfilename;
+tiffname = strrep(tiffname,[filesep filesep],filesep);
+tiffname1  = strrep(tiffname, ...
             '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat', ...
             '.OME.tif_analysis_output.OME.tiff');
-tiffname2  = strrep(handles.TrackPlotter_handles.fullfilename, ...
+tiffname2  = strrep(tiffname, ...
             '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat', ...
             '.tif_analysis_output.OME.tiff');
-tiffname3  = strrep(handles.TrackPlotter_handles.fullfilename, ...
+tiffname3  = strrep(tiffname, ...
             '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat', ...
             '.lsm_analysis_output.OME.tiff');        
         
-if isa(tiffname1,'file')        
+if exist(tiffname1,'file')        
     tiffname = tiffname1;
-elseif isa(tiffname2,'file')
+elseif exist(tiffname2,'file')
     tiffname = tiffname2;
-elseif isa(tiffname3,'file')
+elseif exist(tiffname3,'file')
     tiffname = tiffname3;        
 else
     tiffname = tiffname1; % ??
 end
-        
+
 try
     hw = waitbar(0,'Loading image file..');
     if ~isempty(hw), waitbar(0.1,hw); drawnow, end; 

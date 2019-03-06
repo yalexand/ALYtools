@@ -1,5 +1,7 @@
 function [datas, captions, table_names, fig] = analyze_ImageTiling(obj,~,~) 
 
+tic
+
      datas = [];
      captions = [];
      table_names = 'default';
@@ -452,6 +454,8 @@ for k=1:sT
     datas = [datas; record];
 end
 captions = {'filename','X','Y'};
+
+disp(['execution time ' num2str(toc/60) ' min']);
 
 end
 
