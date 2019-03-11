@@ -26,7 +26,7 @@ function icyvol = do_ImageTiling_Segmentation(obj,send_to_Icy,~)
             
                 % gradmod
                 grad_scale = 3;
-                GMD = zeros(size(org));
+                GMD = zeros(size(org),'single');
                 %
                 for k=1:nImg
                     u = squeeze(org(:,:,k));
@@ -47,7 +47,7 @@ function icyvol = do_ImageTiling_Segmentation(obj,send_to_Icy,~)
                         GMD(:,:,k) = g - mip;
                 end            
         
-                icyvol = zeros(sX,sY,2,1,nImg);            
+                icyvol = zeros(sX,sY,2,1,nImg,'single');            
                 %
                 for k=1:nImg                                          
                     S = 5;
@@ -65,7 +65,7 @@ function icyvol = do_ImageTiling_Segmentation(obj,send_to_Icy,~)
                                     
         elseif strcmp('bleached_fluor',obj.ImageTiling_mode)
                         
-                icyvol = zeros(sX,sY,2,1,nImg);            
+                icyvol = zeros(sX,sY,2,1,nImg,'single');            
                 obj.PR_ref_channel = 1;
                 for k=1:nImg                                          
                     S = 5;

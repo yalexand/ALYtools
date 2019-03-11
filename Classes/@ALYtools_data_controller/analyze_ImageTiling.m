@@ -20,6 +20,11 @@ tic
      N = rws;
      M = cls;
      
+     if 0==N || 0==M
+         disp('error - number of row/columns can not be zero')
+         return;
+     end
+     
      sT = N*M;
      
      A = zeros(N*M);
@@ -90,8 +95,8 @@ tic
     along_col_acc_y1y2 = [];
     along_col_acc_y2y1 = [];        
     %
-    s1 = 3;
-    s2 = 7;
+    s1 = 3/2;
+    s2 = 7/2;
     for k=1:Nedges
         edge = edges{k,1};
         in_node = edge(1);
@@ -112,7 +117,7 @@ tic
         disp([num2str(in_node) ' ' num2str(out_node) ' ' mode]);
         if strcmp(mode,'along row')
             % x1x2
-                    z = xcorr2_fft(u1(rx1,ry_full),u2(rx2,ry_full));                     
+                    z = xcorr2_fft(imresize(u1(rx1,ry_full),0.5),imresize(u2(rx2,ry_full),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
@@ -121,7 +126,7 @@ tic
                     along_row_acc_x1x2 = [along_row_acc_x1x2; q];
                     %icy_imshow(uint16(z),[num2str(k) ' : ' num2str(in_node) ' -> ' num2str(out_node) ', q = ' num2str(q) ' x1x2']);
             % x2x1
-                    z = xcorr2_fft(u1(rx2,ry_full),u2(rx1,ry_full));
+                    z = xcorr2_fft(imresize(u1(rx2,ry_full),0.5),imresize(u2(rx1,ry_full),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
@@ -130,7 +135,7 @@ tic
                     along_row_acc_x2x1 = [along_row_acc_x2x1; q];            
                     %icy_imshow(uint16(z),[num2str(k) ' : ' num2str(in_node) ' -> ' num2str(out_node) ', q = ' num2str(q) ' x2x1']);                    
             % y1y2
-                    z = xcorr2_fft(u1(rx_full,ry1),u2(rx_full,ry2));
+                    z = xcorr2_fft(imresize(u1(rx_full,ry1),0.5),imresize(u2(rx_full,ry2),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
@@ -139,7 +144,7 @@ tic
                     along_row_acc_y1y2 = [along_row_acc_y1y2; q];            
                     %icy_imshow(uint16(z),[num2str(k) ' : ' num2str(in_node) ' -> ' num2str(out_node) ', q = ' num2str(q) ' y1y2']);                    
             % y2y1
-                    z = xcorr2_fft(u1(rx_full,ry2),u2(rx_full,ry1));
+                    z = xcorr2_fft(imresize(u1(rx_full,ry2),0.5),imresize(u2(rx_full,ry1),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
@@ -149,7 +154,7 @@ tic
                     %icy_imshow(uint16(z),[num2str(k) ' : ' num2str(in_node) ' -> ' num2str(out_node) ', q = ' num2str(q) ' y2y1']);                    
         elseif strcmp(mode,'along col')
             % x1x2
-                    z = xcorr2_fft(u1(rx1,ry_full),u2(rx2,ry_full));                     
+                    z = xcorr2_fft(imresize(u1(rx1,ry_full),0.5),imresize(u2(rx2,ry_full),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
@@ -158,7 +163,7 @@ tic
                     along_col_acc_x1x2 = [along_col_acc_x1x2; q];
                     %icy_imshow(uint16(z),[num2str(k) ' : ' num2str(in_node) ' -> ' num2str(out_node) ', q = ' num2str(q) ' x1x2']);
             % x2x1
-                    z = xcorr2_fft(u1(rx2,ry_full),u2(rx1,ry_full));
+                    z = xcorr2_fft(imresize(u1(rx2,ry_full),0.5),imresize(u2(rx1,ry_full),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
@@ -167,7 +172,7 @@ tic
                     along_col_acc_x2x1 = [along_col_acc_x2x1; q];            
                     %icy_imshow(uint16(z),[num2str(k) ' : ' num2str(in_node) ' -> ' num2str(out_node) ', q = ' num2str(q) ' x2x1']);                    
             % y1y2
-                    z = xcorr2_fft(u1(rx_full,ry1),u2(rx_full,ry2));
+                    z = xcorr2_fft(imresize(u1(rx_full,ry1),0.5),imresize(u2(rx_full,ry2),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
@@ -176,7 +181,7 @@ tic
                     along_col_acc_y1y2 = [along_col_acc_y1y2; q];            
                     %icy_imshow(uint16(z),[num2str(k) ' : ' num2str(in_node) ' -> ' num2str(out_node) ', q = ' num2str(q) ' y1y2']);                    
             % y2y1
-                    z = xcorr2_fft(u1(rx_full,ry2),u2(rx_full,ry1));
+                    z = xcorr2_fft(imresize(u1(rx_full,ry2),0.5),imresize(u2(rx_full,ry1),0.5));
                     g1 = gsderiv(z,s1,0);
                     g2 = gsderiv(z,s2,0);
                     z = (g1-g2);                    
