@@ -1,20 +1,47 @@
 function perform_image_tiling(in_src_dir,in_dst_dir,in_Extension,in_ncols,in_nrows,ovlp_x,ovlp_y,mode,QT)
 
-resolve_xlwrite_path_issue();
+if ~isdeployed
+    resolve_xlwrite_path_issue();
+end
 
 tic
 
 dc = ALYtools_data_controller(true,[]);
-dc.problem = 'Experimental';
+dc.problem = 'Image_Tiling';
 
 Extension = in_Extension; %'ome.tif';
 
 dc.ImageTiling_mode = mode;
-dc.ImageTiling_Ncols = in_ncols;
-dc.ImageTiling_Nrows = in_nrows;
-dc.ImageTiling_Ovlp_X = ovlp_x;
-dc.ImageTiling_Ovlp_Y = ovlp_y; 
-dc.ImageTiling_QT = QT; 
+
+if isnumeric(in_ncols)
+    dc.ImageTiling_Ncols = in_ncols;
+else
+    dc.ImageTiling_Ncols = str2num(in_ncols);
+end
+    if isnumeric(in_nrows)
+        dc.ImageTiling_Nrows = in_nrows;
+    else
+        dc.ImageTiling_Nrows = str2num(in_nrows);
+    end
+        if isnumeric(ovlp_x)
+            dc.ImageTiling_Ovlp_X = ovlp_x;
+        else
+            dc.ImageTiling_Ovlp_X = str2num(ovlp_x);
+        end
+            if isnumeric(ovlp_y)
+                dc.ImageTiling_Ovlp_Y = ovlp_y;
+            else
+                dc.ImageTiling_Ovlp_Y = str2num(ovlp_y);
+            end
+                if isnumeric(QT)
+                    dc.ImageTiling_QT = QT;
+                else
+                    dc.ImageTiling_QT = str2num(QT);
+                end
+       
+dc.ImageTiling_Ovlp_X = str2num(ovlp_x);
+dc.ImageTiling_Ovlp_Y = str2num(ovlp_y); 
+dc.ImageTiling_QT = str2num(QT); 
 
 dirdata = dir([in_src_dir filesep '*.' Extension]);
 fnames = {dirdata.name};

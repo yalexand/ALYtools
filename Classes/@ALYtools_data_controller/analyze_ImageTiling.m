@@ -384,13 +384,19 @@ CY = 1;
 if strcmp(obj.ImageTiling_mode,'bleached_fluor')
 
     % %%%%%%%%%%%%%%%%%%%%%%%%% beautify
-    scene = zeros(SX,SY,sT,1,1);
-    for k=1:sT
-        rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
-        ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;
-        scene(rx,ry,k,1,1) = sgm(:,:,2,1,k);
+    if st<10
+        scene = zeros(SX,SY,sT,1,1);
+        for k=1:sT
+            rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
+            ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;
+            scene(rx,ry,k,1,1) = sgm(:,:,2,1,k);
+        end
+        try
+            icy_imshow(uint16(scene));
+        catch
+            disp('cannot show image in icy - not running?')
+        end
     end
-    icy_imshow(uint16(scene));
     % %%%%%%%%%%%%%%%%%%%%%%%%%    
         
 scene = zeros(SX,SY);    
