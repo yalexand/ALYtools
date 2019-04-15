@@ -384,7 +384,7 @@ CY = 1;
 if strcmp(obj.ImageTiling_mode,'bleached_fluor')
 
     % %%%%%%%%%%%%%%%%%%%%%%%%% beautify
-    if st<10
+    if sT<10
         scene = zeros(SX,SY,sT,1,1);
         for k=1:sT
             rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;

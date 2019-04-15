@@ -39,10 +39,6 @@ end
                     dc.ImageTiling_QT = str2num(QT);
                 end
        
-dc.ImageTiling_Ovlp_X = str2num(ovlp_x);
-dc.ImageTiling_Ovlp_Y = str2num(ovlp_y); 
-dc.ImageTiling_QT = str2num(QT); 
-
 dirdata = dir([in_src_dir filesep '*.' Extension]);
 fnames = {dirdata.name};
 fnames = sort_nat(fnames);
