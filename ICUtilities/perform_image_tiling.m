@@ -40,9 +40,25 @@ end
                 end
        
 dirdata = dir([in_src_dir filesep '*.' Extension]);
-fnames = {dirdata.name};
-fnames = sort_nat(fnames);
-dc.load_multiple(fnames,in_src_dir,false);
+if ~isempty({dirdata.name})
+    fnames = {dirdata.name};
+    fnames = sort_nat(fnames);
+    dc.load_multiple(fnames,in_src_dir,false);
+else
+    % try this arrangement: /output/fovdir1, fovdir2 etc.
+    dirdata = dir([in_src_dir filesep 'output']);
+    postfix = '_2D.ome.tiff';
+    dirnames = setxor({dirdata.name},{'.','..','.directory'});
+    dirnames = sort_nat(dirnames);
+    dc.imgdata = [];
+    for k=1:numel(dirnames)
+        curname = char(dirnames(k)); % FOV file name base is the same as folder name
+        fullfname = [in_src_dir filesep 'output' filesep curname filesep curname postfix];
+        [~,~,I] = bfopen_v(fullfname);
+        dc.M_imgdata{k} = single(I);
+        dc.M_filenames{k} = curname;        
+    end    
+end
 
 [datas, captions, table_names, fig] = dc.analyze_ImageTiling(false);
 
@@ -50,7 +66,7 @@ str = strsplit(in_src_dir,filesep);
 xlsname = [in_dst_dir filesep char(str(numel(str))) '.xls'];
 xlwrite(xlsname,[captions; datas]);
 filesavename = [in_dst_dir filesep char(str(numel(str))) '.ome.tif'];
-bfsave(fig,filesavename);
+bfsave(fig,filesavename,'BigTiff',true,'Compression','LZW');
 
 disp(['execution time ' num2str(toc/60) ' min']);
 
