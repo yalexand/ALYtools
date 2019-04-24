@@ -391,7 +391,8 @@ classdef ALYtools_data_controller < handle
                 if ~obj.open_image([pathname filenames]), return, end;
                 obj.M_imgdata{1} = obj.imgdata;
                 obj.show_data(obj.send_original_to_Icy_on_show);
-                obj.M_filenames{1} = filenames;                
+                obj.M_filenames{1} = filenames;
+                obj.current_filename = filenames; % 24.04.2019 : likely low risk
             else
                 obj.imgdata = [];
                 hw = [];
