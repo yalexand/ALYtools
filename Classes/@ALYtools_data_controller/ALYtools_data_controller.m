@@ -400,11 +400,16 @@ classdef ALYtools_data_controller < handle
                     if ~obj.open_image([pathname filesep char(filenames(k))]), break, end;
                     obj.M_imgdata{k} = obj.imgdata;
                     obj.M_filenames{k} = filenames(k);
-                    % obj.current_filename = filename;  
                     if ~obj.run_headless, obj.show_data(obj.send_original_to_Icy_on_show); end;
                     if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end; 
                 end
                 if ~isempty(hw), delete(hw), drawnow; end;
+                % setting obj.current_filename - presuming current folder's name is relevant
+                strs = strsplit(pathname,filesep);
+                obj.current_filename = char(strs(numel(strs)));
+                if isempty(obj.current_filename)
+                    obj.current_filename = char(strs(numel(strs)-1));
+                end
             end
             
             %obj.imgdata = [];
