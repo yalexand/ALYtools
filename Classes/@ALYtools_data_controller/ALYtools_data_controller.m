@@ -41,6 +41,7 @@ classdef ALYtools_data_controller < handle
         scene_axes = [];
         
         OPT_data_controller = [];
+        NumWorkers = 2;
                                                                        
     end                    
     
@@ -290,6 +291,18 @@ classdef ALYtools_data_controller < handle
             ImageTiling_Ovlp_Y = 0.5;            
             ImageTiling_QT = 0;
             ImageTiling_mode = 'bleached_fluor'; %'brightfield'
+            %
+            AI_Powered_2D_SMLM_Reconstruction_network; % path to file
+            AI_Powered_2D_SMLM_Reconstruction_upscale_factor = 5;
+            AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width = 5;
+            AI_Powered_2D_SMLM_Reconstruction_pixel_size = 107; % nm/pixel
+            AI_Powered_2D_SMLM_Reconstruction_extraction_scale = 2; %non-super res pixels            
+            AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio = 3.5; % ditto
+            AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; % std factor?
+            AI_Powered_2D_SMLM_Reconstruction_extraction_method = 'Linear_TopHat';
+            AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = 80; % nm
+            AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = 200; % frames            
+            AI_Powered_2D_SMLM_Reconstruction_image_formation_method = 'ASH';            
     end    
         
     properties(Transient,Hidden)
@@ -328,7 +341,7 @@ classdef ALYtools_data_controller < handle
             end
             
             %obj.OPT_data_controller = ic_OPTtools_data_controller(true,[]); %headless
-            
+                        
             obj.RootDirectory = pwd;
             
             if (ispc || ismac) && isempty(obj.IcyDirectory) && ~isdeployed && ~obj.run_headless
@@ -353,7 +366,11 @@ classdef ALYtools_data_controller < handle
                 end                
                 delete(hw); drawnow;                               
             end
-                                                                                                                                                
+            %
+            % if there are more than 4 cores, one can try using parfor
+            % par_pool = gcp;
+            % obj.NumWorkers = par_pool.NumWorkers;
+                                                                                                                                                   
         end
                 
 %-------------------------------------------------------------------------%
@@ -529,7 +546,7 @@ classdef ALYtools_data_controller < handle
                              obj.HL1_ref_channel = 1;
                          end                                               
                          
-                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' 't_dependent_Nuclei_ratio_FRET', 'Image_Tiling'}
+                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' 't_dependent_Nuclei_ratio_FRET', 'Image_Tiling', 'AI_Powered_2D_SMLM_Reconstruction'}
                     
                      % if sT<6, don't believe it is T, reinterpret as channels
                      if sT < 6 && sC ==1
@@ -588,7 +605,7 @@ classdef ALYtools_data_controller < handle
 %-------------------------------------------------------------------------%        
         function show_data(obj,send_original_to_Icy,~)
 
-            [~,~,~,sC,~] = size(obj.imgdata);
+            [~,~,~,sC,sT] = size(obj.imgdata);
             
             switch obj.problem
                 
@@ -597,12 +614,19 @@ classdef ALYtools_data_controller < handle
                     if 3~=sC, obj.imgdata = []; cla(obj.scene_axes); errordlg('3 channel image is expected'); return; end
                     image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes); 
                     
-                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks','Image_Tiling'}
-                    I = double(obj.imgdata);
+                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks','Image_Tiling','AI_Powered_2D_SMLM_Reconstruction'}
+                    if sT>10
+                        I = double(obj.imgdata(:,:,:,:,1:10));
+                    else
+                        I = double(obj.imgdata);                        
+                    end
                     if 3 == sC || 4 == sC
                         image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes);
-                    elseif 1 == sC || 2 == sC
+                    elseif (1 == sC || 2 == sC) && 1==sT
                         image(uint8(map(squeeze(I(:,:,1,1,1)),0,255)),'Parent',obj.scene_axes);
+                    elseif (1 == sC) && sT>1
+                        u = squeeze(sum(I,5));
+                        image(uint8(map(u,0,255)),'Parent',obj.scene_axes);
                     end  
                 case {'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'}
                     image(uint8(map(squeeze(sum(I,5)),0,255)),'Parent',obj.scene_axes);
@@ -781,8 +805,11 @@ classdef ALYtools_data_controller < handle
                 case 't_dependent_Nuclei_ratio_FRET'
                     % t_dependent_Nuclei_ratio_FRET_Segmentation_settings(obj);
                     
-                case 'Image_Tiling'
-                    obj.do_ImageTiling_Segmentation(true);                    
+                case 'ImageTiling'
+                    obj.do_ImageTiling_Segmentation(true);
+                    
+                case 'AI_Powered_2D_SMLM_Reconstruction'
+                    obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(true);                                                                                
             end
 
         end    
@@ -892,6 +919,9 @@ classdef ALYtools_data_controller < handle
                     [datas, captions, table_names, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;
                 case 'Image_Tiling'
                     [datas, captions, table_names, fig] = obj.analyze_ImageTiling;
+                case 'AI_Powered_2D_SMLM_Reconstruction'
+                    [datas, captions, table_names, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
+                    
             end % switch
 
             timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
@@ -929,9 +959,21 @@ classdef ALYtools_data_controller < handle
                                 xlsname = [dirname filesep obj.problem '_analysis_data.xls'];
                             end
                             if ispc
-                                xlswrite( xlsname,[captions; datas],char(table_names) );
+                                try
+                                    xlswrite( xlsname,[captions; datas],char(table_names) );
+                                catch
+                                    disp('can not write output as xls, save as mat file instead');                                    
+                                    matname = xlsname(1:length(xlsname)-4);
+                                    save([matname '.mat'],'captions','datas');
+                                end
                             else
-                                xlwrite( xlsname,[captions; datas],char(table_names) );
+                                try
+                                    xlwrite( xlsname,[captions; datas],char(table_names) );
+                                catch
+                                    disp('can not write output as xls, save as mat file instead');
+                                    matname = xlsname(1:length(xlsname)-4);
+                                    save([matname '.mat'],'captions','datas');
+                                end
                             end
                         end
                     end
@@ -1039,8 +1081,8 @@ classdef ALYtools_data_controller < handle
                             elseif strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET')
                                 [data, caption, table_name, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;
                                 fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dirname);
-                            elseif strcmp(obj.problem,'Image_Tiling')
-                                [data, caption, table_name, fig] = obj.analyze_ImageTiling;                                
+                            elseif strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction')
+                                [data, caption, table_name, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
                             end
                         catch
                             disp(['failed to analyze the file ' obj.current_filename]);
@@ -2876,7 +2918,8 @@ classdef ALYtools_data_controller < handle
             %[datas, captions, table_names, fig] = obj.analyze_OPT_Mouse_Lung;
             %[datas, captions, table_names, fig] = obj.analyze_MNEPR; 
             %[datas, captions, table_names, fig] = obj.analyze_DarkNuclei;
-            [datas, captions, table_names, fig] = obj.analyze_ImageTiling;            
+            %[datas, captions, table_names, fig] = obj.analyze_ImageTiling;
+            [datas, captions, table_names, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;            
         end 
 %-------------------------------------------------------------------------%  also see the function above
         function sgm = do_Experimental_Segmentation(obj,send_to_Icy,~)                                    
@@ -2886,7 +2929,8 @@ classdef ALYtools_data_controller < handle
             %sgm = obj.do_OPT_Mouse_Lung_Segmentation(send_to_Icy);
             %sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
             %sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
-            sgm = obj.do_ImageTiling_Segmentation(send_to_Icy);            
+            %sgm = obj.do_ImageTiling_Segmentation(send_to_Icy);
+            sgm = obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(send_to_Icy);
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
@@ -4830,7 +4874,7 @@ function phasors = per_image_TCSPC_FLIM_get_phasors(obj,~,~)
                     if ~isempty(hw), delete(hw), drawnow; end;
                 end % if obj.per_image_TCSPC_FLIM_nonimaging % cuvette data        
 end
-%-------------------------------------------------------------------------%          
+%-------------------------------------------------------------------------%
     function [datas, captions, table_names, fig] = analyze_per_image_TCSPC_FLIM_PHASOR(obj,~,~)            
                 datas = [];
                 captions = [];
@@ -4852,6 +4896,319 @@ end
                 per_image_TCSPC_FLIM_PHASOR_results_panel(res);
     end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy,~) 
+
+            d = 5; %obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width; % = 5;
+            s = 2; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale; % = 2; %non-super res pixels            
+            K = 3.5; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio; % = 3.5; % ditto
+            t = 6; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; %; % std factor?
+            method = 'Linear_TopHat'; % obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method; % = 'Linear_TopHat';
+
+            [sX,sY,~,~,sT] = size(obj.imgdata);
+            XYF = [];
+            icyvol = [];
+
+            % maybe used for harvesting
+            ycoor = repmat(1:sX,[sY 1]);
+            xcoor = repmat((1:sY)',[1 sX]);
+
+                    n_frames = 10;
+                    
+                    for k=1:n_frames % only first 10 frames
+
+                        frame = single(squeeze(obj.imgdata(:,:,1,1,k)));    
+                    % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
+                        switch method
+                            case 'Linear_TopHat'
+                                z = linear_tophat(frame,s,K);                
+                            case 'DOG'
+                                g1=gsderiv(frame,s,0);
+                                g2=gsderiv(frame,s*K,0);
+                                z=(g1-g2)./mean(g2(:));                
+                            case 'Primitive_Linear_Tophat'
+                                z = conv2(frame,ones(s)/(s*s),'same');
+                                z = (frame-z)/mean(z(:));   
+                                    r = ceil(s/2+1);
+                                    z(1:r,:)=0;
+                                    z(sX-r:sX,:)=0;
+                                    z(:,1:r)=0;
+                                    z(:,sY-r:sY)=0;                      
+                        end
+                        %       
+                        z = z.*(z>0);
+                        sample = z(z~=0);
+                        thresh = t*std(sample(:)); 
+                        z(z<thresh)=0;
+                        %
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                        %     z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
+                        %     z = z > 0;
+                        %             
+                        %     [x,y]=find(z==1);
+                        %     f = k*ones(length(x),1);
+                        %     rec = [x y f];
+                        %     XYF = [XYF; rec];
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                        %
+                        L = bwlabel(z);
+                        xw = xcoor.*z;
+                        yw = ycoor.*z;
+                        for m=1:max(L(:))
+                            pixs_m = z(L==m);
+                            denom = sum(pixs_m(:));
+                            xw_m = xw(L==m);
+                            yw_m = yw(L==m);
+                            x = sum(xw_m(:))/denom;
+                            y = sum(yw_m(:))/denom;
+                            rec = round([x y k]); % pity
+                            XYF = [XYF; rec];        
+                        end
+                    end 
+                    %
+                    indi = XYF(:,1)-d>=1 & XYF(:,2)-d>=1 & ... 
+                           XYF(:,1)+d<=sX & XYF(:,2)+d<=sY;
+                    XYF = XYF(indi,:);
+                    % the block ABOVE should be a copy of the corresponding one from "Analysis" proc for consistency
+                    %  
+                    icyvol = zeros(sX,sY,2,1,n_frames,'single');
+                    icyvol(:,:,1,1,1:n_frames) = single(obj.imgdata(:,:,1,1,1:n_frames));
+                    for k=1:size(XYF,1)
+                        cur_frame = XYF(k,3);
+                        if cur_frame <= n_frames
+                            icyvol(XYF(k,1),XYF(k,2),2,1,cur_frame) = 255;
+                        end
+                    end
+                                                
+                if send_to_Icy                
+                    try
+                        notification = [obj.current_filename ' - Segmentation: AI_Powered_2D_SMLM_Reconstruction'];
+                        if isempty(obj.h_Icy_segmentation_adjustment)
+                            obj.h_Icy_segmentation_adjustment = icy_imshow(icyvol,notification);                    
+                        else
+                            icy_imshow(obj.h_Icy_segmentation_adjustment,icyvol,notification);                    
+                        end
+                    catch
+                        errordlg('problem with Icy, - might be not running');
+                    end 
+                end
+end
+%-------------------------------------------------------------------------%
+function [datas, captions, table_names, fig] = analyze_AI_Powered_2D_SMLM_Reconstruction(obj,~,~) 
+
+     t_start = tic;
+
+disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
+     
+     datas = [];
+     captions = [];
+     table_names = 'default';
+     fig = [];
+     
+     [sX,sY,~,~,sT] = size(obj.imgdata);
+     
+     path_to_network = 'C:\Users\alexany\ALYtools\TrainedNetworks\trained_net_UAI2DGaussPSF_5x_training_data_range_1pix_N_250000.mat'; % obj.AI_Powered_2D_SMLM_Reconstruction_network; % path to file
+     upscale_fac = 5; %obj.AI_Powered_2D_SMLM_Reconstruction_upscale_factor = 5;
+     d = 5; %obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width = 5;
+     pix_size = 107; %obj.AI_Powered_2D_SMLM_Reconstruction_pixel_size = 107; % nm/pixel
+     R = 50/pix_size*upscale_fac; % R = 80 nm %obj.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = 80; % nm
+     block_size = 200; %obj.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = 200; % frames            
+          
+     load(path_to_network);
+     
+     %XYF = obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(false);     
+     %%%%%%%%%%%%%%%%%%%%
+
+            s = 2; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale; % = 2; %non-super res pixels            
+            K = 3.5; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio; % = 3.5; % ditto
+            t = 6; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; %; % std factor?
+            method = 'Linear_TopHat'; % obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method; % = 'Linear_TopHat';
+            
+            XYF = [];
+
+            % maybe used for harvesting
+            ycoor = repmat(1:sX,[sY 1]);
+            xcoor = repmat((1:sY)',[1 sX]);
+            
+                temp_img = obj.imgdata; % ?!!!!
+                % obj.imgdata = []; % remove from memory if image size is very large
+                % % Create a parallel pool if none exists
+                if isempty(gcp)
+                       parpool;
+                end                
+                
+                parfor k=1:sT
+                    % k
+                %for k=1:sT
+                    %frame = single(squeeze(obj.imgdata(:,:,1,1,k)));    
+                    frame = single(squeeze(temp_img(:,:,1,1,k)));    
+
+                    % if any changes made the block BELOW should be copied into corresponding "Segmentation" proc for consistency   
+                    switch method
+                        case 'Linear_TopHat'
+                            z = linear_tophat(frame,s,K);
+                        case 'DOG'
+                            g1=gsderiv(frame,s,0);
+                            g2=gsderiv(frame,s*K,0);
+                            z=(g1-g2)./mean(g2(:));                
+                        case 'Primitive_Linear_Tophat'
+                            z = conv2(frame,ones(s)/(s*s),'same');
+                            z = (frame-z)/mean(z(:));   
+                                r = ceil(s/2+1);
+                                z(1:r,:)=0;
+                                z(sX-r:sX,:)=0;
+                                z(:,1:r)=0;
+                                z(:,sY-r:sY)=0;                      
+                    end
+                    %       
+                    z = z.*(z>0);
+                    sample = z(z~=0);
+                    thresh = t*std(sample(:)); 
+                    z(z<thresh)=0;
+                    %
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                    %     z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
+                    %     z = z > 0;
+                    %             
+                    %     [x,y]=find(z==1);
+                    %     f = k*ones(length(x),1);
+                    %     rec = [x y f];
+                    %     XYF = [XYF; rec];
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                    %
+                    L = bwlabel(z);
+                    xw = xcoor.*z;
+                    yw = ycoor.*z;
+                    for m=1:max(L(:))
+                        pixs_m = z(L==m);
+                        denom = sum(pixs_m(:));
+                        xw_m = xw(L==m);
+                        yw_m = yw(L==m);
+                        x = sum(xw_m(:))/denom;
+                        y = sum(yw_m(:))/denom;
+                        rec = round([x y k]); % pity
+                        XYF = [XYF; rec];        
+                    end
+                end % parfor 
+                %
+                indi = XYF(:,1)-d>=1 & XYF(:,2)-d>=1 & ... 
+                       XYF(:,1)+d<=sX & XYF(:,2)+d<=sY;
+                XYF = XYF(indi,:);                                         
+                % if any changes made the block ABOVE should be copied into corresponding "Segmentation" proc for consistency                                   
+         
+disp(['extracted ' num2str(size(XYF,1)) ' emitters, time = ' num2str(toc(t_start)/60)]);
+                
+     VIC = zeros(2*d+1,2*d+1,size(XYF,1));
+     x = XYF(:,1);
+     y = XYF(:,2);
+     f = XYF(:,3);
+     x1 = x-d;
+     x2 = x+d;
+     y1 = y-d;
+     y2 = y+d;
+     for k=1:size(XYF,1)
+        %VIC(:,:,k) = single(squeeze(obj.imgdata(x1(k):x2(k),y1(k):y2(k),1,1,f(k))));
+        VIC(:,:,k) = single(squeeze(temp_img(x1(k):x2(k),y1(k):y2(k),1,1,f(k))));
+     end
+disp(['vicinities extracted, time = ' num2str(toc(t_start)/60)]);
+     
+     %%%%%%%%%%%%%%%%%% normalize image data
+     VIC_norm = zeros(size(VIC));
+     parfor k=1:size(VIC,3)
+     %for k=1:size(VIC,3)         
+        z = VIC(:,:,k);
+        z = map(z,0,1);
+        z = (z - mean(z(:)))/std(z(:));
+        VIC_norm(:,:,k) = z;
+        %disp([' normalizing vicinity images.. ' num2str(k)]);
+     end
+     %%%%%%%%%%%%%%%%%% normalize image data
+disp(['vicinities normalized, time = ' num2str(toc(t_start)/60)]);     
+
+     VIC_norm = reshape(VIC_norm,2*d+1,2*d+1,1,size(VIC, 3));
+     dx_dy = predict(net,VIC_norm);
+
+        % ONE SHOULD PUT THRESHOLD ON dx_dy !!! - should be within [-1.5 , 1.5]
+        XY = XYF(:,1:2) + dx_dy; % super-resolved emitter coordinates
+
+        % this is the example showing how to filter out bad localisations
+        % indi = dx_dy(:,1)>=-1.5 & dx_dy(:,2)>=-1.5 & ... 
+        %        dx_dy(:,1)<=+1.5 & dx_dy(:,2)<=+1.5;
+        % XY = XY(indi,:);
+
+        % this looks like localisation result
+        XY_nm = (XY - 0.5)*pix_size;
+        F = XYF(:,3);
+
+        % and this is real thing in super res pixels
+        % ATTENTION - XY_nm IS THE RESULT - will be used later
+        XY_UPS = ceil(XY_nm/pix_size*upscale_fac); % stands for UPSCALED
+        F_UPS = F;
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        [XY_UPS,F_UPS] = AI_Powered_2D_SMLM_Reconstruction_merge_localisations_in_frames(XY_UPS,F_UPS,block_size); % block-wise "unique"
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp(['merged localisations in frames, time = ' num2str(toc(t_start)/60) ' #localisations = ' num2str(size(XY_UPS,1))]);
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % R = 50/pix_size*upscale_fac; % R = 80 nm 
+        % NB what it means - if single localisation doesn't have any localsations within R, it is removed
+        % all distances are in super res pixels for this proc
+        [XY_UPS,F_UPS] = AI_Powered_2D_SMLM_Reconstruction_remove_spurious_localisations(upscale_fac*sX,upscale_fac*sY,XY_UPS,F_UPS,R);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp(['spurious localisations removed, time = ' num2str(toc(t_start)/60) ' #localisations = ' num2str(size(XY_UPS,1))]);             
+
+        % XY_UPS is expressed in super-res pixels
+        DX_DY_DRIFT = AI_Powered_2D_SMLM_Reconstruction_calculate_XY_drift_increments(upscale_fac*sX,upscale_fac*sY,XY_UPS,F_UPS,sT,upscale_fac); 
+
+        % loss of precision..
+        XY_UPS = AI_Powered_2D_SMLM_Reconstruction_implement_drift_correction(XY_UPS,F_UPS,DX_DY_DRIFT); %will contain fractional part
+        XY_UPS = round(XY_UPS);
+disp('..drift corrected..');                     
+                       
+disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations = ' num2str(size(XY_UPS,1))]);
+
+            % constructing output super res image
+            visualisation_method = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method; % = 'ASH'
+                switch visualisation_method
+                    case 'ASH'
+                        scene_AI = AI_Powered_2D_SMLM_Reconstruction_ASH_2d(upscale_fac*sX,upscale_fac*sY,XY_UPS,max(3,round(upscale_fac/2)));
+                    case 'Smoothed Histogram'
+                        scene_AI = zeros(upscale_fac*sX,upscale_fac*sY,'single');
+                        for k=1:size(XY_UPS,1)
+                              x = round(XY_UPS(k,1)); %no need to divide by pix_size!
+                              y = round(XY_UPS(k,2)); 
+                            if x>=1 && x<=sX*upscale_fac && y>=1 && y<=sY*upscale_fac
+                                scene_AI(x,y) = scene_AI(x,y) + 1;
+                            end
+                        end
+                        s = 1;
+                        scene_AI = gsderiv(scene_AI,s,0);                                                                        
+                end
+            % original - total intensity image   
+            total_intensity = zeros(sX,sY,'single');
+            parfor k=1:sT
+                total_intensity = total_intensity + single(squeeze(temp_img(:,:,1,1,k)));
+            end
+            total_intensity_UPS = imresize(total_intensity,upscale_fac,'box');            
+                        
+            non_superres_features = zeros(size(total_intensity));
+            for k=1:size(XYF,1)
+                non_superres_features(XYF(k,1),XYF(k,2)) = non_superres_features(XYF(k,1),XYF(k,2))+1;
+            end              
+            non_superres_features = imresize(non_superres_features,upscale_fac,'box');
+
+            fig = zeros(upscale_fac*sX,upscale_fac*sY,3,1,1,'single');
+            fig(:,:,1,:,:) = total_intensity_UPS;
+            fig(:,:,2,:,:) = scene_AI;
+            fig(:,:,3,:,:) = non_superres_features;
+        
+            datas = [XY_UPS/upscale_fac/pix_size F_UPS];
+            datas = num2cell(datas);
+            captions = {'X [nm]','Y [nm]','frame'};        
+end
+%-------------------------------------------------------------------------%
+        
     end % methods
             
 end
