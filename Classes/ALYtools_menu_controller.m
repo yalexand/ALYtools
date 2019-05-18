@@ -392,7 +392,7 @@ classdef ALYtools_menu_controller < handle
         elseif strcmp(obj.data_controller.problem,'Image_Tiling')
              ImageTiling_Problem_Specific_settings(obj.data_controller);                                                                
         elseif strcmp(obj.data_controller.problem,'AI_Powered_2D_SMLM_Reconstruction')
-             AI_Powered_2D_SMLM_Reconstruction_Problem_Specific_settings(obj.data_controller);                                                        
+             AI_Powered_2d_SMLM_reconstruction_settings(obj.data_controller);                                                        
         end
                                 
     end        

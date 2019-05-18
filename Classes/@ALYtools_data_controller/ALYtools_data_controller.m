@@ -292,17 +292,22 @@ classdef ALYtools_data_controller < handle
             ImageTiling_QT = 0;
             ImageTiling_mode = 'bleached_fluor'; %'brightfield'
             %
-            AI_Powered_2D_SMLM_Reconstruction_network; % path to file
+            AI_Powered_2D_SMLM_Reconstruction_network = []; % path to file
             AI_Powered_2D_SMLM_Reconstruction_upscale_factor = 5;
             AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width = 5;
             AI_Powered_2D_SMLM_Reconstruction_pixel_size = 107; % nm/pixel
             AI_Powered_2D_SMLM_Reconstruction_extraction_scale = 2; %non-super res pixels            
             AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio = 3.5; % ditto
-            AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; % std factor?
+            AI_Powered_2D_SMLM_Reconstruction_extraction_threshold = 6; % std factor?
             AI_Powered_2D_SMLM_Reconstruction_extraction_method = 'Linear_TopHat';
-            AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = 80; % nm
+            AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = 50; % nm
             AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = 200; % frames            
-            AI_Powered_2D_SMLM_Reconstruction_image_formation_method = 'ASH';            
+            AI_Powered_2D_SMLM_Reconstruction_image_formation_method = 'ASH';
+            AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = 3;
+            AI_Powered_2D_SMLM_Reconstruction_NA = 1;
+            AI_Powered_2D_SMLM_Reconstruction_extraction_methods = {'Linear_TopHat','DOG','Primitive_Linear_Tophat'};
+            AI_Powered_2D_SMLM_Reconstruction_image_formation_methods = {'ASH','Smoothed Histogram'};
+
     end    
         
     properties(Transient,Hidden)
@@ -2220,6 +2225,20 @@ classdef ALYtools_data_controller < handle
             settings.ImageTiling_Ovlp_Y = obj.ImageTiling_Ovlp_Y;
             settings.ImageTiling_QT = obj.ImageTiling_QT;
             settings.ImageTiling_mode = obj.ImageTiling_mode;
+            %
+            settings.AI_Powered_2D_SMLM_Reconstruction_network = obj.AI_Powered_2D_SMLM_Reconstruction_network;
+            settings.AI_Powered_2D_SMLM_Reconstruction_upscale_factor = obj.AI_Powered_2D_SMLM_Reconstruction_upscale_factor;
+            settings.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width = obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width;
+            settings.AI_Powered_2D_SMLM_Reconstruction_pixel_size = obj.AI_Powered_2D_SMLM_Reconstruction_pixel_size;
+            settings.AI_Powered_2D_SMLM_Reconstruction_extraction_scale = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale;
+            settings.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio;
+            settings.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold;
+            settings.AI_Powered_2D_SMLM_Reconstruction_extraction_method = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method;
+            settings.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = obj.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl;
+            settings.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = obj.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size;
+            settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method;
+            settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
+            settings.AI_Powered_2D_SMLM_Reconstruction_NA = obj.AI_Powered_2D_SMLM_Reconstruction_NA;            
             
             xml_write(fname,settings);
         end
@@ -2412,9 +2431,24 @@ classdef ALYtools_data_controller < handle
                     obj.ImageTiling_Ovlp_X = settings.ImageTiling_Ovlp_X;
                     obj.ImageTiling_Ovlp_Y = settings.ImageTiling_Ovlp_Y;
                     obj.ImageTiling_QT = settings.ImageTiling_QT;
-                    obj.ImageTiling_mode = settings.ImageTiling_mode;                    
+                    obj.ImageTiling_mode = settings.ImageTiling_mode; 
+                    %
+                    obj.AI_Powered_2D_SMLM_Reconstruction_network = settings.AI_Powered_2D_SMLM_Reconstruction_network;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_upscale_factor = settings.AI_Powered_2D_SMLM_Reconstruction_upscale_factor;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width = settings.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_pixel_size = settings.AI_Powered_2D_SMLM_Reconstruction_pixel_size;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale = settings.AI_Powered_2D_SMLM_Reconstruction_extraction_scale;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio = settings.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold = settings.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method = settings.AI_Powered_2D_SMLM_Reconstruction_extraction_method;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = settings.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = settings.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_method;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_NA = settings.AI_Powered_2D_SMLM_Reconstruction_NA;
                 catch
-                end                
+                end  
+                
              end
         end
 %-------------------------------------------------------------------------%                
@@ -4899,11 +4933,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy,~) 
 
-            d = 5; %obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width; % = 5;
-            s = 2; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale; % = 2; %non-super res pixels            
-            K = 3.5; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio; % = 3.5; % ditto
-            t = 6; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; %; % std factor?
-            method = 'Linear_TopHat'; % obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method; % = 'Linear_TopHat';
+            d = obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width; % = 5;
+            s = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale; % = 2; %non-super res pixels            
+            K = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio; % = 3.5; % ditto
+            t = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; %; % std factor?
+            method = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method; % = 'Linear_TopHat';
 
             [sX,sY,~,~,sT] = size(obj.imgdata);
             XYF = [];
@@ -4913,9 +4947,11 @@ function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy
             ycoor = repmat(1:sX,[sY 1]);
             xcoor = repmat((1:sY)',[1 sX]);
 
-                    n_frames = 10;
+                   n_frames = 10;
                     
-                    for k=1:n_frames % only first 10 frames
+                   frame_data = cell(n_frames,1);         
+                   %parfor k=1:n_frames % only first 10 frames
+                   for k=1:n_frames % only first 10 frames
 
                         frame = single(squeeze(obj.imgdata(:,:,1,1,k)));    
                     % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
@@ -4954,17 +4990,25 @@ function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy
                         L = bwlabel(z);
                         xw = xcoor.*z;
                         yw = ycoor.*z;
-                        for m=1:max(L(:))
+                        ML = max(L(:));
+                        XYF_k = zeros(ML,3);
+                        for m=1:ML
                             pixs_m = z(L==m);
                             denom = sum(pixs_m(:));
                             xw_m = xw(L==m);
                             yw_m = yw(L==m);
                             x = sum(xw_m(:))/denom;
                             y = sum(yw_m(:))/denom;
-                            rec = round([x y k]); % pity
-                            XYF = [XYF; rec];        
+                            XYF_k(m,:) = round([x y k]); % pity;        
                         end
-                    end 
+                        frame_data{k} = XYF_k; 
+                   end 
+                   XYF = [];
+                   %parfor k=1:n_frames 
+                   for k=1:n_frames 
+                       XYF_k = frame_data{k};
+                       XYF = [XYF; XYF_k];
+                   end
                     %
                     indi = XYF(:,1)-d>=1 & XYF(:,2)-d>=1 & ... 
                            XYF(:,1)+d<=sX & XYF(:,2)+d<=sY;
@@ -5007,22 +5051,25 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
      
      [sX,sY,~,~,sT] = size(obj.imgdata);
      
-     path_to_network = 'C:\Users\alexany\ALYtools\TrainedNetworks\trained_net_UAI2DGaussPSF_5x_training_data_range_1pix_N_250000.mat'; % obj.AI_Powered_2D_SMLM_Reconstruction_network; % path to file
-     upscale_fac = 5; %obj.AI_Powered_2D_SMLM_Reconstruction_upscale_factor = 5;
-     d = 5; %obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width = 5;
-     pix_size = 107; %obj.AI_Powered_2D_SMLM_Reconstruction_pixel_size = 107; % nm/pixel
-     R = 50/pix_size*upscale_fac; % R = 80 nm %obj.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = 80; % nm
-     block_size = 200; %obj.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = 200; % frames            
-          
-     load(path_to_network);
+     path_to_network = obj.AI_Powered_2D_SMLM_Reconstruction_network; % path to file
+     upscale_fac = obj.AI_Powered_2D_SMLM_Reconstruction_upscale_factor;
+     d = obj.AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width;
+     pix_size = obj.AI_Powered_2D_SMLM_Reconstruction_pixel_size; % nm/pixel
+     R = obj.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl/pix_size*upscale_fac; % expressed in super res pixs
+     block_size = obj.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size; % 200 frames 
+     visualisation_method = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method; % = 'ASH'
+      
+     try
+        load(path_to_network); % "net" object is there
+     catch % then try default
+        path_to_network = [pwd filesep 'TrainedNetworks' filesep 'trained_net_UAI2DGaussPSF_5x_training_data_range_1pix_N_250000.mat'];
+        load(path_to_network);
+     end
      
-     %XYF = obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(false);     
-     %%%%%%%%%%%%%%%%%%%%
-
-            s = 2; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale; % = 2; %non-super res pixels            
-            K = 3.5; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio; % = 3.5; % ditto
-            t = 6; %obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; %; % std factor?
-            method = 'Linear_TopHat'; % obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method; % = 'Linear_TopHat';
+            s = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale; % = 2; %non-super res pixels            
+            K = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio; % = 3.5; % ditto
+            t = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; %; % std factor
+            method = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method; % = 'Linear_TopHat';
             
             XYF = [];
 
@@ -5033,69 +5080,77 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                 temp_img = obj.imgdata; % ?!!!!
                 % obj.imgdata = []; % remove from memory if image size is very large
                 % % Create a parallel pool if none exists
-                if isempty(gcp)
-                       parpool;
-                end                
-                
-                parfor k=1:sT
-                    % k
-                %for k=1:sT
-                    %frame = single(squeeze(obj.imgdata(:,:,1,1,k)));    
-                    frame = single(squeeze(temp_img(:,:,1,1,k)));    
+%                 if isempty(gcp)
+%                        parpool;
+%                 end   
 
-                    % if any changes made the block BELOW should be copied into corresponding "Segmentation" proc for consistency   
-                    switch method
-                        case 'Linear_TopHat'
-                            z = linear_tophat(frame,s,K);
-                        case 'DOG'
-                            g1=gsderiv(frame,s,0);
-                            g2=gsderiv(frame,s*K,0);
-                            z=(g1-g2)./mean(g2(:));                
-                        case 'Primitive_Linear_Tophat'
-                            z = conv2(frame,ones(s)/(s*s),'same');
-                            z = (frame-z)/mean(z(:));   
-                                r = ceil(s/2+1);
-                                z(1:r,:)=0;
-                                z(sX-r:sX,:)=0;
-                                z(:,1:r)=0;
-                                z(:,sY-r:sY)=0;                      
-                    end
-                    %       
-                    z = z.*(z>0);
-                    sample = z(z~=0);
-                    thresh = t*std(sample(:)); 
-                    z(z<thresh)=0;
+                   n_frames = sT;                
+                   frame_data = cell(n_frames,1);         
+                   %parfor k=1:n_frames % only first 10 frames
+                   for k=1:n_frames % only first 10 frames
+
+                        frame = single(squeeze(temp_img(:,:,1,1,k)));
+                    % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
+                        switch method
+                            case 'Linear_TopHat'
+                                z = linear_tophat(frame,s,K);                
+                            case 'DOG'
+                                g1=gsderiv(frame,s,0);
+                                g2=gsderiv(frame,s*K,0);
+                                z=(g1-g2)./mean(g2(:));                
+                            case 'Primitive_Linear_Tophat'
+                                z = conv2(frame,ones(s)/(s*s),'same');
+                                z = (frame-z)/mean(z(:));   
+                                    r = ceil(s/2+1);
+                                    z(1:r,:)=0;
+                                    z(sX-r:sX,:)=0;
+                                    z(:,1:r)=0;
+                                    z(:,sY-r:sY)=0;                      
+                        end
+                        %       
+                        z = z.*(z>0);
+                        sample = z(z~=0);
+                        thresh = t*std(sample(:)); 
+                        z(z<thresh)=0;
+                        %
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                        %     z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
+                        %     z = z > 0;
+                        %             
+                        %     [x,y]=find(z==1);
+                        %     f = k*ones(length(x),1);
+                        %     rec = [x y f];
+                        %     XYF = [XYF; rec];
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                        %
+                        L = bwlabel(z);
+                        xw = xcoor.*z;
+                        yw = ycoor.*z;
+                        ML = max(L(:));
+                        XYF_k = zeros(ML,3);
+                        for m=1:ML
+                            pixs_m = z(L==m);
+                            denom = sum(pixs_m(:));
+                            xw_m = xw(L==m);
+                            yw_m = yw(L==m);
+                            x = sum(xw_m(:))/denom;
+                            y = sum(yw_m(:))/denom;
+                            XYF_k(m,:) = round([x y k]); % pity;        
+                        end
+                        frame_data{k} = XYF_k; 
+                   end 
+                   XYF = [];
+                   %parfor k=1:n_frames 
+                   for k=1:n_frames 
+                       XYF_k = frame_data{k};
+                       XYF = [XYF; XYF_k];
+                   end
                     %
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-                    %     z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
-                    %     z = z > 0;
-                    %             
-                    %     [x,y]=find(z==1);
-                    %     f = k*ones(length(x),1);
-                    %     rec = [x y f];
-                    %     XYF = [XYF; rec];
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-                    %
-                    L = bwlabel(z);
-                    xw = xcoor.*z;
-                    yw = ycoor.*z;
-                    for m=1:max(L(:))
-                        pixs_m = z(L==m);
-                        denom = sum(pixs_m(:));
-                        xw_m = xw(L==m);
-                        yw_m = yw(L==m);
-                        x = sum(xw_m(:))/denom;
-                        y = sum(yw_m(:))/denom;
-                        rec = round([x y k]); % pity
-                        XYF = [XYF; rec];        
-                    end
-                end % parfor 
-                %
-                indi = XYF(:,1)-d>=1 & XYF(:,2)-d>=1 & ... 
-                       XYF(:,1)+d<=sX & XYF(:,2)+d<=sY;
-                XYF = XYF(indi,:);                                         
-                % if any changes made the block ABOVE should be copied into corresponding "Segmentation" proc for consistency                                   
-         
+                    indi = XYF(:,1)-d>=1 & XYF(:,2)-d>=1 & ... 
+                           XYF(:,1)+d<=sX & XYF(:,2)+d<=sY;
+                    XYF = XYF(indi,:);
+                    % the block ABOVE should be a copy of the corresponding one from "Analysis" proc for consistency
+
 disp(['extracted ' num2str(size(XYF,1)) ' emitters, time = ' num2str(toc(t_start)/60)]);
                 
      VIC = zeros(2*d+1,2*d+1,size(XYF,1));
@@ -5114,8 +5169,8 @@ disp(['vicinities extracted, time = ' num2str(toc(t_start)/60)]);
      
      %%%%%%%%%%%%%%%%%% normalize image data
      VIC_norm = zeros(size(VIC));
-     parfor k=1:size(VIC,3)
-     %for k=1:size(VIC,3)         
+     %parfor k=1:size(VIC,3)
+     for k=1:size(VIC,3)         
         z = VIC(:,:,k);
         z = map(z,0,1);
         z = (z - mean(z(:)))/std(z(:));
@@ -5168,8 +5223,7 @@ disp('..drift corrected..');
                        
 disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations = ' num2str(size(XY_UPS,1))]);
 
-            % constructing output super res image
-            visualisation_method = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method; % = 'ASH'
+            % constructing output super res image            
                 switch visualisation_method
                     case 'ASH'
                         scene_AI = AI_Powered_2D_SMLM_Reconstruction_ASH_2d(upscale_fac*sX,upscale_fac*sY,XY_UPS,max(3,round(upscale_fac/2)));
@@ -5187,7 +5241,8 @@ disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations =
                 end
             % original - total intensity image   
             total_intensity = zeros(sX,sY,'single');
-            parfor k=1:sT
+            %parfor k=1:sT
+            for k=1:sT
                 total_intensity = total_intensity + single(squeeze(temp_img(:,:,1,1,k)));
             end
             total_intensity_UPS = imresize(total_intensity,upscale_fac,'box');            
