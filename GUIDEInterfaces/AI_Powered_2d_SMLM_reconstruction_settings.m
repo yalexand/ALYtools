@@ -22,7 +22,7 @@ function varargout = AI_Powered_2d_SMLM_reconstruction_settings(varargin)
 
 % Edit the above text to modify the response to help AI_Powered_2d_SMLM_reconstruction_settings
 
-% Last Modified by GUIDE v2.5 18-May-2019 10:50:37
+% Last Modified by GUIDE v2.5 18-May-2019 22:05:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -74,6 +74,7 @@ handles.time_dependent_block_size =     dc.AI_Powered_2D_SMLM_Reconstruction_tim
 handles.image_formation_method =        dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_method;
 handles.image_formation_scale =         dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
 handles.NA =                            dc.AI_Powered_2D_SMLM_Reconstruction_NA;
+handles.wavelength =                    dc.AI_Powered_2D_SMLM_Reconstruction_wavelength;
 
 % back up initial values for "cancel"
 handles.ini_network =                       dc.AI_Powered_2D_SMLM_Reconstruction_network; % path to file
@@ -89,6 +90,7 @@ handles.ini_time_dependent_block_size =     dc.AI_Powered_2D_SMLM_Reconstruction
 handles.ini_image_formation_method =        dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_method;
 handles.ini_image_formation_scale =         dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
 handles.ini_NA =                            dc.AI_Powered_2D_SMLM_Reconstruction_NA;
+handles.ini_wavelength =                    dc.AI_Powered_2D_SMLM_Reconstruction_wavelength;
 % back up initial values for "cancel"
 
 set(handles.image_formation_method_popupmenu,'String',dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_methods);
@@ -110,24 +112,10 @@ set(handles.spurious_emitter_distance_edit,'String',num2str(handles.max_distance
 set(handles.frame_merging_block_size_edit,'String',num2str(handles.time_dependent_block_size));
 set(handles.super_res_image_formation_scale_edit,'String',num2str(handles.image_formation_scale)); 
 set(handles.NA_edit,'String',num2str(handles.NA));
+set(handles.wavelength_edit,'String',num2str(handles.wavelength));
       
 % Choose default command line output for AI_Powered_2d_SMLM_reconstruction_settings
 handles.output = hObject;
-
-%             AI_Powered_2D_SMLM_Reconstruction_network; % path to file
-%             AI_Powered_2D_SMLM_Reconstruction_upscale_factor = 5;
-%             AI_Powered_2D_SMLM_Reconstruction_vicinity_half_width = 5;
-%             AI_Powered_2D_SMLM_Reconstruction_pixel_size = 107; % nm/pixel
-%             AI_Powered_2D_SMLM_Reconstruction_extraction_scale = 2; %non-super res pixels            
-%             AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio = 3.5; % ditto
-%             AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; % std factor?
-%             AI_Powered_2D_SMLM_Reconstruction_extraction_method = 'Linear_TopHat';
-%             AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl = 80; % nm
-%             AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = 200; % frames            
-%             AI_Powered_2D_SMLM_Reconstruction_image_formation_method = 'ASH';
-%             AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = 3;
-%             AI_Powered_2D_SMLM_Reconstruction_NA = 3;
-
 
 % Update handles structure
 guidata(hObject, handles);
@@ -545,6 +533,7 @@ dc.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = handles.time_de
 dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = handles.image_formation_method;
 dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = handles.image_formation_scale;
 dc.AI_Powered_2D_SMLM_Reconstruction_NA = handles.NA;
+dc.AI_Powered_2D_SMLM_Reconstruction_wavelength = handles.wavelength;
 
 % --- Executes on button press in update_pushbutton.
 function update_pushbutton_Callback(hObject, eventdata, handles)
@@ -583,6 +572,7 @@ dc.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = handles.ini_tim
 dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = handles.ini_image_formation_method;
 dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = handles.ini_image_formation_scale;
 dc.AI_Powered_2D_SMLM_Reconstruction_NA = handles.ini_NA;
+dc.AI_Powered_2D_SMLM_Reconstruction_wavelength = handles.ini_wavelength;
 
     fh = ancestor(hObject,'figure');     
     delete(fh);
@@ -592,3 +582,34 @@ function network_path_pushbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to network_path_pushbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+
+function wavelength_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to wavelength_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of wavelength_edit as text
+%        str2double(get(hObject,'String')) returns contents of wavelength_edit as a double
+value = str2double(get(hObject,'String'));
+if ~isnan(value) && value >= 200 && value <= 800
+    handles.wavelength = value;
+    guidata(hObject,handles);
+else
+    value = handles.wavelength;
+    set(hObject,'String',num2str(value));
+end
+uiresume(handles.figure1);
+
+% --- Executes during object creation, after setting all properties.
+function wavelength_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to wavelength_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

@@ -307,6 +307,7 @@ classdef ALYtools_data_controller < handle
             AI_Powered_2D_SMLM_Reconstruction_NA = 1;
             AI_Powered_2D_SMLM_Reconstruction_extraction_methods = {'Linear_TopHat','DOG','Primitive_Linear_Tophat'};
             AI_Powered_2D_SMLM_Reconstruction_image_formation_methods = {'ASH','Smoothed Histogram'};
+            AI_Powered_2D_SMLM_Reconstruction_wavelength = 509; % nm
 
     end    
         
@@ -2238,7 +2239,8 @@ classdef ALYtools_data_controller < handle
             settings.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size = obj.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size;
             settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method;
             settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
-            settings.AI_Powered_2D_SMLM_Reconstruction_NA = obj.AI_Powered_2D_SMLM_Reconstruction_NA;            
+            settings.AI_Powered_2D_SMLM_Reconstruction_NA = obj.AI_Powered_2D_SMLM_Reconstruction_NA;
+            settings.AI_Powered_2D_SMLM_Reconstruction_wavelength = obj.AI_Powered_2D_SMLM_Reconstruction_wavelength;
             
             xml_write(fname,settings);
         end
@@ -2446,6 +2448,7 @@ classdef ALYtools_data_controller < handle
                     obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_method;
                     obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
                     obj.AI_Powered_2D_SMLM_Reconstruction_NA = settings.AI_Powered_2D_SMLM_Reconstruction_NA;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_wavelength = settings.AI_Powered_2D_SMLM_Reconstruction_wavelength;
                 catch
                 end  
                 
