@@ -957,7 +957,8 @@ classdef ALYtools_data_controller < handle
                             || strcmp(obj.problem,'PR') || strcmp(obj.problem,'NucCyt') ...
                             || strcmp(obj.problem,'MPHG') || strcmp(obj.problem,'Experimental') ...
                             || strcmp(obj.problem,'Sparks') || strcmp(obj.problem,'per_image_TCSPC_FLIM') ... 
-                            || strcmp(obj.problem,'Image_Tiling')                        
+                            || strcmp(obj.problem,'Image_Tiling') ...
+                            || strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction')
                         if obj.save_analysis_output_as_xls && ~isempty(datas)
                             if ~isempty(obj.current_filename)
                                 xlsname = [dirname filesep '_' obj.problem '_' obj.current_filename '_analysis_data.xls'];
@@ -968,17 +969,19 @@ classdef ALYtools_data_controller < handle
                                 try
                                     xlswrite( xlsname,[captions; datas],char(table_names) );
                                 catch
-                                    disp('can not write output as xls, save as mat file instead');                                    
-                                    matname = xlsname(1:length(xlsname)-4);
-                                    save([matname '.mat'],'captions','datas');
+                                    disp('can not write output as xls, save as mat,csv file instead');                                    
+                                    fname = xlsname(1:length(xlsname)-4);
+                                    save([fname '.mat'],'captions','datas');
+                                    cell2csv([fname '.csv'],[captions; datas]);
                                 end
                             else
                                 try
                                     xlwrite( xlsname,[captions; datas],char(table_names) );
                                 catch
-                                    disp('can not write output as xls, save as mat file instead');
-                                    matname = xlsname(1:length(xlsname)-4);
-                                    save([matname '.mat'],'captions','datas');
+                                    disp('can not write output as xls, save as mat,csv file instead');
+                                    fname = xlsname(1:length(xlsname)-4);
+                                    save([fname '.mat'],'captions','datas');
+                                    cell2csv([fname '.csv'],[captions; datas]);                                    
                                 end
                             end
                         end
@@ -1037,7 +1040,7 @@ classdef ALYtools_data_controller < handle
             
             switch obj.problem
                             
-                case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' 't_dependent_Nuclei_ratio_FRET'}
+                case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' 't_dependent_Nuclei_ratio_FRET','AI_Powered_2D_SMLM_Reconstruction'}
                     
                     dirname = [];           
                     cmnxlsname = [];
@@ -1099,10 +1102,24 @@ classdef ALYtools_data_controller < handle
                             if obj.save_analysis_output_as_xls && ~isempty(data) && ~isempty(caption) && ~isempty(table_name)
                                 xlsname = [dirname filesep obj.current_filename '_analysis_data.xls']; 
                                 if ispc
-                                    xlswrite( xlsname,[caption; data],char(table_name) );
+                                    try
+                                        xlswrite( xlsname,[caption; data],char(table_name) );
+                                    catch
+                                        disp('can not write output as xls, save as mat,csv file instead');                                    
+                                        fname = xlsname(1:length(xlsname)-4);
+                                        save([fname '.mat'],'caption','data');
+                                        cell2csv([fname '.csv'],[caption; data]);
+                                    end
                                 else
-                                    xlwrite( xlsname,[caption; data],char(table_name) );
-                                end                                    
+                                    try
+                                        xlwrite( xlsname,[caption; data],char(table_name) );
+                                    catch
+                                        disp('can not write output as xls, save as mat,csv file instead');
+                                        fname = xlsname(1:length(xlsname)-4);
+                                        save([fname '.mat'],'caption','data');
+                                        cell2csv([fname '.csv'],[caption; data]);                                    
+                                    end
+                                end
                             end
                             %
                             if obj.save_analysis_output_as_xls && ~isempty(data) && ~isempty(caption) && ~isempty(table_name)
@@ -1159,7 +1176,9 @@ classdef ALYtools_data_controller < handle
                         
                     end     
                     
-                    if obj.save_analysis_output_as_xls && ~isempty(CMN) && ~isempty(caption) && ~isempty(table_name) % common excel data file
+                    if obj.save_analysis_output_as_xls && ~isempty(CMN) && ~isempty(caption) && ~isempty(table_name) && ... % common excel data file
+                            ~strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction') && ...
+                            ~strcmp(obj.problem,'ImageTiling')                            
                        if ispc
                         xlswrite( cmnxlsname,CMN );
                        else
@@ -5089,8 +5108,8 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
 
                    n_frames = sT;                
                    frame_data = cell(n_frames,1);         
-                   %parfor k=1:n_frames % only first 10 frames
-                   for k=1:n_frames % only first 10 frames
+                   parfor k=1:n_frames % only first 10 frames
+                   %for k=1:n_frames % only first 10 frames
 
                         frame = single(squeeze(temp_img(:,:,1,1,k)));
                     % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
@@ -5143,8 +5162,8 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                         frame_data{k} = XYF_k; 
                    end 
                    XYF = [];
-                   %parfor k=1:n_frames 
-                   for k=1:n_frames 
+                   parfor k=1:n_frames 
+                   %for k=1:n_frames 
                        XYF_k = frame_data{k};
                        XYF = [XYF; XYF_k];
                    end
@@ -5172,8 +5191,8 @@ disp(['vicinities extracted, time = ' num2str(toc(t_start)/60)]);
      
      %%%%%%%%%%%%%%%%%% normalize image data
      VIC_norm = zeros(size(VIC));
-     %parfor k=1:size(VIC,3)
-     for k=1:size(VIC,3)         
+     parfor k=1:size(VIC,3)
+     %for k=1:size(VIC,3)         
         z = VIC(:,:,k);
         z = map(z,0,1);
         z = (z - mean(z(:)))/std(z(:));
@@ -5244,8 +5263,8 @@ disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations =
                 end
             % original - total intensity image   
             total_intensity = zeros(sX,sY,'single');
-            %parfor k=1:sT
-            for k=1:sT
+            parfor k=1:sT
+            %for k=1:sT
                 total_intensity = total_intensity + single(squeeze(temp_img(:,:,1,1,k)));
             end
             total_intensity_UPS = imresize(total_intensity,upscale_fac,'box');            
@@ -5261,7 +5280,7 @@ disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations =
             fig(:,:,2,:,:) = scene_AI;
             fig(:,:,3,:,:) = non_superres_features;
         
-            datas = [XY_UPS/upscale_fac/pix_size F_UPS];
+            datas = [XY_UPS/upscale_fac*pix_size F_UPS];
             datas = num2cell(datas);
             captions = {'X [nm]','Y [nm]','frame'};        
 end
