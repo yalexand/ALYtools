@@ -356,7 +356,10 @@ function extraction_method_popupmenu_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of extraction_method_popupmenu as a double
 index = get(hObject,'Value');
 str = get(hObject,'String');
-handles.extraction_method = str(index);
+handles.extraction_method = char(str(index));
+guidata(hObject,handles);
+uiresume(handles.figure1);
+  
 
 % --- Executes during object creation, after setting all properties.
 function extraction_method_popupmenu_CreateFcn(hObject, eventdata, handles)

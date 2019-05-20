@@ -4983,7 +4983,7 @@ function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy
                             case 'DOG'
                                 g1=gsderiv(frame,s,0);
                                 g2=gsderiv(frame,s*K,0);
-                                z=(g1-g2)./mean(g2(:));                
+                                z=(g1-g2)./g2;                                
                             case 'Primitive_Linear_Tophat'
                                 z = conv2(frame,ones(s)/(s*s),'same');
                                 z = (frame-z)/mean(z(:));   
@@ -4999,16 +4999,13 @@ function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy
                         thresh = t*std(sample(:)); 
                         z(z<thresh)=0;
                         %
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-                        %     z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
-                        %     z = z > 0;
-                        %             
-                        %     [x,y]=find(z==1);
-                        %     f = k*ones(length(x),1);
-                        %     rec = [x y f];
-                        %     XYF = [XYF; rec];
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-                        %
+%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+%                             z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
+%                             z = z > 0;                                    
+%                             [x,y]=find(z==1);
+%                             f = k*ones(length(x),1);
+%                             frame_data{k} = [x y f];
+%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
                         L = bwlabel(z);
                         xw = xcoor.*z;
                         yw = ycoor.*z;
@@ -5100,7 +5097,7 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
             xcoor = repmat((1:sY)',[1 sX]);
             
                 temp_img = obj.imgdata; % ?!!!!
-                % obj.imgdata = []; % remove from memory if image size is very large
+                obj.imgdata = []; % remove from memory if image size is very large
                 % % Create a parallel pool if none exists
 %                 if isempty(gcp)
 %                        parpool;
@@ -5119,7 +5116,7 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                             case 'DOG'
                                 g1=gsderiv(frame,s,0);
                                 g2=gsderiv(frame,s*K,0);
-                                z=(g1-g2)./mean(g2(:));                
+                                z=(g1-g2)./g2;
                             case 'Primitive_Linear_Tophat'
                                 z = conv2(frame,ones(s)/(s*s),'same');
                                 z = (frame-z)/mean(z(:));   
@@ -5135,16 +5132,13 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                         thresh = t*std(sample(:)); 
                         z(z<thresh)=0;
                         %
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-                        %     z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
-                        %     z = z > 0;
-                        %             
-                        %     [x,y]=find(z==1);
-                        %     f = k*ones(length(x),1);
-                        %     rec = [x y f];
-                        %     XYF = [XYF; rec];
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-                        %
+%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+%                             z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
+%                             z = z > 0;                                    
+%                             [x,y]=find(z==1);
+%                             f = k*ones(length(x),1);
+%                             frame_data{k} = [x y f];
+%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting                        
                         L = bwlabel(z);
                         xw = xcoor.*z;
                         yw = ycoor.*z;
