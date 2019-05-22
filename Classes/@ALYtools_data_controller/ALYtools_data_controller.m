@@ -969,19 +969,19 @@ classdef ALYtools_data_controller < handle
                                 try
                                     xlswrite( xlsname,[captions; datas],char(table_names) );
                                 catch
-                                    disp('can not write output as xls, save as mat,csv file instead');                                    
+                                    disp('can not write output as xls, save as mat file instead');                                    
                                     fname = xlsname(1:length(xlsname)-4);
                                     save([fname '.mat'],'captions','datas');
-                                    cell2csv([fname '.csv'],[captions; datas]);
+                                    %cell2csv([fname '.csv'],[captions; datas]);
                                 end
                             else
                                 try
                                     xlwrite( xlsname,[captions; datas],char(table_names) );
                                 catch
-                                    disp('can not write output as xls, save as mat,csv file instead');
+                                    disp('can not write output as xls, save as mat file instead');
                                     fname = xlsname(1:length(xlsname)-4);
                                     save([fname '.mat'],'captions','datas');
-                                    cell2csv([fname '.csv'],[captions; datas]);                                    
+                                    %cell2csv([fname '.csv'],[captions; datas]);                                    
                                 end
                             end
                         end
@@ -1105,19 +1105,19 @@ classdef ALYtools_data_controller < handle
                                     try
                                         xlswrite( xlsname,[caption; data],char(table_name) );
                                     catch
-                                        disp('can not write output as xls, save as mat,csv file instead');                                    
+                                        disp('can not write output as xls, save as mat file instead');                                    
                                         fname = xlsname(1:length(xlsname)-4);
                                         save([fname '.mat'],'caption','data');
-                                        cell2csv([fname '.csv'],[caption; data]);
+                                        %cell2csv([fname '.csv'],[caption; data]);
                                     end
                                 else
                                     try
                                         xlwrite( xlsname,[caption; data],char(table_name) );
                                     catch
-                                        disp('can not write output as xls, save as mat,csv file instead');
+                                        disp('can not write output as xls, save as mat file instead');
                                         fname = xlsname(1:length(xlsname)-4);
                                         save([fname '.mat'],'caption','data');
-                                        cell2csv([fname '.csv'],[caption; data]);                                    
+                                        %cell2csv([fname '.csv'],[caption; data]);                                    
                                     end
                                 end
                             end
@@ -4999,28 +4999,28 @@ function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy
                         thresh = t*std(sample(:)); 
                         z(z<thresh)=0;
                         %
-%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-%                             z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
-%                             z = z > 0;                                    
-%                             [x,y]=find(z==1);
-%                             f = k*ones(length(x),1);
-%                             frame_data{k} = [x y f];
-%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-                        L = bwlabel(z);
-                        xw = xcoor.*z;
-                        yw = ycoor.*z;
-                        ML = max(L(:));
-                        XYF_k = zeros(ML,3);
-                        for m=1:ML
-                            pixs_m = z(L==m);
-                            denom = sum(pixs_m(:));
-                            xw_m = xw(L==m);
-                            yw_m = yw(L==m);
-                            x = sum(xw_m(:))/denom;
-                            y = sum(yw_m(:))/denom;
-                            XYF_k(m,:) = round([x y k]); % pity;        
-                        end
-                        frame_data{k} = XYF_k; 
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                            z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
+                            z = z > 0;                                    
+                            [x,y]=find(z==1);
+                            f = k*ones(length(x),1);
+                            frame_data{k} = [x y f];
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+%                         L = bwlabel(z);
+%                         xw = xcoor.*z;
+%                         yw = ycoor.*z;
+%                         ML = max(L(:));
+%                         XYF_k = zeros(ML,3);
+%                         for m=1:ML
+%                             pixs_m = z(L==m);
+%                             denom = sum(pixs_m(:));
+%                             xw_m = xw(L==m);
+%                             yw_m = yw(L==m);
+%                             x = sum(xw_m(:))/denom;
+%                             y = sum(yw_m(:))/denom;
+%                             XYF_k(m,:) = round([x y k]); % pity;        
+%                         end
+%                         frame_data{k} = XYF_k; 
                    end 
                    XYF = [];
                    %parfor k=1:n_frames 
@@ -5097,16 +5097,20 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
             xcoor = repmat((1:sY)',[1 sX]);
             
                 temp_img = obj.imgdata; % ?!!!!
-                obj.imgdata = []; % remove from memory if image size is very large
-                % % Create a parallel pool if none exists
-%                 if isempty(gcp)
-%                        parpool;
-%                 end   
-
+                % obj.imgdata = []; % remove from memory if image size is very large
+                   
+                   % original - total intensity image   
+                   total_intensity = zeros(sX,sY,'single');
+                   parfor k=1:sT
+                   %for k=1:sT
+                       total_intensity = total_intensity + single(squeeze(temp_img(:,:,1,1,k)));
+                   end
+                   total_intensity_UPS = imresize(total_intensity,upscale_fac,'box');            
+                                                         
                    n_frames = sT;                
                    frame_data = cell(n_frames,1);         
-                   parfor k=1:n_frames % only first 10 frames
-                   %for k=1:n_frames % only first 10 frames
+                   parfor k=1:n_frames 
+                   %for k=1:n_frames
 
                         frame = single(squeeze(temp_img(:,:,1,1,k)));
                     % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
@@ -5132,29 +5136,29 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                         thresh = t*std(sample(:)); 
                         z(z<thresh)=0;
                         %
-%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
-%                             z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
-%                             z = z > 0;                                    
-%                             [x,y]=find(z==1);
-%                             f = k*ones(length(x),1);
-%                             frame_data{k} = [x y f];
-%                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting                        
-                        L = bwlabel(z);
-                        xw = xcoor.*z;
-                        yw = ycoor.*z;
-                        ML = max(L(:));
-                        XYF_k = zeros(ML,3);
-                        for m=1:ML
-                            pixs_m = z(L==m);
-                            denom = sum(pixs_m(:));
-                            xw_m = xw(L==m);
-                            yw_m = yw(L==m);
-                            x = sum(xw_m(:))/denom;
-                            y = sum(yw_m(:))/denom;
-                            XYF_k(m,:) = round([x y k]); % pity;        
-                        end
-                        frame_data{k} = XYF_k; 
-                   end 
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting
+                            z = z > imdilate(z, [1 1 1; 1 0 1; 1 1 1]); 
+                            z = z > 0;                                    
+                            [x,y]=find(z==1);
+                            f = k*ones(length(x),1);
+                            frame_data{k} = [x y f];
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% harvesting                        
+%                         L = bwlabel(z);
+%                         xw = xcoor.*z;
+%                         yw = ycoor.*z;
+%                         ML = max(L(:));
+%                         XYF_k = zeros(ML,3);
+%                         for m=1:ML
+%                             pixs_m = z(L==m);
+%                             denom = sum(pixs_m(:));
+%                             xw_m = xw(L==m);
+%                             yw_m = yw(L==m);
+%                             x = sum(xw_m(:))/denom;
+%                             y = sum(yw_m(:))/denom;
+%                             XYF_k(m,:) = round([x y k]); % pity;        
+%                         end
+%                         frame_data{k} = XYF_k; 
+                   end
                    XYF = [];
                    parfor k=1:n_frames 
                    %for k=1:n_frames 
@@ -5181,6 +5185,9 @@ disp(['extracted ' num2str(size(XYF,1)) ' emitters, time = ' num2str(toc(t_start
         %VIC(:,:,k) = single(squeeze(obj.imgdata(x1(k):x2(k),y1(k):y2(k),1,1,f(k))));
         VIC(:,:,k) = single(squeeze(temp_img(x1(k):x2(k),y1(k):y2(k),1,1,f(k))));
      end
+     
+     clear('temp_img');
+     
 disp(['vicinities extracted, time = ' num2str(toc(t_start)/60)]);
      
      %%%%%%%%%%%%%%%%%% normalize image data
@@ -5255,13 +5262,6 @@ disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations =
                         s = 1;
                         scene_AI = gsderiv(scene_AI,s,0);                                                                        
                 end
-            % original - total intensity image   
-            total_intensity = zeros(sX,sY,'single');
-            parfor k=1:sT
-            %for k=1:sT
-                total_intensity = total_intensity + single(squeeze(temp_img(:,:,1,1,k)));
-            end
-            total_intensity_UPS = imresize(total_intensity,upscale_fac,'box');            
                         
             non_superres_features = zeros(size(total_intensity));
             for k=1:size(XYF,1)
