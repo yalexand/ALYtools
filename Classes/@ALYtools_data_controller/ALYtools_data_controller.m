@@ -5224,8 +5224,8 @@ disp(['vicinities normalized, time = ' num2str(toc(t_start)/60)]);
         F = XYF(:,3);
 
         % and this is real thing in super res pixels
-        % ATTENTION - XY_nm IS THE RESULT - will be used later
-        XY_UPS = ceil(XY_nm/pix_size*upscale_fac); % stands for UPSCALED
+        % ATTENTION - XY_nm IS THE RESULT - will be used later        
+        XY_UPS = round(XY_nm/pix_size*upscale_fac); % stands for UPSCALED
         F_UPS = F;
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
