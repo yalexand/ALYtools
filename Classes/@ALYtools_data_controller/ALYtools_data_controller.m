@@ -4968,6 +4968,8 @@ function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy
             % maybe used for harvesting
             ycoor = repmat(1:sX,[sY 1]);
             xcoor = repmat((1:sY)',[1 sX]);
+                        
+            r = ceil(s/2+1);
 
                    n_frames = 10;
                     
@@ -4977,17 +4979,17 @@ function XYF = do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(obj,send_to_Icy
 
                         frame = single(squeeze(obj.imgdata(:,:,1,1,k)));    
                     % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
+                                                            
                         switch method
                             case 'Linear_TopHat'
                                 z = linear_tophat(frame,s,K);                
                             case 'DOG'
                                 g1=gsderiv(frame,s,0);
                                 g2=gsderiv(frame,s*K,0);
-                                z=(g1-g2)./g2;                                
+                                z=(g1-g2);
                             case 'Primitive_Linear_Tophat'
                                 z = conv2(frame,ones(s)/(s*s),'same');
-                                z = (frame-z)/mean(z(:));   
-                                    r = ceil(s/2+1);
+                                z = (frame-z);
                                     z(1:r,:)=0;
                                     z(sX-r:sX,:)=0;
                                     z(:,1:r)=0;
@@ -5090,6 +5092,8 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
             t = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_threshold; %; % std factor
             method = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_method; % = 'Linear_TopHat';
             
+            r = ceil(s/2+1);
+                        
             XYF = [];
 
             % maybe used for harvesting
@@ -5113,18 +5117,18 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                    %for k=1:n_frames
 
                         frame = single(squeeze(temp_img(:,:,1,1,k)));
-                    % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
+                                                                        
+                        % the block BELOW should be a copy of the corresponding one from "Analysis" proc for consistency
                         switch method
                             case 'Linear_TopHat'
                                 z = linear_tophat(frame,s,K);                
                             case 'DOG'
                                 g1=gsderiv(frame,s,0);
                                 g2=gsderiv(frame,s*K,0);
-                                z=(g1-g2)./g2;
+                                z=(g1-g2);
                             case 'Primitive_Linear_Tophat'
                                 z = conv2(frame,ones(s)/(s*s),'same');
-                                z = (frame-z)/mean(z(:));   
-                                    r = ceil(s/2+1);
+                                z = (frame-z);
                                     z(1:r,:)=0;
                                     z(sX-r:sX,:)=0;
                                     z(:,1:r)=0;
@@ -5166,8 +5170,9 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                        XYF = [XYF; XYF_k];
                    end
                     %
-                    indi = XYF(:,1)-d>=1 & XYF(:,2)-d>=1 & ... 
-                           XYF(:,1)+d<=sX & XYF(:,2)+d<=sY;
+                     indi = XYF(:,1)-d>=1 & XYF(:,2)-d>=1 & ... 
+                            XYF(:,1)+d<=sX & XYF(:,2)+d<=sY;
+
                     XYF = XYF(indi,:);
                     % the block ABOVE should be a copy of the corresponding one from "Analysis" proc for consistency
 

@@ -238,7 +238,7 @@ function vicinity_half_width_edit_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of vicinity_half_width_edit as a double
 value = str2double(get(hObject,'String'));
 if ~isnan(value) && value >= 4 && value <= 20
-    handles.vicinity_half_width = 2*ceil(value/2)+1;
+    handles.vicinity_half_width = round(value);
     guidata(hObject,handles);
 else
     value = handles.vicinity_half_width;
@@ -585,9 +585,14 @@ function network_path_pushbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to network_path_pushbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-
-
+    [filename,pathname] = uigetfile({'*.mat','select mat file'}, ...
+                    'AI_Powered_2d_SMLM_reconstruction: trained network chooser',pwd);
+    if filename == 0, return, end
+    handles.network = [pathname filesep filename];
+    set(handles.network_edit,'String',handles.network);
+    guidata(hObject,handles);
+    uiresume(handles.figure1);
+            
 function wavelength_edit_Callback(hObject, eventdata, handles)
 % hObject    handle to wavelength_edit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
