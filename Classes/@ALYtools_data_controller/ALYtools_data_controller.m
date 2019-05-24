@@ -5209,19 +5209,25 @@ disp(['vicinities extracted, time = ' num2str(toc(t_start)/60)]);
 disp(['vicinities normalized, time = ' num2str(toc(t_start)/60)]);     
 
      VIC_norm = reshape(VIC_norm,2*d+1,2*d+1,1,size(VIC, 3));
-     dx_dy = predict(net,VIC_norm);
-
-        % ONE SHOULD PUT THRESHOLD ON dx_dy !!! - should be within [-1.5 , 1.5]
-        XY = XYF(:,1:2) + dx_dy; % super-resolved emitter coordinates
-
-        % this is the example showing how to filter out bad localisations
-        % indi = dx_dy(:,1)>=-1.5 & dx_dy(:,2)>=-1.5 & ... 
-        %        dx_dy(:,1)<=+1.5 & dx_dy(:,2)<=+1.5;
-        % XY = XY(indi,:);
-
-        % this looks like localisation result
+     
+     prediction = predict(net,VIC_norm);
+     if 2 == size(prediction,2)         
+        dx_dy = prediction;
+        XY = XYF(:,1:2) + dx_dy; 
         XY_nm = (XY - 0.5)*pix_size;
         F = XYF(:,3);
+     else % use sigma to filter
+        dx_dy = prediction(:,1:2);
+        sigma = prediction(:,3);
+        thresh = .6; %?
+        indi = sigma>thresh;
+        XY = XYF(:,1:2) + dx_dy;
+        F = XYF(:,3);                
+        XY = XY(indi,:);
+        XY_nm = (XY - 0.5)*pix_size;        
+        F = F(indi);
+        sigma = sigma(indi);
+     end
 
         % and this is real thing in super res pixels
         % ATTENTION - XY_nm IS THE RESULT - will be used later        
