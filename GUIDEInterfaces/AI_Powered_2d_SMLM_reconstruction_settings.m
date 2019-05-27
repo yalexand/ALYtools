@@ -22,7 +22,7 @@ function varargout = AI_Powered_2d_SMLM_reconstruction_settings(varargin)
 
 % Edit the above text to modify the response to help AI_Powered_2d_SMLM_reconstruction_settings
 
-% Last Modified by GUIDE v2.5 18-May-2019 22:05:29
+% Last Modified by GUIDE v2.5 27-May-2019 12:16:26
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -75,6 +75,8 @@ handles.image_formation_method =        dc.AI_Powered_2D_SMLM_Reconstruction_ima
 handles.image_formation_scale =         dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
 handles.NA =                            dc.AI_Powered_2D_SMLM_Reconstruction_NA;
 handles.wavelength =                    dc.AI_Powered_2D_SMLM_Reconstruction_wavelength;
+handles.min_sigma =                     dc.AI_Powered_2D_SMLM_Reconstruction_min_sigma;
+handles.max_sigma =                     dc.AI_Powered_2D_SMLM_Reconstruction_max_sigma;
 
 % back up initial values for "cancel"
 handles.ini_network =                       dc.AI_Powered_2D_SMLM_Reconstruction_network; % path to file
@@ -91,6 +93,8 @@ handles.ini_image_formation_method =        dc.AI_Powered_2D_SMLM_Reconstruction
 handles.ini_image_formation_scale =         dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
 handles.ini_NA =                            dc.AI_Powered_2D_SMLM_Reconstruction_NA;
 handles.ini_wavelength =                    dc.AI_Powered_2D_SMLM_Reconstruction_wavelength;
+handles.ini_min_sigma =                     dc.AI_Powered_2D_SMLM_Reconstruction_min_sigma;
+handles.ini_max_sigma =                     dc.AI_Powered_2D_SMLM_Reconstruction_max_sigma;
 % back up initial values for "cancel"
 
 set(handles.image_formation_method_popupmenu,'String',dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_methods);
@@ -113,6 +117,8 @@ set(handles.frame_merging_block_size_edit,'String',num2str(handles.time_dependen
 set(handles.super_res_image_formation_scale_edit,'String',num2str(handles.image_formation_scale)); 
 set(handles.NA_edit,'String',num2str(handles.NA));
 set(handles.wavelength_edit,'String',num2str(handles.wavelength));
+set(handles.min_sigma_edit,'String',num2str(handles.min_sigma));
+set(handles.max_sigma_edit,'String',num2str(handles.max_sigma));
       
 % Choose default command line output for AI_Powered_2d_SMLM_reconstruction_settings
 handles.output = hObject;
@@ -537,6 +543,8 @@ dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = handles.image_form
 dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = handles.image_formation_scale;
 dc.AI_Powered_2D_SMLM_Reconstruction_NA = handles.NA;
 dc.AI_Powered_2D_SMLM_Reconstruction_wavelength = handles.wavelength;
+dc.AI_Powered_2D_SMLM_Reconstruction_min_sigma = handles.min_sigma;
+dc.AI_Powered_2D_SMLM_Reconstruction_max_sigma = handles.max_sigma;
 
 % --- Executes on button press in update_pushbutton.
 function update_pushbutton_Callback(hObject, eventdata, handles)
@@ -576,6 +584,8 @@ dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_method = handles.ini_image_
 dc.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = handles.ini_image_formation_scale;
 dc.AI_Powered_2D_SMLM_Reconstruction_NA = handles.ini_NA;
 dc.AI_Powered_2D_SMLM_Reconstruction_wavelength = handles.ini_wavelength;
+dc.AI_Powered_2D_SMLM_Reconstruction_min_sigma = handles.ini_min_sigma;
+dc.AI_Powered_2D_SMLM_Reconstruction_max_sigma = handles.ini_max_sigma;
 
     fh = ancestor(hObject,'figure');     
     delete(fh);
@@ -613,6 +623,68 @@ uiresume(handles.figure1);
 % --- Executes during object creation, after setting all properties.
 function wavelength_edit_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to wavelength_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function min_sigma_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to min_sigma_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of min_sigma_edit as text
+%        str2double(get(hObject,'String')) returns contents of min_sigma_edit as a double
+value = str2double(get(hObject,'String'));
+if ~isnan(value) && value >= 0 && value <= 10 && value < handles.max_sigma
+    handles.min_sigma = value;
+    guidata(hObject,handles);
+else
+    value = handles.min_sigma;
+    set(hObject,'String',num2str(value));
+end
+uiresume(handles.figure1);
+
+% --- Executes during object creation, after setting all properties.
+function min_sigma_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to min_sigma_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function max_sigma_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to max_sigma_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of max_sigma_edit as text
+%        str2double(get(hObject,'String')) returns contents of max_sigma_edit as a double
+value = str2double(get(hObject,'String'));
+if ~isnan(value) && value >= 0 && value <= 10 && value > handles.min_sigma
+    handles.max_sigma = value;
+    guidata(hObject,handles);
+else
+    value = handles.max_sigma;
+    set(hObject,'String',num2str(value));
+end
+uiresume(handles.figure1);
+
+% --- Executes during object creation, after setting all properties.
+function max_sigma_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to max_sigma_edit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

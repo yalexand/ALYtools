@@ -308,6 +308,8 @@ classdef ALYtools_data_controller < handle
             AI_Powered_2D_SMLM_Reconstruction_extraction_methods = {'Linear_TopHat','DOG','Primitive_Linear_Tophat'};
             AI_Powered_2D_SMLM_Reconstruction_image_formation_methods = {'ASH','Smoothed Histogram'};
             AI_Powered_2D_SMLM_Reconstruction_wavelength = 509; % nm
+            AI_Powered_2D_SMLM_Reconstruction_min_sigma = 0; % pixel
+            AI_Powered_2D_SMLM_Reconstruction_max_sigma = 7; % pixel
 
     end    
         
@@ -972,7 +974,7 @@ classdef ALYtools_data_controller < handle
                                     disp('can not write output as xls, save as mat file instead');                                    
                                     fname = xlsname(1:length(xlsname)-4);
                                     save([fname '.mat'],'captions','datas');
-                                    %cell2csv([fname '.csv'],[captions; datas]);
+                                    cell2csv([fname '.csv'],[captions; datas]);
                                 end
                             else
                                 try
@@ -981,7 +983,7 @@ classdef ALYtools_data_controller < handle
                                     disp('can not write output as xls, save as mat file instead');
                                     fname = xlsname(1:length(xlsname)-4);
                                     save([fname '.mat'],'captions','datas');
-                                    %cell2csv([fname '.csv'],[captions; datas]);                                    
+                                    cell2csv([fname '.csv'],[captions; datas]);                                    
                                 end
                             end
                         end
@@ -1108,7 +1110,7 @@ classdef ALYtools_data_controller < handle
                                         disp('can not write output as xls, save as mat file instead');                                    
                                         fname = xlsname(1:length(xlsname)-4);
                                         save([fname '.mat'],'caption','data');
-                                        %cell2csv([fname '.csv'],[caption; data]);
+                                        cell2csv([fname '.csv'],[caption; data]);                                        
                                     end
                                 else
                                     try
@@ -1117,7 +1119,7 @@ classdef ALYtools_data_controller < handle
                                         disp('can not write output as xls, save as mat file instead');
                                         fname = xlsname(1:length(xlsname)-4);
                                         save([fname '.mat'],'caption','data');
-                                        %cell2csv([fname '.csv'],[caption; data]);                                    
+                                        cell2csv([fname '.csv'],[caption; data]);                                      
                                     end
                                 end
                             end
@@ -2260,6 +2262,8 @@ classdef ALYtools_data_controller < handle
             settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
             settings.AI_Powered_2D_SMLM_Reconstruction_NA = obj.AI_Powered_2D_SMLM_Reconstruction_NA;
             settings.AI_Powered_2D_SMLM_Reconstruction_wavelength = obj.AI_Powered_2D_SMLM_Reconstruction_wavelength;
+            settings.AI_Powered_2D_SMLM_Reconstruction_min_sigma = obj.AI_Powered_2D_SMLM_Reconstruction_min_sigma;
+            settings.AI_Powered_2D_SMLM_Reconstruction_max_sigma = obj.AI_Powered_2D_SMLM_Reconstruction_max_sigma;            
             
             xml_write(fname,settings);
         end
@@ -2468,6 +2472,8 @@ classdef ALYtools_data_controller < handle
                     obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale = settings.AI_Powered_2D_SMLM_Reconstruction_image_formation_scale;
                     obj.AI_Powered_2D_SMLM_Reconstruction_NA = settings.AI_Powered_2D_SMLM_Reconstruction_NA;
                     obj.AI_Powered_2D_SMLM_Reconstruction_wavelength = settings.AI_Powered_2D_SMLM_Reconstruction_wavelength;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_min_sigma = settings.AI_Powered_2D_SMLM_Reconstruction_min_sigma;
+                    obj.AI_Powered_2D_SMLM_Reconstruction_max_sigma = settings.AI_Powered_2D_SMLM_Reconstruction_max_sigma;
                 catch
                 end  
                 
@@ -5079,11 +5085,13 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
      R = obj.AI_Powered_2D_SMLM_Reconstruction_max_distance_to_spurious_pixl/pix_size*upscale_fac; % expressed in super res pixs
      block_size = obj.AI_Powered_2D_SMLM_Reconstruction_time_dependent_block_size; % 200 frames 
      visualisation_method = obj.AI_Powered_2D_SMLM_Reconstruction_image_formation_method; % = 'ASH'
+     min_sigma = obj.AI_Powered_2D_SMLM_Reconstruction_min_sigma;
+     max_sigma = obj.AI_Powered_2D_SMLM_Reconstruction_max_sigma;
       
      try
         load(path_to_network); % "net" object is there
      catch % then try default
-        path_to_network = [pwd filesep 'TrainedNetworks' filesep 'trained_net_UAI2DGaussPSF_5x_training_data_range_1pix_N_250000.mat'];
+        path_to_network = [pwd filesep 'TrainedNetworks' filesep 'trained_net_lambda_340_NA_1_49_nmppix_106_d_5_N_400000_sigma.mat'];
         load(path_to_network);
      end
      
@@ -5187,7 +5195,6 @@ disp(['extracted ' num2str(size(XYF,1)) ' emitters, time = ' num2str(toc(t_start
      y1 = y-d;
      y2 = y+d;
      for k=1:size(XYF,1)
-        %VIC(:,:,k) = single(squeeze(obj.imgdata(x1(k):x2(k),y1(k):y2(k),1,1,f(k))));
         VIC(:,:,k) = single(squeeze(temp_img(x1(k):x2(k),y1(k):y2(k),1,1,f(k))));
      end
      
@@ -5219,8 +5226,7 @@ disp(['vicinities normalized, time = ' num2str(toc(t_start)/60)]);
      else % use sigma to filter
         dx_dy = prediction(:,1:2);
         sigma = prediction(:,3);
-        thresh = .6; %?
-        indi = sigma>thresh;
+        indi = sigma>min_sigma & sigma<max_sigma;
         XY = XYF(:,1:2) + dx_dy;
         F = XYF(:,3);                
         XY = XY(indi,:);
@@ -5285,9 +5291,16 @@ disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations =
             fig(:,:,2,:,:) = scene_AI;
             fig(:,:,3,:,:) = non_superres_features;
         
-            datas = [XY_UPS/upscale_fac*pix_size F_UPS];
-            datas = num2cell(datas);
-            captions = {'X [nm]','Y [nm]','frame'};        
+            if ~exist('sigma','var')
+                datas = [XY_UPS/upscale_fac*pix_size F_UPS];
+                datas = num2cell(datas);
+                captions = {'X [nm]','Y [nm]','frame'}; 
+            else
+                sigma = sigma(F_UPS);
+                datas = [XY_UPS/upscale_fac*pix_size F_UPS sigma];
+                datas = num2cell(datas);
+                captions = {'X [nm]','Y [nm]','frame','sigma'};
+            end
 end
 %-------------------------------------------------------------------------%
         
