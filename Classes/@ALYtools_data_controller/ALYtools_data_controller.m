@@ -5287,9 +5287,9 @@ disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations =
             non_superres_features = imresize(non_superres_features,upscale_fac,'box');
 
             fig = zeros(upscale_fac*sX,upscale_fac*sY,3,1,1,'single');
-            fig(:,:,1,:,:) = total_intensity_UPS;
-            fig(:,:,2,:,:) = scene_AI;
-            fig(:,:,3,:,:) = non_superres_features;
+            fig(:,:,1,1,1) = total_intensity_UPS;
+            fig(:,:,2,1,1) = scene_AI;
+            fig(:,:,3,1,1) = non_superres_features;
         
             if ~exist('sigma','var')
                 datas = [XY_UPS/upscale_fac*pix_size F_UPS];
