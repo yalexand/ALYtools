@@ -3979,9 +3979,9 @@ Lysosomes are small red punctate structures positive for LAMP1.
 - Is there a difference in size between cht and WT lysosomes? So it would be great to measure the size of lysosomes (diameter or area)
  
 - Is there a difference in intracellular distribution of lysosomes in cht and WT cells? 
-So probably the parameter is  ‘distance from the nucleus’? It seems that in WT lysosomes are perinuclear, and in cht lysosomes are more diffused.
+So probably the parameter is  ï¿½distance from the nucleusï¿½? It seems that in WT lysosomes are perinuclear, and in cht lysosomes are more diffused.
  
-- What is the difference between total lysosomal ‘mass’ (possibly ‘ratio of LAMP1 signal to phalloidin’)
+- What is the difference between total lysosomal ï¿½massï¿½ (possibly ï¿½ratio of LAMP1 signal to phalloidinï¿½)
  
 - Is it possible to see the difference in the nucleus size (diameter or area) or granularity between Rab38 and WT mutant? 
 Nucleus is stained with the DAPI (blue). It is an indirect parameter of cell wellbeing which might be compromised when lysosomes are not digesting material properly.     
@@ -5090,10 +5090,15 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
       
      try
         load(path_to_network); % "net" object is there
-     catch % then try default
+     catch % try some defaults
         path_to_network = [pwd filesep 'TrainedNetworks' filesep 'trained_net_lambda_340_NA_1_49_nmppix_106_d_5_N_400000_sigma.mat'];
+        if ~isfile(path_to_network)
+            path_to_network = [pwd filesep 'AI_Powered_2D_SMLM_Reconstruction_default_trained_net.mat'];
+        end
         load(path_to_network);
      end
+     %
+     if ~exist('net','var'), return, end
      
             s = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale; % = 2; %non-super res pixels            
             K = obj.AI_Powered_2D_SMLM_Reconstruction_extraction_scale_ratio; % = 3.5; % ditto
