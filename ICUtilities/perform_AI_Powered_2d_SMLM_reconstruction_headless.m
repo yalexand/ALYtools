@@ -35,7 +35,7 @@ function perform_AI_Powered_2d_SMLM_reconstruction_headless()
                    
     t_start = tic;
     for k=3:numel(strings)
-            cur_name = char(strings{k});            
+            cur_name = char(strings{k});
             dc.open_image([SRC_DIR_NAME filesep cur_name]);    
             [data, caption, ~, fig] = dc.analyze_AI_Powered_2D_SMLM_Reconstruction;
             cur_dir_name = strrep(cur_name,'.OME','');
