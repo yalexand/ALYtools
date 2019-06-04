@@ -5114,7 +5114,7 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
             xcoor = repmat((1:sY)',[1 sX]);
             
                 temp_img = obj.imgdata; % ?!!!!
-                % obj.imgdata = []; % remove from memory if image size is very large
+                %obj.imgdata = []; % remove from memory if image size is very large
                    
                    % original - total intensity image   
                    total_intensity = zeros(sX,sY,'single');
@@ -5191,7 +5191,7 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
 
 disp(['extracted ' num2str(size(XYF,1)) ' emitters, time = ' num2str(toc(t_start)/60)]);
                 
-     VIC = zeros(2*d+1,2*d+1,size(XYF,1));
+     VIC = zeros(2*d+1,2*d+1,size(XYF,1),'single');
      x = XYF(:,1);
      y = XYF(:,2);
      f = XYF(:,3);
@@ -5208,21 +5208,20 @@ disp(['extracted ' num2str(size(XYF,1)) ' emitters, time = ' num2str(toc(t_start
 disp(['vicinities extracted, time = ' num2str(toc(t_start)/60)]);
      
      %%%%%%%%%%%%%%%%%% normalize image data
-     VIC_norm = zeros(size(VIC));
      parfor k=1:size(VIC,3)
      %for k=1:size(VIC,3)         
         z = VIC(:,:,k);
         z = map(z,0,1);
         z = (z - mean(z(:)))/std(z(:));
-        VIC_norm(:,:,k) = z;
+        VIC(:,:,k) = z;
         %disp([' normalizing vicinity images.. ' num2str(k)]);
      end
      %%%%%%%%%%%%%%%%%% normalize image data
 disp(['vicinities normalized, time = ' num2str(toc(t_start)/60)]);     
 
-     VIC_norm = reshape(VIC_norm,2*d+1,2*d+1,1,size(VIC, 3));
+     VIC = reshape(VIC,2*d+1,2*d+1,1,size(VIC,3));
      
-     prediction = predict(net,VIC_norm);
+     prediction = predict(net,VIC);
      if 2 == size(prediction,2)         
         dx_dy = prediction;
         XY = XYF(:,1:2) + dx_dy; 

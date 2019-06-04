@@ -5,7 +5,7 @@ function AI_Powered_2d_SMLM_reconstruct(SRC_FILE_NAME,DST_DIR_NAME,settings_fnam
         disp('input parameters are not valid directory names, can not continue');
         return;
     end
-            addpath_ALYtools;
+            if ~isdeployed, addpath_ALYtools, end
                 
             % verify that enough memory is allocated
             bfCheckJavaMemory();
