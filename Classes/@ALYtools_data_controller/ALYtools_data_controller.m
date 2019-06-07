@@ -974,7 +974,20 @@ classdef ALYtools_data_controller < handle
                                     disp('can not write output as xls, save as mat file instead');                                    
                                     fname = xlsname(1:length(xlsname)-4);
                                     save([fname '.mat'],'captions','datas');
-                                    cell2csv([fname '.csv'],[captions; datas]);
+                                    %
+                                    cap = [];
+                                    for ci=1:numel(captions)
+                                        elem = ['"' char(captions(ci)) '"'];
+                                        if ci<numel(captions)
+                                            elem = [elem ','];
+                                        end
+                                        cap = [cap elem];
+                                    end
+                                    fid = fopen( [fname '.csv'], 'w' );
+                                    fprintf( fid, '%s\n', cap);
+                                    fclose(fid);
+                                    dlmwrite([fname '.csv'],cell2mat(datas),'-append');
+                                    % 
                                 end
                             else
                                 try
@@ -983,7 +996,20 @@ classdef ALYtools_data_controller < handle
                                     disp('can not write output as xls, save as mat file instead');
                                     fname = xlsname(1:length(xlsname)-4);
                                     save([fname '.mat'],'captions','datas');
-                                    cell2csv([fname '.csv'],[captions; datas]);                                    
+                                    %
+                                    cap = [];
+                                    for ci=1:numel(captions)
+                                        elem = ['"' char(captions(ci)) '"'];
+                                        if ci<numel(captions)
+                                            elem = [elem ','];
+                                        end
+                                        cap = [cap elem];
+                                    end
+                                    fid = fopen( [fname '.csv'], 'w' );
+                                    fprintf( fid, '%s\n', cap);
+                                    fclose(fid);
+                                    dlmwrite([fname '.csv'],cell2mat(datas),'-append');
+                                    %                                 
                                 end
                             end
                         end
@@ -1110,7 +1136,20 @@ classdef ALYtools_data_controller < handle
                                         disp('can not write output as xls, save as mat file instead');                                    
                                         fname = xlsname(1:length(xlsname)-4);
                                         save([fname '.mat'],'caption','data');
-                                        cell2csv([fname '.csv'],[caption; data]);                                        
+                                        %
+                                        cap = [];
+                                        for ci=1:numel(caption)
+                                            elem = ['"' char(caption(ci)) '"'];
+                                            if ci<numel(caption)
+                                                elem = [elem ','];
+                                            end
+                                            cap = [cap elem];
+                                        end
+                                        fid = fopen( [fname '.csv'], 'w' );
+                                        fprintf( fid, '%s\n', cap);
+                                        fclose(fid);
+                                        dlmwrite([fname '.csv'],cell2mat(data),'-append');
+                                        %                                          
                                     end
                                 else
                                     try
@@ -1119,7 +1158,20 @@ classdef ALYtools_data_controller < handle
                                         disp('can not write output as xls, save as mat file instead');
                                         fname = xlsname(1:length(xlsname)-4);
                                         save([fname '.mat'],'caption','data');
-                                        cell2csv([fname '.csv'],[caption; data]);                                      
+                                        %
+                                        cap = [];
+                                        for ci=1:numel(caption)
+                                            elem = ['"' char(caption(ci)) '"'];
+                                            if ci<numel(caption)
+                                                elem = [elem ','];
+                                            end
+                                            cap = [cap elem];
+                                        end
+                                        fid = fopen( [fname '.csv'], 'w' );
+                                        fprintf( fid, '%s\n', cap);
+                                        fclose(fid);
+                                        dlmwrite([fname '.csv'],cell2mat(data),'-append');
+                                        %                                      
                                     end
                                 end
                             end
@@ -5296,14 +5348,14 @@ disp(['total execution time = ' num2str(toc(t_start)/60) ' min, #localisations =
             fig(:,:,3,1,1) = non_superres_features;
         
             if ~exist('sigma','var')
-                datas = [XY_UPS/upscale_fac*pix_size F_UPS];
+                datas = [(1:length(XY_UPS))' F_UPS XY_UPS/upscale_fac*pix_size];
                 datas = num2cell(datas);
-                captions = {'X [nm]','Y [nm]','frame'}; 
+                captions = {'id','frame','x [nm]','y [nm]'};
             else
                 sigma = sigma(F_UPS);
-                datas = [XY_UPS/upscale_fac*pix_size F_UPS sigma];
+                datas = [(1:length(XY_UPS))' F_UPS XY_UPS/upscale_fac*pix_size sigma];
                 datas = num2cell(datas);
-                captions = {'X [nm]','Y [nm]','frame','sigma'};
+                captions = {'id','frame','x [nm]','y [nm]','sigma'};
             end
 end
 %-------------------------------------------------------------------------%
