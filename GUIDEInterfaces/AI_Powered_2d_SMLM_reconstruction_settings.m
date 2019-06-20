@@ -243,7 +243,7 @@ function vicinity_half_width_edit_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of vicinity_half_width_edit as text
 %        str2double(get(hObject,'String')) returns contents of vicinity_half_width_edit as a double
 value = str2double(get(hObject,'String'));
-if ~isnan(value) && value >= 4 && value <= 20
+if ~isnan(value) && value >= 1 && value <= 20
     handles.vicinity_half_width = round(value);
     guidata(hObject,handles);
 else
