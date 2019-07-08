@@ -51,7 +51,8 @@ if strcmp(direction_flag,'refer_to_last_image')
     fnames = fliplr(fnames);
 end
 
-fac = 2; % downsampling
+% fac = 2; % downsampling - for test example
+fac = 8; % downsampling - for real case
 
 transforms = cell(1,numel(fnames)-1);
 
@@ -60,10 +61,11 @@ transforms = cell(1,numel(fnames)-1);
 [optimizer, metric] = imregconfig('monomodal');
 % [optimizer, metric] = imregconfig('multimodal');
 
+tstart = tic;
 
 % CAN COMMENT THIS AS IMAGES ARE SAVED IN TMP...
-parfor k=1:numel(fnames)-1   
-    tstart = tic;
+for k=1:numel(fnames)-1   
+%parfor k=1:numel(fnames)-1   
     
     fname1 = char(fnames(k))
     [~,~,u1] = bfopen_v([src_dir filesep fname1]);
@@ -94,8 +96,8 @@ fname = char(fnames(1))
     fname_reg = [tmp_dir filesep fname]
     bfsave(v,fname_reg,'BigTiff',true,'Compression','LZW','DimensionOrder','XYZCT');
 
-parfor k=2:numel(fnames)   
-tstart = tic;
+for k=2:numel(fnames)   
+% parfor k=2:numel(fnames)   
     fname = char(fnames(k))
     [~,~,u_k] = bfopen_v([src_dir filesep fname]);
     u_k = single(u_k);
@@ -120,11 +122,11 @@ end
 % CAN COMMENT THIS AS IMAGES ARE SAVED IN TMP...
 
 DRS = 512; % desired ROI size
+% DRS = 1024; % desired ROI size
 
 N = numel(fnames);
 %  GET IMAGES FROM THE ONLY RIGID DIRECTORY AND APPLY DEMONS TO THEM CONSECUTIVELY
 for m=1:N-1
-    tstart = tic;    
     if m==1
         fname = char(fnames(m));
         [~,~,prev] = bfopen_v([tmp_dir filesep fname]);
@@ -201,4 +203,5 @@ for m=1:N-1
       prev = next_reg; % corrected!
       toc(tstart)      
 end
+toc(tstart)  
 
