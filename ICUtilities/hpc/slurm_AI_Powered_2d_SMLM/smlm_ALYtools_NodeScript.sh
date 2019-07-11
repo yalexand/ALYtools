@@ -17,8 +17,9 @@ OMEtiffcount=${ARRARGS[2]}
 mrt_camp=${ARRARGS[3]}
 settings_file=${ARRARGS[4]}
 src_filename_must_have_token=${ARRARGS[5]}
-jno=${ARRARGS[6]}
-mrt=${ARRARGS[7]}
+file_extension_template=${ARRARGS[6]}
+jno=${ARRARGS[7]}
+mrt=${ARRARGS[8]}
 
 echo $SRCDIR
 echo $DSTDIR
@@ -34,8 +35,7 @@ if (($OMEtiffcount != 0)); then
 cnt=0
 for f in $SRCDIR/*; do
 	case "$f" in
-	#*.OME.tiff*)
-	*.tif*)
+	*$file_extension_template*)
 	    #echo $(basename "$f")
 	    cnt=$(($cnt + 1))
 		if [ "x$jno" == "x$cnt" ]; then

@@ -64,8 +64,8 @@ transforms = cell(1,numel(fnames)-1);
 tstart = tic;
 
 % CAN COMMENT THIS AS IMAGES ARE SAVED IN TMP...
-for k=1:numel(fnames)-1   
-%parfor k=1:numel(fnames)-1   
+%for k=1:numel(fnames)-1   
+parfor k=1:numel(fnames)-1   
     
     fname1 = char(fnames(k))
     [~,~,u1] = bfopen_v([src_dir filesep fname1]);
@@ -96,8 +96,8 @@ fname = char(fnames(1))
     fname_reg = [tmp_dir filesep fname]
     bfsave(v,fname_reg,'BigTiff',true,'Compression','LZW','DimensionOrder','XYZCT');
 
-for k=2:numel(fnames)   
-% parfor k=2:numel(fnames)   
+%for k=2:numel(fnames)   
+parfor k=2:numel(fnames)   
     fname = char(fnames(k))
     [~,~,u_k] = bfopen_v([src_dir filesep fname]);
     u_k = single(u_k);
@@ -179,9 +179,14 @@ for m=1:N-1
               [gx,gy] = gsderiv(static,3,1);
                 static_comp = sqrt(gx.*gx + gy.*gy) + static/3;
               %  
-              [dfield_gpu,~] = imregdemons(gpuArray(moving_comp),gpuArray(static_comp),[500 400 200],...
-                  'AccumulatedFieldSmoothing',1.3);
-              dfield = gather(dfield_gpu);            
+              if 0~=gpuDeviceCount
+                  [dfield_gpu,~] = imregdemons(gpuArray(moving_comp),gpuArray(static_comp),[500 400 200],...
+                      'AccumulatedFieldSmoothing',1.3);
+                  dfield = gather(dfield_gpu);            
+              else
+                  [dfield,~] = imregdemons(moving_comp,static_comp,[500 400 200],...
+                      'AccumulatedFieldSmoothing',1.3);
+              end
             
             store{k} = imwarp(moving,dfield,'SmoothEdges', true);
             disp([k toc(tstart)]);

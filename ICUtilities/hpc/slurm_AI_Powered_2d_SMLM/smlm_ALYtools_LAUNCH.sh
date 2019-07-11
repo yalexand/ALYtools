@@ -7,12 +7,12 @@ SRCDIR=$1
 DSTDIR=$2
 settings_file=$3
 src_filename_must_have_token=$4
+file_extension_template=$5
 
 OMEtiffcount=0
 for f in $SRCDIR/*; do
 	case "$f" in
-	#*.OME.tiff*)
-	*.tif*)
+	*$file_extension_template*)
 	    #echo $(basename "$f")
 	    OMEtiffcount=$((OMEtiffcount + 1))
 	;;
@@ -27,7 +27,7 @@ fi
 
 mrt_camp=matlab-runtime
 
-ARGS="$SRCDIR:$DSTDIR:$OMEtiffcount:$mrt_camp:$settings_file:$src_filename_must_have_token"
+ARGS="$SRCDIR:$DSTDIR:$OMEtiffcount:$mrt_camp:$settings_file:$src_filename_must_have_token:$file_extension_template"
 echo $ARGS
 
 one=$(sbatch $HOME/smlm_ALYtools_camp_software/smlm_ALYtools_Dispatch.slurm $ARGS)
