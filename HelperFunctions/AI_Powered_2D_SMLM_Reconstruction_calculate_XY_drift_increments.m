@@ -99,5 +99,5 @@ function DX_DY_DRIFT = AI_Powered_2D_SMLM_Reconstruction_calculate_XY_drift_incr
 %           figure
 %           plot(f,dx-ix,'bo',f,dy-iy,'ro',frames,dx_fitted-ix,'b.-',frames,dy_fitted-iy,'r.-');
                     
-          DX_DY_DRIFT = [res_dx' res_dy'];
+          DX_DY_DRIFT = - [res_dx' res_dy'];
 end
