@@ -23,8 +23,13 @@
             registration_exclusion_mask = (i1==0) | (i2==0);
                         
             % segment
-            %sT = 32; % .. for debugging
-            icyvol = zeros(sX,sY,3,1,sT,'single');
+            % sT = 32; % .. for debugging
+            if 2==sC
+                icyvol = zeros(sX,sY,3,1,sT,'single');
+            elseif 3==sC
+                icyvol = zeros(sX,sY,5,1,sT,'single');
+            end
+            
             for k=1:sT                
                ud = single(squeeze(obj.imgdata(:,:,1,D_channel,k)));
                ua = single(squeeze(obj.imgdata(:,:,1,A_channel,k)));
@@ -118,10 +123,60 @@
                      
                 nukes = nukes &~ registration_exclusion_mask;     
                 nukes = bwareaopen(nukes,ceil(100/4*fac*fac)); % 100 divided by 4, because resized back
+            
+                % cell body segmentation if third channel is present
                 
+                if 3==sC
+                       uref = single(squeeze(obj.imgdata(:,:,1,3,k)));
+                       S = ceil(18*fac); % ..say..
+                       smooth_scale = ceil(2*fac);
+                       max_hole_size = smooth_scale^2;
+
+                       % skip? - mask zeros that may occur due to usage of warp transform
+                       K  = 2.5;
+                       % t = 0.055; 
+                       t = 0.1; % less generous
+                       z = nonlinear_tophat(uref,S,K)-1;
+                       z(z<t)=0;                 
+                       z = imopen(z,strel('disk',smooth_scale,0));
+                       %
+                       z = z | nukes;
+                         % fill SMALL holes                             
+                         z1 = imfill(z,'holes') - z;                    
+                         z2 = bwareaopen(z1,max_hole_size);
+                         z1(z2) = 0;
+                         z = z | z1;
+                         % fill small holes - ends                                
+                       %               
+                       cell_bodies = z;
+                       %break cell body clumps
+                            z2 = bwmorph(nukes,'thicken',Inf);
+                            sep_lines = ~z2;
+                            sep_lines(~cell_bodies)=0;
+                            cell_bodies(sep_lines)=0;
+
+                            % remove orphan pieces of cellular stuff..
+                            L_n = bwlabel(nukes);
+                            stats_n = regionprops(L_n,'Area','Centroid');    
+                            L_c = bwlabel(cell_bodies);                                    
+                            %
+                            for n = 1:numel(stats_n)
+                                xcn = fix(stats_n(n).Centroid(2));
+                                ycn = fix(stats_n(n).Centroid(1));
+                                cell_label = L_c(xcn,ycn);
+                                L_c(L_c==cell_label)=0;
+                            end            
+                            cell_bodies(L_c~=0)=0;          
+                            % remove orphan pieces of cellular stuff - ends                                                          
+                end
+                %                                
                 icyvol(:,:,1,1,k) = ud;
                 icyvol(:,:,2,1,k) = ua;               
                 icyvol(:,:,3,1,k) = nukes;
+                if 3==sC
+                    icyvol(:,:,4,1,k) = uref;
+                    icyvol(:,:,5,1,k) = cell_bodies;               
+                end
                % 
                disp([num2str(k) ' ' num2str(mean(ud(:))) ' ' num2str(mean(ua(:))) ' ' num2str(sum(nukes(:)))]);
             end
@@ -133,10 +188,18 @@
                     ud_prev     = squeeze(icyvol(:,:,1,1,k-1));
                     ua_prev     = squeeze(icyvol(:,:,2,1,k-1));                    
                     nukes_prev  = squeeze(icyvol(:,:,3,1,k-1));
+                    if 3==sC
+                        uref_prev = icyvol(:,:,4,1,k-1);
+                        cell_body_prev = icyvol(:,:,5,1,k-1);
+                    end                    
                     %
                     icyvol(:,:,1,1,k) = ud_prev;
                     icyvol(:,:,2,1,k) = ua_prev;
                     icyvol(:,:,3,1,k) = nukes_prev;
+                    if 3==sC
+                        icyvol(:,:,4,1,k) = uref_prev;
+                        icyvol(:,:,5,1,k) = cell_body_prev;
+                    end                                        
                     disp(['fixed missing frame ' num2str(k)]);
                 end
             end                            

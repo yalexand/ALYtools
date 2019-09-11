@@ -70,7 +70,11 @@ handles.features = {'duration [h]', ...
                     'D/A Pearson corr.',... 
                     't(start) [h]',...
                     'FRET ratio c-time [min]',...
-                    'FRET molar fraction'
+                    'FRET molar fraction', ...
+                    'Cell area (ref)',...
+                    'Cell intensity (ref)',...
+                    'Nucleus intensity (ref)',...
+                    'Nuc/Cyt intensity (ref)',...                                        
                     };
 
 handles.mask = [];    
@@ -83,13 +87,18 @@ handles.rng_speed = [0 10];
 handles.rng_directionality = [-1 1];
 handles.rng_nghbrs = [1 12];
 handles.rng_cell_density = [1e-7 0.008];
-handles.rng_FRET_ratio = [0.3 3];
+handles.rng_FRET_ratio = [0.3 7];
 handles.rng_FRET_ratio_variability = [0 0.5];
 handles.rng_intensity = [0 1000];
 handles.rng_nucleus_size = [20 750];
 handles.rng_Pearson_corr = [-1 1];
 handles.rng_autocorr_time = [0 120];
 handles.rng_FRET_molar_fraction = [0 1];
+%
+handles.rng_cell_area = [20 750*10];
+handles.rng_cell_intensity_ref = [0 1000];
+handles.rng_nuc_intensity_ref_ = [0 1000];
+handles.rng_intensity_ref_nuc_cyt_ratio = [0 7];
 % ranges for visualization
 
 %handles.mitotic_intervals_option = 'EXCLUDE';
@@ -532,12 +541,12 @@ for k=1:numel(D)
     %
     nnghb = zeros(size(FRET_ratio));
     cell_density = zeros(size(FRET_ratio));
-    if 10==size(track,2) || 11==size(track,2)
+    if size(track,2) >= 10 
         nnghb = squeeze(track(:,9));
         cell_density = squeeze(track(:,10));            
     end
     beta_FRET = 0;            
-    if 11==size(track,2)
+    if size(track,2)>=11
         nnghb = squeeze(track(:,9));
         cell_density = squeeze(track(:,10));
         beta_FRET = squeeze(track(:,11));        
@@ -605,9 +614,12 @@ for k=1:numel(D)
     %
     track_data(k,8+2) = mean_donor_intensity;
     track_data(k,9+2) = mean_acceptor_intensity;
+    try
     track_data(k,10+2) = mean_nucleus_size*(handles.pixelsize)^2;
     track_data(k,11+2) = mean_Pearson_correlation;
     track_data(k,12+2) = track_data(k,1); % start time
+    catch
+    end
     %
     track_data(k,4+2) = mean_nnghb;
     track_data(k,5+2) = mean_cell_density/(handles.pixelsize)^2;        
@@ -635,12 +647,19 @@ for k=1:numel(D)
 %         legend({'autocorrelation','up.confidence bound'},'fontsize',16);
 %         disp(k);
     %
+    if 18 == numel(handles.features)
+        track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
+        track_data(k,16+2) = mean(squeeze(track(:,13)));
+        track_data(k,17+2) = mean(squeeze(track(:,14)));
+        track_data(k,18+2) = mean(squeeze(track(:,15)));    
+    end           
 end
 
 dur = squeeze(track_data(:,1+2));
 stt = squeeze(track_data(:,12+2));
 handles.rng_duration = [min(dur) max(dur)];
 handles.rng_start_time = [min(stt) max(stt)];
+
 
 %
 % proper place to handle trend curves
@@ -779,7 +798,7 @@ max_val = max(c_data);
 % ??? [min_val, max_val] = visualization_range(handles,c_ind);
 
 show_actual_dependence = false;
-if ismember(y_ind,[4 5 6 8 9 10 11 14])
+if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18])
     show_actual_dependence = true;
 end
 
@@ -833,6 +852,26 @@ for k = 1:numel(y_data)
                         Y = squeeze(track(:,11));
                         catch
                         end
+                    case 15 % cell size
+                        try
+                        Y = squeeze(track(:,12))*(handles.pixelsize)^2;
+                        catch
+                        end
+                    case 16 % 
+                        try
+                        Y = squeeze(track(:,13));
+                        catch
+                        end
+                    case 17 % 
+                        try
+                        Y = squeeze(track(:,14));
+                        catch
+                        end
+                    case 18 % 
+                        try
+                        Y = squeeze(track(:,15));
+                        catch
+                        end                                                
                 end                                        
             %
         end
@@ -1260,7 +1299,19 @@ function [minval, maxval] = visualization_range(handles,index)
                         maxval = max(handles.rng_duration);                    
                     case 12 % start time
                         minval = min(handles.rng_start_time);
-                        maxval = max(handles.rng_start_time);                   
+                        maxval = max(handles.rng_start_time); 
+                    case 15 % start time
+                        minval = min(handles.rng_cell_area);
+                        maxval = max(handles.rng_cell_area); 
+                    case 16 % start time
+                        minval = min(handles.rng_cell_intensity_ref);
+                        maxval = max(handles.rng_cell_intensity_ref); 
+                    case 17 % start time
+                        minval = min(handles.rng_nuc_intensity_ref);
+                        maxval = max(handles.rng_nuc_intensity_ref); 
+                    case 18 % start time
+                        minval = min(handles.rng_intensity_ref_nuc_cyt_ratio);
+                        maxval = max(handles.rng_intensity_ref_nuc_cyt_ratio); 
              end
 
 
