@@ -365,8 +365,7 @@ else
 end
 % gather statistics on frames - end
 
-
-% % MOVIE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+clear('lab_cells');
 
 % fix NUCDATA :)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% that is legacy; should't happen
@@ -503,22 +502,40 @@ xlswrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_num
 %         end                
 %         icy_imshow(uint16(icyvol));    
 
+clear('track_mate_input');
+
+OK_tracks_indices = [];
+min_track_length = 4;
 % matching
         for k=1:numel(tracks)
             track = tracks{k};
             if 3==sC
                 ext_track = zeros(size(track,1),11); %frame,x,y+8 params
             elseif 5==sC
-                ext_track = zeros(size(track,1),15+2); %frame,x,y+12 params + velocity + directionality
+                ext_track = zeros(size(track,1),15); %frame,x,y+12 params
             end
+            %
+            if size(track,1)>=min_track_length
+                OK_tracks_indices = [OK_tracks_indices; k];
+                        
             for m=1:size(track,1)
                 frame = track(m,1)+1;
                 x = round(track(m,2))+1;
                 y = round(track(m,3))+1;
                 %                                
-                nuc_lab = lab_nukes(x,y,frame); % may be problems - 0s
+                nuc_lab = lab_nukes(x,y,frame); % may be problems - 0s                              
+                if  0==nuc_lab
+                    disp('correcting orphan TrackMate point..');
+                    % try to look for label nearby                    
+                    w = round(5/obj.microns_per_pixel);
+                    roix = max(1,x-w):min(sX,x+w);
+                    roiy = max(1,y-w):min(sY,y+w);
+                    L = squeeze(lab_nukes(:,:,frame));
+                    s = L(roix,roiy);
+                    nuc_lab = max(s(:)); % a bit risky..
+                end                
+                if 0 == nuc_lab, nuc_lab = 1; end % :) - last resort - shouldn't happen
                 %
-                if nuc_lab>=1
                     nuc_data = NUCDATA{frame};                                                
                     nucleus_size =          nuc_data(nuc_lab,1);
                     donor_intensity =       nuc_data(nuc_lab,6);
@@ -533,22 +550,7 @@ xlswrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_num
                         cell_intensity_ref = nuc_data(nuc_lab,13);
                         nuc_intensity_ref = nuc_data(nuc_lab,14);
                     end
-                else
-                    nucleus_size =          Inf;
-                    donor_intensity =       Inf;
-                    acceptor_intensity =    Inf;
-                    FRET_ratio =            Inf;
-                    Pearson_correlation =   Inf;
-                    nnghb =                 Inf;
-                    cell_density =          Inf;
-                    beta_FRET =             Inf;
-                    if 5==sC
-                        cell_area = Inf;
-                        cell_intensity_ref = Inf;
-                        nuc_intensity_ref = Inf;
-                    end                    
-                end
-                %              
+                    
                     ext_track(m,1) = frame;
                     ext_track(m,2) = track(m,2);
                     ext_track(m,3) = track(m,3);
@@ -566,70 +568,13 @@ xlswrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_num
                         ext_track(m,14) = nuc_intensity_ref;
                         ext_track(m,15) = nuc_intensity_ref/cell_intensity_ref;
                     end
-                    %
-                    % fix
-                        if 0~=sum(isinf(ext_track(:)))
-                            % replace by medians
-                                md_nucleus_size = ext_track(:,7);
-                                    md_nucleus_size = md_nucleus_size(~isinf(md_nucleus_size));
-                                    md_nucleus_size = median(md_nucleus_size(:));
-                                md_donor_intensity = ext_track(:,5);
-                                    md_donor_intensity = md_donor_intensity(~isinf(md_donor_intensity));
-                                    md_donor_intensity = median(md_donor_intensity(:));
-                                md_acceptor_intensity  = ext_track(:,6);
-                                    md_acceptor_intensity = md_acceptor_intensity(~isinf(md_acceptor_intensity));
-                                    md_acceptor_intensity = median(md_acceptor_intensity(:));
-                                md_FRET_ratio = ext_track(:,4);
-                                    md_FRET_ratio = md_FRET_ratio(~isinf(md_FRET_ratio));
-                                    md_FRET_ratio = median(md_FRET_ratio(:));
-                                md_Pearson_correlation = ext_track(:,8);
-                                    md_Pearson_correlation = md_Pearson_correlation(~isinf(md_Pearson_correlation));
-                                    md_Pearson_correlation = median(md_Pearson_correlation(:));
-                                md_nnghb = ext_track(:,9);
-                                    md_nnghb = md_nnghb(~isinf(md_nnghb));
-                                    md_nnghb = median(md_nnghb(:));
-                                md_cell_density  = ext_track(:,10);
-                                    md_cell_density = md_cell_density(~isinf(md_cell_density));
-                                    md_cell_density = median(md_cell_density(:));
-                                md_beta_FRET = ext_track(:,11);
-                                    md_beta_FRET = md_beta_FRET(~isinf(md_beta_FRET));
-                                    md_beta_FRET = median(md_beta_FRET(:));
-                                if 5==sC
-                                    md_cell_area  = ext_track(:,12);
-                                        md_cell_area = md_cell_area(~isinf(md_cell_area));
-                                        md_cell_area = medain(md_cell_area(:));
-                                    md_cell_intensity_ref  = ext_track(:,13);
-                                        md_cell_intensity_ref = md_cell_intensity_ref(~isinf(md_cell_intensity_ref));
-                                        md_cell_intensity_ref = median(md_cell_intensity_ref(:));
-                                    md_nuc_intensity_ref = ext_track(:,14);
-                                        md_nuc_intensity_ref = md_nuc_intensity_ref(~isinf(md_nuc_intensity_ref));
-                                        md_nuc_intensity_ref = median(md_nuc_intensity_ref(:));
-                                    md_intensity_ref_ratio = ext_track(:,15);
-                                        md_intensity_ref_ratio = md_intensity_ref_ratio(~isinf(md_intensity_ref_ratio));
-                                        md_intensity_ref_ratio = median(md_intensity_ref_ratio(:));                                    
-                                end
-                            for z = 1:size(ext_track,1)
-                                if isinf(ext_track(m,7)), ext_track(m,7) = md_nucleus_size; end % nucleus_size; 
-                                if isinf(ext_track(m,5)), ext_track(m,5) = md_donor_intensity; end
-                                if isinf(ext_track(m,6)), ext_track(m,6) = md_acceptor_intensity; end 
-                                if isinf(ext_track(m,4)), ext_track(m,4) = md_FRET_ratio; end
-                                if isinf(ext_track(m,8)), ext_track(m,8) = md_Pearson_correlation; end
-                                if isinf(ext_track(m,9)), ext_track(m,9) = md_nnghb; end
-                                if isinf(ext_track(m,10)), ext_track(m,10) = md_cell_density; end
-                                if isinf(ext_track(m,11)), ext_track(m,11) = md_beta_FRET; end
-                                if 5==sC
-                                    if isinf(ext_track(m,12)), ext_track(m,12) = md_cell_area; end % 
-                                    if isinf(ext_track(m,13)), ext_track(m,13) = md_cell_intensity_ref; end
-                                    if isinf(ext_track(m,14)), ext_track(m,14) = md_nuc_intensity_ref; end 
-                                    if isinf(ext_track(m,15)), ext_track(m,15) = md_intensity_ref_ratio; end                                    
-                                end
-                            end
-                        end
-                    % fix
+                 %
             end
+            end % if track is not too short
             %
             tracks{k} = ext_track;
         end
+        tracks = tracks(OK_tracks_indices);
 
 fullfname = [output_directory filesep fname '_FRET_ratio_featured_TRACKMATE_OUTPUT.mat'];
 dt = obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;

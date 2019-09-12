@@ -79,7 +79,10 @@ handles.features = {'duration [h]', ...
 
 handles.mask = [];    
 handles.track_data = [];
-  
+
+handles.velocity_t = [];
+handles.directionality_t = [];
+
 % ranges for visualization
 handles.rng_duration = [0 0]; % defined in calculate_track_data
 handles.rng_start_time = [0 0]; % ditto
@@ -118,7 +121,7 @@ elseif 5 == nargin-3
         % to refine it now
         handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
         %handles.raw_data = tracks;
-    handles.track_data = calculate_track_data(hObject,handles);
+    [handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
     %
     % set filename in window title
     set(handles.figure1, 'Name', [handles.figureName ' : ' varargin{4}]);
@@ -158,7 +161,7 @@ elseif 2 == nargin-3
             handles.raw_data = tracks;
         end
         % this object is for visualizing       
-        handles.track_data = calculate_track_data(hObject,handles);
+        [handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
 
         set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
 
@@ -264,7 +267,7 @@ else
     guidata(hObject,handles);
     return;
 end
-handles.track_data = calculate_track_data(hObject,handles);
+[handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
        for k=1:numel(handles.features)
@@ -306,7 +309,7 @@ else
     guidata(hObject,handles);
     return;
 end
-handles.track_data = calculate_track_data(hObject,handles);
+[handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
        for k=1:numel(handles.features)
@@ -496,7 +499,7 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
         handles.raw_data = tracks;
     end
     % this object is for visualizing       
-    handles.track_data = calculate_track_data(hObject,handles);
+    [handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
        
     set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
 
@@ -523,9 +526,12 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     guidata(hObject, handles);
 
 % --------------------------------------------------------------------
-function track_data = calculate_track_data(hObject,handles)
+function [track_data,velocity_t,directionality_t] = calculate_track_data(hObject,handles)
 D = handles.raw_data;
 if isempty(D), return, end;
+
+velocity_t = cell(numel(D),1);
+directionality_t = cell(numel(D),1);
 
 track_data = zeros(numel(D),2+numel(handles.features)); % first 2 are reserved for begin and end time
 for k=1:numel(D)
@@ -605,12 +611,37 @@ for k=1:numel(D)
         track_data(k,7+2) = sqrt(mean(s.*s)); % FRET ratio variability   
         
     %quantify tracks XY trajectory
-    x = squeeze(track(:,2));
-    y = squeeze(track(:,3));
-    z = zeros(size(x));
-    [directionality,velocity,velocity_sd] = quantify_track(x',y',z','noZ');
-    track_data(k,2+2) = velocity*handles.pixelsize/dt; % :0
-    track_data(k,3+2) = directionality;
+     x = squeeze(track(:,2));
+     y = squeeze(track(:,3));
+     z = zeros(size(x));
+     [directionality,velocity,velocity_sd] = quantify_track(x',y',z','noZ');
+     track_data(k,2+2) = velocity*handles.pixelsize/dt; % :0
+     track_data(k,3+2) = directionality;
+    
+% ERRORS
+% %     % as function of time
+% %     dx = diff(x); dx = [dx(1); dx];
+% %     dy = diff(y); dy = [dy(1); dy];
+% %     velocity_k = sqrt(dx.*dx+dy.*dy);
+% %     directionality_k = zeros(size(x));
+% %     if numel(directionality_k)>2
+% %         for z=2:numel(directionality_k)
+% %             v1 = [dx(z-1) dy(z-1)];
+% %             v2 = [dx(z) dy(z)];
+% %             if 0~=norm(v1) && 0~=norm(v2)
+% %                 directionality_k(z) = dot(v1,v2)/norm(v1)/norm(v2);
+% %             end
+% %         end       
+% %     end
+% %     directionality_k(1) = directionality_k(2); % whatever
+% %     track_data(k,2+2) = mean(velocity_k);
+% %     track_data(k,3+2) = mean(directionality_k);     
+% %     velocity_t{k} = velocity_k*handles.pixelsize/dt;
+% %     directionality_t{k} = directionality_k;
+        
+    %velocity_k
+    %directionality_k
+    %disp([k mean(velocity_k) mean(directionality_k)]);            
     %
     track_data(k,8+2) = mean_donor_intensity;
     track_data(k,9+2) = mean_acceptor_intensity;
@@ -648,10 +679,13 @@ for k=1:numel(D)
 %         disp(k);
     %
     if 18 == numel(handles.features)
+        try
         track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
         track_data(k,16+2) = mean(squeeze(track(:,13)));
         track_data(k,17+2) = mean(squeeze(track(:,14)));
         track_data(k,18+2) = mean(squeeze(track(:,15)));    
+        catch
+        end
     end           
 end
 
@@ -659,7 +693,6 @@ dur = squeeze(track_data(:,1+2));
 stt = squeeze(track_data(:,12+2));
 handles.rng_duration = [min(dur) max(dur)];
 handles.rng_start_time = [min(stt) max(stt)];
-
 
 %
 % proper place to handle trend curves
@@ -798,6 +831,7 @@ max_val = max(c_data);
 % ??? [min_val, max_val] = visualization_range(handles,c_ind);
 
 show_actual_dependence = false;
+%if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18 2 3])
 if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18])
     show_actual_dependence = true;
 end
@@ -830,11 +864,11 @@ for k = 1:numel(y_data)
                     %12   't(start) [h]'            
                 switch y_ind                    
                     case 4 % #nghbrs                    
-                        if 10==size(track,2) || 11==size(track,2)
+                        if ismember(size(track,2),[10 11 15])
                             Y = squeeze(track(:,9));
                         end
                     case 5 % cell density
-                        if 10==size(track,2) || 11==size(track,2)
+                        if ismember(size(track,2),[10 11 15])
                             Y = squeeze(track(:,10))/(handles.pixelsize)^2;
                         end
                     case 6 % FRET ratio
@@ -872,6 +906,13 @@ for k = 1:numel(y_data)
                         Y = squeeze(track(:,15));
                         catch
                         end                                                
+                    case 2 % speed                        
+                        Y = squeeze(handles.velocity_t{k});
+                    case 3 % directionality
+                        try
+                        Y = squeeze(handles.directionality_t{k});
+                        catch
+                        end                                                                        
                 end                                        
             %
         end
@@ -909,7 +950,15 @@ if isfield(handles,'NUC_STATS')
                     case 11 % Pearson
                         index = 2;
                     case 14 % FRET molar fraction
-                        index = 8;                                                                        
+                        index = 8;                                                                                                
+                    case 15 % 
+                        index = 12; % cell size                                                                       
+                    case 16 % 
+                        index = 13; % cell intensity ref                                                                       
+                    case 17 % 
+                        index = 14; % nuke intensity ref                                                                       
+                    case 18 % 
+                        index = 15; % nuc/cell ref intensity ratio                                                                                                                       
               end
               
     if 0~=index  
@@ -918,7 +967,7 @@ if isfield(handles,'NUC_STATS')
             meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
             stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
             taxis = handles.dt*(1:numel(meanvals));
-            if 1==index
+            if ~isempty(intersect(index,[1 12]))
                 meanvals = meanvals*(handles.pixelsize)^2;
                 stdvals = stdvals*(handles.pixelsize)^2;        
             end
