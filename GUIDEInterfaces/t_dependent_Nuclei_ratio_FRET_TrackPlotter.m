@@ -611,38 +611,20 @@ for k=1:numel(D)
         track_data(k,7+2) = sqrt(mean(s.*s)); % FRET ratio variability   
         
     %quantify tracks XY trajectory
-     x = squeeze(track(:,2));
-     y = squeeze(track(:,3));
-     z = zeros(size(x));
-     [directionality,velocity,velocity_sd] = quantify_track(x',y',z','noZ');
-     track_data(k,2+2) = velocity*handles.pixelsize/dt; % :0
-     track_data(k,3+2) = directionality;
-    
-% ERRORS
-% %     % as function of time
-% %     dx = diff(x); dx = [dx(1); dx];
-% %     dy = diff(y); dy = [dy(1); dy];
-% %     velocity_k = sqrt(dx.*dx+dy.*dy);
-% %     directionality_k = zeros(size(x));
-% %     if numel(directionality_k)>2
-% %         for z=2:numel(directionality_k)
-% %             v1 = [dx(z-1) dy(z-1)];
-% %             v2 = [dx(z) dy(z)];
-% %             if 0~=norm(v1) && 0~=norm(v2)
-% %                 directionality_k(z) = dot(v1,v2)/norm(v1)/norm(v2);
-% %             end
-% %         end       
-% %     end
-% %     directionality_k(1) = directionality_k(2); % whatever
-% %     track_data(k,2+2) = mean(velocity_k);
-% %     track_data(k,3+2) = mean(directionality_k);     
-% %     velocity_t{k} = velocity_k*handles.pixelsize/dt;
-% %     directionality_t{k} = directionality_k;
-        
-    %velocity_k
-    %directionality_k
-    %disp([k mean(velocity_k) mean(directionality_k)]);            
+    x = squeeze(track(:,2));
+    y = squeeze(track(:,3));
+    z = zeros(size(x));
+    [directionality,velocity,velocity_sd] = quantify_track(x',y',z','noZ');
+    track_data(k,3+2) = directionality;
     %
+    DD = [x';y'];
+    velocity_k = zeros(size(x));
+    for m=1:numel(x)-1
+        velocity_k(m) = norm(DD(1:2,m+1)-DD(1:2,m));
+    end
+    velocity_k(end) = velocity_k(end-1);
+    velocity_t{k} = velocity_k*handles.pixelsize/dt;    
+    track_data(k,2+2) = mean(velocity_t{k}); % :0        
     track_data(k,8+2) = mean_donor_intensity;
     track_data(k,9+2) = mean_acceptor_intensity;
     try
@@ -831,8 +813,8 @@ max_val = max(c_data);
 % ??? [min_val, max_val] = visualization_range(handles,c_ind);
 
 show_actual_dependence = false;
-%if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18 2 3])
-if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18])
+%if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18])
+if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18 2])
     show_actual_dependence = true;
 end
 
@@ -908,11 +890,6 @@ for k = 1:numel(y_data)
                         end                                                
                     case 2 % speed                        
                         Y = squeeze(handles.velocity_t{k});
-                    case 3 % directionality
-                        try
-                        Y = squeeze(handles.directionality_t{k});
-                        catch
-                        end                                                                        
                 end                                        
             %
         end
