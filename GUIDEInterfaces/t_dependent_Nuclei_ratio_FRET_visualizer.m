@@ -99,20 +99,32 @@ else
 end
 
 try
-    hw = waitbar(0,'Loading image file..');
-    if ~isempty(hw), waitbar(0.1,hw); drawnow, end; 
-    [~,~,I] = bfopen_v(tiffname);
-    if ~isempty(hw), delete(hw), drawnow; end;
+    hw = waitbar(0,'Loading image file..');          
+    %
+    r = bfGetReader(tiffname,0);
+    sX = r.getSizeY();
+    sY = r.getSizeX();
+    sC = r.getSizeC();
+    sT = r.getSizeT();
+    handles.image = zeros(sX,sY,sT,'uint16');
+    for f=1:sT
+        iZ = 1;
+        iC = 3;
+        iT = f;        
+        iPlane = r.getIndex(iZ - 1, iC - 1, iT - 1) + 1;
+        handles.image(:,:,f) = bfGetPlane(r,iPlane);
+         if ~isempty(hw), waitbar(f/sT,hw); drawnow, end;        
+    end
+    r.close();
+    if ~isempty(hw), delete(hw), drawnow; end;    
     
-    handles.image = squeeze(I(:,:,1,3,:));
-
     numSteps = size(handles.image,3);
     set(handles.theslider,'Min',1);
     set(handles.theslider,'Max',numSteps);
     set(handles.theslider,'Value',1);
     set(handles.theslider, 'SliderStep', [1/(numSteps-1) , 1/(numSteps-1) ]);    
               
-    A = I(:,:,1,3,:);
+    A = handles.image;
     lowestValue = min(A(A(:)>0));  
     highestValue = quantile(A(A(:)~=0),0.9);
     cmap = jet(256);
