@@ -71,17 +71,18 @@ handles.features = {'duration [h]', ...
                     't(start) [h]',...
                     'FRET ratio c-time [min]',...
                     'FRET molar fraction', ...
-                    'Cell area (ref)',...
+                    'Cell area (ref) [um^2]',...
                     'Cell intensity (ref)',...
                     'Nucleus intensity (ref)',...
-                    'Nuc/Cyt intensity (ref)',...                                        
+                    'Nuc/Cyt intensity (ref)',...
+                    'Nuc/Cell area (ref)',...                    
                     };
 
 handles.mask = [];    
 handles.track_data = [];
 
 handles.velocity_t = [];
-handles.directionality_t = [];
+handles.nuc_cell_area_ratio_t = [];
 
 % ranges for visualization
 handles.rng_duration = [0 0]; % defined in calculate_track_data
@@ -102,6 +103,7 @@ handles.rng_cell_area = [20 750*10];
 handles.rng_cell_intensity_ref = [0 1000];
 handles.rng_nuc_intensity_ref_ = [0 1000];
 handles.rng_intensity_ref_nuc_cyt_ratio = [0 7];
+handles.rng_nuc_cell_area_ratio = [0 1];
 % ranges for visualization
 
 %handles.mitotic_intervals_option = 'EXCLUDE';
@@ -121,7 +123,7 @@ elseif 5 == nargin-3
         % to refine it now
         handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
         %handles.raw_data = tracks;
-    [handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
+    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
     %
     % set filename in window title
     set(handles.figure1, 'Name', [handles.figureName ' : ' varargin{4}]);
@@ -161,7 +163,7 @@ elseif 2 == nargin-3
             handles.raw_data = tracks;
         end
         % this object is for visualizing       
-        [handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
+        [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
 
         set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
 
@@ -267,7 +269,7 @@ else
     guidata(hObject,handles);
     return;
 end
-[handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
+[handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
        for k=1:numel(handles.features)
@@ -309,7 +311,7 @@ else
     guidata(hObject,handles);
     return;
 end
-[handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
+[handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
        for k=1:numel(handles.features)
@@ -499,7 +501,7 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
         handles.raw_data = tracks;
     end
     % this object is for visualizing       
-    [handles.track_data,handles.velocity_t,handles.directionality_t] = calculate_track_data(hObject,handles);
+    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
        
     set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
 
@@ -526,12 +528,12 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     guidata(hObject, handles);
 
 % --------------------------------------------------------------------
-function [track_data,velocity_t,directionality_t] = calculate_track_data(hObject,handles)
+function [track_data,velocity_t,nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles)
 D = handles.raw_data;
 if isempty(D), return, end;
 
 velocity_t = cell(numel(D),1);
-directionality_t = cell(numel(D),1);
+nuc_cell_area_ratio_t = cell(numel(D),1);
 
 track_data = zeros(numel(D),2+numel(handles.features)); % first 2 are reserved for begin and end time
 for k=1:numel(D)
@@ -660,12 +662,14 @@ for k=1:numel(D)
 %         legend({'autocorrelation','up.confidence bound'},'fontsize',16);
 %         disp(k);
     %
-    if 18 == numel(handles.features)
+    if 19 == numel(handles.features)
         try
         track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
         track_data(k,16+2) = mean(squeeze(track(:,13)));
         track_data(k,17+2) = mean(squeeze(track(:,14)));
-        track_data(k,18+2) = mean(squeeze(track(:,15)));    
+        track_data(k,18+2) = mean(squeeze(track(:,15)));
+        nuc_cell_area_ratio_t{k} = nucleus_size./squeeze(track(:,12));
+        track_data(k,19+2) = mean(nuc_cell_area_ratio_t{k}); % nucleus to cell area ratio
         catch
         end
     end           
@@ -814,7 +818,7 @@ max_val = max(c_data);
 
 show_actual_dependence = false;
 %if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18])
-if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18 2])
+if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18 2 19])
     show_actual_dependence = true;
 end
 
@@ -890,6 +894,8 @@ for k = 1:numel(y_data)
                         end                                                
                     case 2 % speed                        
                         Y = squeeze(handles.velocity_t{k});
+                    case 19 % 
+                        Y = squeeze(handles.nuc_cell_area_ratio_t{k});                        
                 end                                        
             %
         end
@@ -1326,18 +1332,21 @@ function [minval, maxval] = visualization_range(handles,index)
                     case 12 % start time
                         minval = min(handles.rng_start_time);
                         maxval = max(handles.rng_start_time); 
-                    case 15 % start time
+                    case 15 % 
                         minval = min(handles.rng_cell_area);
                         maxval = max(handles.rng_cell_area); 
-                    case 16 % start time
+                    case 16 % 
                         minval = min(handles.rng_cell_intensity_ref);
                         maxval = max(handles.rng_cell_intensity_ref); 
-                    case 17 % start time
+                    case 17 % 
                         minval = min(handles.rng_nuc_intensity_ref);
                         maxval = max(handles.rng_nuc_intensity_ref); 
-                    case 18 % start time
+                    case 18 % 
                         minval = min(handles.rng_intensity_ref_nuc_cyt_ratio);
                         maxval = max(handles.rng_intensity_ref_nuc_cyt_ratio); 
+                    case 19 % 
+                        minval = min(handles.rng_nuc_cell_area_ratio);
+                        maxval = max(handles.rng_nuc_cell_area_ratio);
              end
 
 
