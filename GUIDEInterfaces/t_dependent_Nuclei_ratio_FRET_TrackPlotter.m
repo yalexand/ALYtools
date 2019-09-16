@@ -1249,10 +1249,18 @@ don  = squeeze(handles.NUC_STATS(:,3,1));
 acc  = squeeze(handles.NUC_STATS(:,4,1));
 t= handles.dt*(0:numel(acc)-1);
 h = figure;
-plot(t,don,'b.-',t,acc,'r.-');
-    xlabel('time [h]');
-    ylabel('intensity');
+if 19 ~= numel(handles.features)
+        plot(t,don,'b.-',t,acc,'r.-');
+        xlabel('time [h]');
+        ylabel('intensity');
         legend({'donor','acceptor'});
+else
+        ref = squeeze(handles.NUC_STATS(:,10,1));
+        plot(t,don,'b.-',t,acc,'r.-',t,ref,'k.-');
+        xlabel('time [h]');
+        ylabel('intensity');
+        legend({'donor','acceptor','ref'});        
+end               
 grid on;
 ax_new=gca;
 set(ax_new,'Position','default');

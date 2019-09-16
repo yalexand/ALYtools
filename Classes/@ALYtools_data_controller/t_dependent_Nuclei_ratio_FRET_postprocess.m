@@ -351,7 +351,7 @@ else
 % 14 nucleus intensity in reference channel
 % 15 intensity ratio nuc/cell in ref. channel
     indices = [1 3 6 5 4 9 10 11 12 13 14 15];
-    NUC_STATS = zeros(nFovs,11,5); % mean, std, median, 025Q, 075Q
+    NUC_STATS = zeros(nFovs,12,5); % mean, std, median, 025Q, 075Q
     for k=1:nFovs
         nuc_data = NUCDATA{k};
         parfor j=1:numel(indices)
