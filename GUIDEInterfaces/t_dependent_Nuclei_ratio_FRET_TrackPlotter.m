@@ -101,7 +101,7 @@ handles.rng_FRET_molar_fraction = [0 1];
 %
 handles.rng_cell_area = [20 750*10];
 handles.rng_cell_intensity_ref = [0 1000];
-handles.rng_nuc_intensity_ref_ = [0 1000];
+handles.rng_nuc_intensity_ref = [0 1000];
 handles.rng_intensity_ref_nuc_cyt_ratio = [0 7];
 handles.rng_nuc_cell_area_ratio = [0 1];
 % ranges for visualization
