@@ -97,6 +97,7 @@ function handles = setup_menu(obj,handles)
     menu_settings_Registration = uimenu(menu_settings,'Label',['On-Load registration : ' settings_Registration],'Separator','On');
     handles.menu_settings_Registration_None = uimenu(menu_settings_Registration,'Label','None');
     handles.menu_settings_Registration_M1 = uimenu(menu_settings_Registration,'Label','M1');
+    handles.menu_settings_Registration_M2 = uimenu(menu_settings_Registration,'Label','Rotation axis shift only');
         
     menu_settings_Median_Prefiltering = uimenu(menu_settings,'Label',['On-Load Median pre-filtering : ' num2str(settings_Prefiltering_Size)],'Separator','On');
     handles.menu_settings_Median_Prefiltering_Set_Size = uimenu(menu_settings_Median_Prefiltering,'Label','Set size');    

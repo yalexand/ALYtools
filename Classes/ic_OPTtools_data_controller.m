@@ -2469,7 +2469,109 @@ end
             switch obj.registration_method
                 case 'M1' 
                     obj.M1_do_registration;
+                case 'Rotation axis shift only' 
+                    obj.M2_do_registration;                    
             end
+        end        
+%-------------------------------------------------------------------------%
+        function M2_do_registration(obj,~)
+            [sizeX,sizeY,n_planes] = size(obj.proj);
+            wait_handle = waitbar(0,'Ini proj memmap...');
+            [mapfile_name_proj,memmap_PROJ] = initialize_memmap([sizeX,sizeY,n_planes],1,'pixels',class(obj.proj),'ini_data',obj.proj);                 
+            close(wait_handle);
+                    
+            obj.proj = [];                
+
+            PROJ = memmap_PROJ.Data.pixels; % memmap projections copy for safety
+            offset = min(PROJ(:));
+            PROJ = PROJ-offset;
+            %
+            % take some (nimg) images with their diametric opposites
+            nangles = numel(obj.angles);
+            P = nangles/2;
+            nimg = 20;
+            u = zeros(sizeX,sizeY,2,nimg,1); % XYCZT
+            
+            angle_incr = floor(nangles/nimg);
+            for k=1:nimg
+                i_1 = angle_incr*(k-1) + 1;
+                % counter index (of diametrically opposite projection)
+                if i_1<=P 
+                    ci_1 = i_1 + P; 
+                else ci_1 = i_1 - P; 
+                end
+                u(:,:,1,k,1) = PROJ(:,:,i_1);
+                u(:,:,2,k,1) = flipud(PROJ(:,:,ci_1));
+            end                                  
+            %
+            s1 = 3;
+            s2 = 7;
+            quality = zeros(1,nimg); % to use as weights
+            shifts = zeros(1,nimg);            
+            hw = [];
+            waitmsg = ['calculating corrections with ' obj.registration_method];
+            if ~obj.run_headless
+                hw = waitbar(0,waitmsg);
+            end                        
+            for k=1:nimg
+                fixed = squeeze(u(:,:,1,k,1));
+                warped = squeeze(u(:,:,2,k,1));                
+                    fixed = imresize(fixed,[sizeX round(sizeY/4)]);
+                    warped = imresize(warped,[sizeX round(sizeY/4)]);                
+                z = xcorr2_fft(fixed,warped);
+                %
+                g1 = gsderiv(z,s1,0);
+                g2 = gsderiv(z,s2,0);
+                z = (g1-g2);
+                %
+                z(z<0)=0;
+                %
+                [wc,hc] = size(z);
+                wc=fix(wc/2);
+                hc=fix(hc/2);
+                rx = wc-s2:wc+s2;
+                ry = hc-s2:hc+s2;
+                z(rx,ry)=0;    
+                %
+                maxz = max(z(:));
+                [x,y] = find(z==maxz(1,1));
+                %
+                quality(k) = z(x,y)/mean(z(:));
+                shifts(k) = x-wc;
+                %
+                if ~isempty(hw), waitbar(k/nimg,hw); drawnow, end
+            end
+            if ~isempty(hw), delete(hw), drawnow, end
+            %    
+            tform = affine2d(eye(3));
+            shift_weighted = round(sum(shifts.*quality)/sum(quality));
+            shift_median = round(median(shifts));
+            disp(['Rotation axis shift weighted, median = ' num2str(shift_weighted) ' , ' num2str(shift_median)]);
+            tform.T(3,2) = - shift_weighted;
+            %            
+            hw = [];
+            waitmsg = ['introducing corrections with ' obj.registration_method];
+            if ~obj.run_headless
+                hw = waitbar(0,waitmsg);
+            end
+            %                        
+            for k = 1:n_planes
+                I = PROJ(:,:,k);
+                if isempty(obj.proj) % proper place to crop the image?
+                        [szx,szy] = size(I);
+                        obj.proj = zeros(szx,szy,n_planes,class(I));
+                end                
+                if k<=P
+                    obj.proj(:,:,k) = I;
+                else % introduce correction
+                    obj.proj(:,:,k) = imwarp(I,tform,'OutputView',imref2d(size(I)));
+                end
+                if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
+            end
+            if ~isempty(hw), delete(hw), drawnow, end
+            %
+            clear('memmap_PROJ');
+            delete(mapfile_name_proj);            
         end        
 %-------------------------------------------------------------------------%
         function M1_do_registration(obj,~) % by Samuel Davis
