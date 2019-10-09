@@ -693,48 +693,40 @@ classdef ic_OPTtools_data_controller < handle
 %-------------------------------------------------------------------------%
 function save_volume(obj,full_filename,verbose,~)                        
     hw = [];   
-    if verbose, hw = waitbar(0,' '); end;                    
+    if verbose, hw = waitbar(0,' '); end                    
     %
-    if ~isempty(obj.delays) && ~isempty(strfind(lower(full_filename),'.ome.tiff'))
+    if ~isempty(obj.delays) && contains(lower(full_filename),'.ome.tiff')
         % FLIM
         obj.save_volm_FLIM(full_filename,verbose);
-        if verbose, delete(hw), drawnow; end;
+        if verbose, delete(hw), drawnow; end
         % FLIM
         return;
     end
     % mat-file
-    if ~isempty(strfind(lower(full_filename),'.mat'))
+    if  contains(lower(full_filename),'.mat')
         %
         vol = obj.volm;
         save(full_filename,'vol','-v7.3');
         clear('vol');
-    elseif ~isempty(strfind(lower(full_filename),'.ome.tiff'))
-    %   
-        [szX,szY,szZ] = size(obj.volm);                                            
+    elseif contains(lower(full_filename),'.ome.tiff')
+    %           
+        [szX,szY,szZ] = size(obj.volm);
+        V = map(obj.volm,0,65535);
         if 32 == obj.save_volume_bit_depth
-            if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
-                metadata = createMinimalOMEXMLMetadata(reshape(obj.volm,[szX,szY,1,1,szZ]),'XYCTZ');
-                toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
-                metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
-                bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
-            else
-                bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
-            end                    
+            % leave as is - single
         elseif 16 == obj.save_volume_bit_depth    
-            V = uint16(obj.volm);
-            if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
-                metadata = createMinimalOMEXMLMetadata(reshape(V,[szX,szY,1,1,szZ]),'XYCTZ');
-                toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
-                metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
-                bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
-            else
-                bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
-            end                                
+            V = uint16(V);
         end
+        if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
+            metadata = createMinimalOMEXMLMetadata(reshape(V,[szX,szY,1,1,szZ]),'XYCTZ');
+            toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
+            metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
+            metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
+            metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
+            bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
+        else
+            bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
+        end                                        
     end
     if verbose, delete(hw), drawnow; end;
 end
