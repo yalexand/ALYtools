@@ -2509,7 +2509,14 @@ end
                 fixed = squeeze(u(:,:,1,k,1));
                 warped = squeeze(u(:,:,2,k,1));                
                     fixed = imresize(fixed,[sizeX round(sizeY/4)]);
-                    warped = imresize(warped,[sizeX round(sizeY/4)]);                
+                    warped = imresize(warped,[sizeX round(sizeY/4)]);
+                %
+                sigma = 3;                
+                [gf1,gf2] = gsderiv(fixed,sigma,1);
+                [gw1,gw2] = gsderiv(warped,sigma,1);
+                fixed = sqrt(gf1.*gf1 + gf2.*gf2);
+                warped = sqrt(gw1.*gw1 + gw2.*gw2);
+                %
                 z = xcorr2_fft(fixed,warped);
                 %
                 g1 = gsderiv(z,s1,0);
@@ -2521,9 +2528,6 @@ end
                 [wc,hc] = size(z);
                 wc=fix(wc/2);
                 hc=fix(hc/2);
-                rx = wc-s2:wc+s2;
-                ry = hc-s2:hc+s2;
-                z(rx,ry)=0;    
                 %
                 maxz = max(z(:));
                 [x,y] = find(z==maxz(1,1));
@@ -2535,7 +2539,6 @@ end
             end
             if ~isempty(hw), delete(hw), drawnow, end
             %    
-            tform = affine2d(eye(3));
             shift_weighted = round(sum(shifts.*quality)/sum(quality));
             shift_median = round(median(shifts));
             disp(['Rotation axis shift weighted, median = ' num2str(shift_weighted) ' , ' num2str(shift_median)]);
@@ -2548,14 +2551,14 @@ end
             %                        
             s = round(shift_weighted/2);
             if abs(s)>=1
+                tform = affine2d(eye(3));                    
+                tform.T(3,2) = - s;                
                 for k = 1:n_planes
                     I = PROJ(:,:,k);
                     if isempty(obj.proj) % proper place to crop the image?
                             [szx,szy] = size(I);
                             obj.proj = zeros(szx,szy,n_planes,class(I));
                     end                
-                        tform = affine2d(eye(3));                    
-                        tform.T(3,2) = - s;
                         obj.proj(:,:,k) = imwarp(I,tform,'OutputView',imref2d(size(I)));
                     if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
                 end
