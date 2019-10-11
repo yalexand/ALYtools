@@ -2539,7 +2539,6 @@ end
             shift_weighted = round(sum(shifts.*quality)/sum(quality));
             shift_median = round(median(shifts));
             disp(['Rotation axis shift weighted, median = ' num2str(shift_weighted) ' , ' num2str(shift_median)]);
-            tform.T(3,2) = - shift_weighted;
             %            
             hw = [];
             waitmsg = ['introducing corrections with ' obj.registration_method];
@@ -2547,18 +2546,19 @@ end
                 hw = waitbar(0,waitmsg);
             end
             %                        
-            for k = 1:n_planes
-                I = PROJ(:,:,k);
-                if isempty(obj.proj) % proper place to crop the image?
-                        [szx,szy] = size(I);
-                        obj.proj = zeros(szx,szy,n_planes,class(I));
-                end                
-                if k<=P
-                    obj.proj(:,:,k) = I;
-                else % introduce correction
-                    obj.proj(:,:,k) = imwarp(I,tform,'OutputView',imref2d(size(I)));
+            s = round(shift_weighted/2);
+            if abs(s)>=1
+                for k = 1:n_planes
+                    I = PROJ(:,:,k);
+                    if isempty(obj.proj) % proper place to crop the image?
+                            [szx,szy] = size(I);
+                            obj.proj = zeros(szx,szy,n_planes,class(I));
+                    end                
+                        tform = affine2d(eye(3));                    
+                        tform.T(3,2) = - s;
+                        obj.proj(:,:,k) = imwarp(I,tform,'OutputView',imref2d(size(I)));
+                    if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
                 end
-                if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
             end
             if ~isempty(hw), delete(hw), drawnow, end
             %
