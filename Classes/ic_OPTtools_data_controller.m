@@ -2481,10 +2481,10 @@ end
             % take some (nimg) images with their diametric opposites
             nangles = numel(obj.angles);
             P = nangles/2;
-            nimg = 20;
+            nimg = 16;
             u = zeros(sizeX,sizeY,2,nimg,1); % XYCZT
-            
-            angle_incr = floor(nangles/nimg);
+            %
+            angle_incr = floor(nangles/nimg/2); % to avoid repetition
             for k=1:nimg
                 i_1 = angle_incr*(k-1) + 1;
                 % counter index (of diametrically opposite projection)
@@ -2508,8 +2508,8 @@ end
             for k=1:nimg
                 fixed = squeeze(u(:,:,1,k,1));
                 warped = squeeze(u(:,:,2,k,1));                
-                    fixed = imresize(fixed,[sizeX round(sizeY/4)]);
-                    warped = imresize(warped,[sizeX round(sizeY/4)]);
+%                     fixed = imresize(fixed,[sizeX round(sizeY/4)]);
+%                     warped = imresize(warped,[sizeX round(sizeY/4)]);
                 %
                 sigma = 3;                
                 [gf1,gf2] = gsderiv(fixed,sigma,1);
@@ -2539,8 +2539,8 @@ end
             end
             if ~isempty(hw), delete(hw), drawnow, end
             %    
-            shift_weighted = round(sum(shifts.*quality)/sum(quality));
-            shift_median = round(median(shifts));
+            shift_weighted = sum(shifts.*quality)/sum(quality);
+            shift_median = median(shifts);
             disp(['Rotation axis shift weighted, median = ' num2str(shift_weighted) ' , ' num2str(shift_median)]);
             %            
             hw = [];
@@ -2549,7 +2549,7 @@ end
                 hw = waitbar(0,waitmsg);
             end
             %                        
-            s = round(shift_weighted/2);
+            s = round(shift_median/2); % safest possible
             if abs(s)>=1
                 tform = affine2d(eye(3));                    
                 tform.T(3,2) = - s;                
@@ -2557,9 +2557,10 @@ end
                     I = PROJ(:,:,k);
                     if isempty(obj.proj) % proper place to crop the image?
                             [szx,szy] = size(I);
-                            obj.proj = zeros(szx,szy,n_planes,class(I));
+                            obj.proj = zeros(szx-2*s,szy,n_planes,class(I));
                     end                
-                        obj.proj(:,:,k) = imwarp(I,tform,'OutputView',imref2d(size(I)));
+                        Icorr = imwarp(I,tform,'OutputView',imref2d(size(I)));
+                        obj.proj(:,:,k) = Icorr(s+1:szx-s,:);
                     if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
                 end
             end
