@@ -1,7 +1,7 @@
 function z=map(x,ymin,ymax)
 
-xmin = min(min(x));
-xmax = max(max(x));
+xmin = minN(x);
+xmax = maxN(x);
 
 z = ymin+(x-xmin)*(ymax-ymin)/(xmax-xmin);
 

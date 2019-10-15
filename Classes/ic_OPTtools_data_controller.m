@@ -693,48 +693,40 @@ classdef ic_OPTtools_data_controller < handle
 %-------------------------------------------------------------------------%
 function save_volume(obj,full_filename,verbose,~)                        
     hw = [];   
-    if verbose, hw = waitbar(0,' '); end;                    
+    if verbose, hw = waitbar(0,' '); end                    
     %
-    if ~isempty(obj.delays) && ~isempty(strfind(lower(full_filename),'.ome.tiff'))
+    if ~isempty(obj.delays) && contains(lower(full_filename),'.ome.tiff')
         % FLIM
         obj.save_volm_FLIM(full_filename,verbose);
-        if verbose, delete(hw), drawnow; end;
+        if verbose, delete(hw), drawnow; end
         % FLIM
         return;
     end
     % mat-file
-    if ~isempty(strfind(lower(full_filename),'.mat'))
+    if  contains(lower(full_filename),'.mat')
         %
         vol = obj.volm;
         save(full_filename,'vol','-v7.3');
         clear('vol');
-    elseif ~isempty(strfind(lower(full_filename),'.ome.tiff'))
-    %   
-        [szX,szY,szZ] = size(obj.volm);                                            
+    elseif contains(lower(full_filename),'.ome.tiff')
+    %           
+        [szX,szY,szZ] = size(obj.volm);
+        V = map(obj.volm,0,65535);
         if 32 == obj.save_volume_bit_depth
-            if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
-                metadata = createMinimalOMEXMLMetadata(reshape(obj.volm,[szX,szY,1,1,szZ]),'XYCTZ');
-                toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
-                metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
-                bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
-            else
-                bfsave(reshape(obj.volm,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
-            end                    
+            % leave as is - single
         elseif 16 == obj.save_volume_bit_depth    
-            V = uint16(obj.volm);
-            if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
-                metadata = createMinimalOMEXMLMetadata(reshape(V,[szX,szY,1,1,szZ]),'XYCTZ');
-                toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
-                metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
-                metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
-                bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
-            else
-                bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
-            end                                
+            V = uint16(V);
         end
+        if ~isempty(obj.PixelsPhysicalSizeX) && ~isempty(obj.PixelsPhysicalSizeX)
+            metadata = createMinimalOMEXMLMetadata(reshape(V,[szX,szY,1,1,szZ]),'XYCTZ');
+            toPosFloat = @(x) ome.xml.model.primitives.PositiveFloat(java.lang.Double(x));
+            metadata.setPixelsPhysicalSizeX(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);
+            metadata.setPixelsPhysicalSizeY(toPosFloat(obj.PixelsPhysicalSizeY*obj.downsampling),0);
+            metadata.setPixelsPhysicalSizeZ(toPosFloat(obj.PixelsPhysicalSizeX*obj.downsampling),0);                        
+            bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'metadata',metadata,'Compression','LZW','BigTiff',true); 
+        else
+            bfsave(reshape(V,[szX,szY,1,1,szZ]),full_filename,'dimensionOrder','XYCTZ','Compression','LZW','BigTiff',true); 
+        end                                        
     end
     if verbose, delete(hw), drawnow; end;
 end
@@ -2469,7 +2461,113 @@ end
             switch obj.registration_method
                 case 'M1' 
                     obj.M1_do_registration;
+                case 'Rotation axis shift only' 
+                    obj.M2_do_registration;                    
             end
+        end        
+%-------------------------------------------------------------------------%
+        function M2_do_registration(obj,~)
+            [sizeX,sizeY,n_planes] = size(obj.proj);
+            wait_handle = waitbar(0,'Ini proj memmap...');
+            [mapfile_name_proj,memmap_PROJ] = initialize_memmap([sizeX,sizeY,n_planes],1,'pixels',class(obj.proj),'ini_data',obj.proj);                 
+            close(wait_handle);
+                    
+            obj.proj = [];                
+
+            PROJ = memmap_PROJ.Data.pixels; % memmap projections copy for safety
+            offset = min(PROJ(:));
+            PROJ = PROJ-offset;
+            %
+            % take some (nimg) images with their diametric opposites
+            nangles = numel(obj.angles);
+            P = nangles/2;
+            nimg = 16;
+            u = zeros(sizeX,sizeY,2,nimg,1); % XYCZT
+            %
+            angle_incr = floor(nangles/nimg/2); % to avoid repetition
+            for k=1:nimg
+                i_1 = angle_incr*(k-1) + 1;
+                % counter index (of diametrically opposite projection)
+                if i_1<=P 
+                    ci_1 = i_1 + P; 
+                else ci_1 = i_1 - P; 
+                end
+                u(:,:,1,k,1) = PROJ(:,:,i_1);
+                u(:,:,2,k,1) = flipud(PROJ(:,:,ci_1));
+            end                                  
+            %
+            s1 = 3;
+            s2 = 7;
+            quality = zeros(1,nimg); % to use as weights
+            shifts = zeros(1,nimg);            
+            hw = [];
+            waitmsg = ['calculating corrections with ' obj.registration_method];
+            if ~obj.run_headless
+                hw = waitbar(0,waitmsg);
+            end                        
+            for k=1:nimg
+                fixed = squeeze(u(:,:,1,k,1));
+                warped = squeeze(u(:,:,2,k,1));                
+%                     fixed = imresize(fixed,[sizeX round(sizeY/4)]);
+%                     warped = imresize(warped,[sizeX round(sizeY/4)]);
+                %
+                sigma = 3;                
+                [gf1,gf2] = gsderiv(fixed,sigma,1);
+                [gw1,gw2] = gsderiv(warped,sigma,1);
+                fixed = sqrt(gf1.*gf1 + gf2.*gf2);
+                warped = sqrt(gw1.*gw1 + gw2.*gw2);
+                %
+                z = xcorr2_fft(fixed,warped);
+                %
+                g1 = gsderiv(z,s1,0);
+                g2 = gsderiv(z,s2,0);
+                z = (g1-g2);
+                %
+                z(z<0)=0;
+                %
+                [wc,hc] = size(z);
+                wc=fix(wc/2);
+                hc=fix(hc/2);
+                %
+                maxz = max(z(:));
+                [x,y] = find(z==maxz(1,1));
+                %
+                quality(k) = z(x,y)/mean(z(:));
+                shifts(k) = x-wc;
+                %
+                if ~isempty(hw), waitbar(k/nimg,hw); drawnow, end
+            end
+            if ~isempty(hw), delete(hw), drawnow, end
+            %    
+            shift_weighted = sum(shifts.*quality)/sum(quality);
+            shift_median = median(shifts);
+            disp(['Rotation axis shift weighted, median = ' num2str(shift_weighted) ' , ' num2str(shift_median)]);
+            %            
+            hw = [];
+            waitmsg = ['introducing corrections with ' obj.registration_method];
+            if ~obj.run_headless
+                hw = waitbar(0,waitmsg);
+            end
+            %                        
+            s = round(shift_median/2); % safest possible
+            if abs(s)>=1
+                tform = affine2d(eye(3));                    
+                tform.T(3,2) = - s;                
+                for k = 1:n_planes
+                    I = PROJ(:,:,k);
+                    if isempty(obj.proj) % proper place to crop the image?
+                            [szx,szy] = size(I);
+                            obj.proj = zeros(szx-2*s,szy,n_planes,class(I));
+                    end                
+                        Icorr = imwarp(I,tform,'OutputView',imref2d(size(I)));
+                        obj.proj(:,:,k) = Icorr(s+1:szx-s,:);
+                    if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
+                end
+            end
+            if ~isempty(hw), delete(hw), drawnow, end
+            %
+            clear('memmap_PROJ');
+            delete(mapfile_name_proj);            
         end        
 %-------------------------------------------------------------------------%
         function M1_do_registration(obj,~) % by Samuel Davis
