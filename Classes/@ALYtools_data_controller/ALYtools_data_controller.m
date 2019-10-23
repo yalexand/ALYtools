@@ -637,7 +637,9 @@ classdef ALYtools_data_controller < handle
                         image(uint8(map(u,0,255)),'Parent',obj.scene_axes);
                     end  
                 case {'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'}
-                    image(uint8(map(squeeze(sum(I,5)),0,255)),'Parent',obj.scene_axes);
+                    if ~isempty(obj.imgdata)
+                        image(uint8(map(squeeze(sum(obj.imgdata,5)),0,255)),'Parent',obj.scene_axes);
+                    end
                 case 't_dependent_Nuclei_ratio_FRET'                    
                     image(uint8(map(double(squeeze(obj.imgdata(:,:,1,1,1))),0,255)),'Parent',obj.scene_axes);                                        
             end
@@ -5005,9 +5007,13 @@ end
                 %
                 phasors = obj.per_image_TCSPC_FLIM_get_phasors;
                 %
-                res{1}=phasors;
-                res{2}=Tp;
-                per_image_TCSPC_FLIM_PHASOR_results_panel(res);
+                res{1} = phasors;
+                res{2} = Tp;
+                if ~isempty(phasors)
+                    per_image_TCSPC_FLIM_PHASOR_results_panel(res);
+                else
+                    disp('failed to define phasors - can not continue');
+                end
     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
