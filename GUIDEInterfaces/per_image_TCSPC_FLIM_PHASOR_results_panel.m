@@ -66,7 +66,12 @@ cla(handles.phasor_plot,'reset');
                 
                 hold on;
                 W = 2*pi/Tp;
-                tau = 0:500:20000;
+                
+                %tau = 0:500:20000;
+                npoints = 50;
+                dtau = round(Tp/npoints);
+                tau = 0:dtau:Tp;
+                
                 G = 1./(1+(W*tau).^2);
                 S = W*tau.*G;
                 plot(handles.phasor_plot,G,S,'m.','markersize',30);
