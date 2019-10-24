@@ -231,7 +231,12 @@ classdef ALYtools_menu_controller < handle
             [filename,pathname] = uigetfile({'*.tif;*.tiff;*.gif;*.avi;*.czi;*.png;*.bmp;*.jpg;*.jpeg;*.lsm;*.sdt;*.nd2','Image Files'}, ...
                 'Select data file',pwd);               
            end
-            if filename == 0, return, end;       
+            if filename == 0, return, end;   
+            
+           if ismember(obj.data_controller.problem,{'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'})
+                    errordlg('no data loaded - with per_image_TCSPC, use "Load Multiple" only');
+                    return;
+            end                        
             %
             obj.data_controller.load(filename,pathname,true); % verbose true
             set(obj.menu_settings_microns_per_pixel,'Label',['Microns per pixel ' num2str(obj.data_controller.microns_per_pixel)]);
