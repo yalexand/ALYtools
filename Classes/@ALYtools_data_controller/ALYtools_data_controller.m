@@ -3035,7 +3035,8 @@ classdef ALYtools_data_controller < handle
             %[datas, captions, table_names, fig] = obj.analyze_MNEPR; 
             %[datas, captions, table_names, fig] = obj.analyze_DarkNuclei;
             %[datas, captions, table_names, fig] = obj.analyze_ImageTiling;
-            [datas, captions, table_names, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;            
+            %[datas, captions, table_names, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
+            [datas, captions, table_names, fig] = obj.analyze_OPT_Embryo;
         end 
 %-------------------------------------------------------------------------%  also see the function above
         function sgm = do_Experimental_Segmentation(obj,send_to_Icy,~)                                    
@@ -3046,7 +3047,8 @@ classdef ALYtools_data_controller < handle
             %sgm = obj.do_MNEPR_Segmentation(send_to_Icy);
             %sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
             %sgm = obj.do_ImageTiling_Segmentation(send_to_Icy);
-            sgm = obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(send_to_Icy);
+            %sgm = obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(send_to_Icy);
+            sgm = obj.do_OPT_Embryo_Segmentation(send_to_Icy);
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
