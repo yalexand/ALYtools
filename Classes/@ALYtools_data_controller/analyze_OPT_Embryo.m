@@ -8,13 +8,12 @@ function [datas, captions, table_names, fig] = analyze_OPT_Embryo(obj,~,~)
           
 hw = waitbar(0,'quantifying OPT Embryos, please wait');
 for m=1:numel(obj.M_imgdata)
-TITLE = [obj.current_filename ' #' num2str(m)];
+TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
 
     embr = obj.M_imgdata{m};
     embr_sgm = obj.M_sgm{m};
     [sx,sy,sz]=size(embr);        
-   
-        % Skel2Graph3D !!!            
+              
         embr_skel = Skeleton3D(embr_sgm);            
         [w,l,h] = size(embr_skel);
 
@@ -122,8 +121,7 @@ TITLE = [obj.current_filename ' #' num2str(m)];
                 % count number of branchpoints
                 [~,nodes_k,links_k] = Skel2Graph3D(skvol_k,0);
                 N_branchpoints_k = length(nodes_k)-sum(cell2mat({nodes_k(:).ep}));
-                show_graph(nodes_k,links_k,sx,sy,sz,TITLE);
-                %
+                show_graph(nodes_k,links_k,sx,sy,sz,TITLE);                
                 %
                 dmap_k = bwdist(skvol_k);
                 s_k = dmap_k.*embr_shell_k;
@@ -261,50 +259,4 @@ if ~isempty(hw), delete(hw), drawnow; end
             'u_volume_kurtosis', ...     
             'N_branchpoints', ... % in pruned skeleton
             };                    
-end
-
-function show_graph(node2,link2,w,l,h,TITLE) % :)
-figure();
-title(TITLE);
-hold on;
-for i=1:length(node2)
-    x1 = node2(i).comx;
-    y1 = node2(i).comy;
-    z1 = node2(i).comz;
-    
-    if(node2(i).ep==1)
-        ncol = 'c';
-    else
-        ncol = 'y';
-    end;
-    
-    for j=1:length(node2(i).links)    % draw all connections of each node
-        if(node2(node2(i).conn(j)).ep==1)
-            col='k'; % branches are black
-        else
-            col='r'; % links are red
-        end;
-        if(node2(i).ep==1)
-            col='k';
-        end;
-
-        
-        % draw edges as lines using voxel positions
-        for k=1:length(link2(node2(i).links(j)).point)-1            
-            [x3,y3,z3]=ind2sub([w,l,h],link2(node2(i).links(j)).point(k));
-            [x2,y2,z2]=ind2sub([w,l,h],link2(node2(i).links(j)).point(k+1));
-            line([y3 y2],[x3 x2],[z3 z2],'Color',col,'LineWidth',2);
-        end;
-    end;
-    
-    % draw all nodes as yellow circles
-    plot3(y1,x1,z1,'o','Markersize',9,...
-        'MarkerFaceColor',ncol,...
-        'Color','k');
-end;
-axis image;axis off;
-set(gcf,'Color','white');
-drawnow;
-view(-17,46);
-
 end
