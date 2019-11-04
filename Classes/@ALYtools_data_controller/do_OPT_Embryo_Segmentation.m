@@ -63,8 +63,8 @@ t = 0.1; % segmentation threshold
                 z1 = maipxy>t;
                 z1 = imclose(z1,strel('disk',1*round(16/f)));
                 z1 = bwareaopen(z1,4*round((16/f)^2));
-                xline = sum(z1,1);
-                yline = sum(z1,2);
+                yline = sum(z1,1);
+                xline = sum(z1,2);
 %figure();
 %plot(1:sx,xline,'b.-',1:sy,yline,'r.-');grid on;
 
@@ -139,15 +139,31 @@ zpadfac = 1.15; % if embryos are close
                         obj.M_imgdata{m} = v;                        
                         %
                         % segmentation
-K = 2.5;
-S1 = 5;
-S2 = round(K*S1);
+S1 = 4;
+K21 = 2;
+K31 = 4;
+S2 = round(K21*S1);
+S3 = round(K31*S1);
                             U1 = gauss3filter(squeeze(v),S1);
                             U2 = gauss3filter(squeeze(v),S2);
+                            U3 = gauss3filter(squeeze(v),S3);
                             %
-                            z = (U1-U2)./(U1+U2);
-t  = 0.235; %?
+                            u1 = (U1-U2)./U2;
+                            u2 = (U2-U3)./U3;
+                            % pixelwise max?
+                            % z = reshape(max(u1(:),u2(:)),[sy_m,sx_m,sz_m]);
+                            % or, try proportionality ?
+a1 = 0.5;
+                            z = u1*a1 + u2*(1-a1);
+                            %
+                            % trying to remove too thin objects?
+                            z = imopen(z,strel('sphere',round(S1/2)));
+                            %
+t  = 0.4;
                             embr_sgm = z > t;
+                        % segmentation
+                            
+                            
                             embr_sgm = bwmorph3(embr_sgm,'majority');
                             embr_sgm = bwmorph3(embr_sgm,'fill');
 min_embr_size = 40*40*40;            
