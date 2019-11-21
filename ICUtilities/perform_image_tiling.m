@@ -12,6 +12,9 @@ dc.problem = 'Image_Tiling';
 Extension = in_Extension; %'ome.tif';
 
 dc.ImageTiling_mode = mode;
+dc.send_analysis_output_to_Icy = false;
+dc.save_analysis_output_as_OMEtiff = false;
+dc.save_analysis_output_as_xls = false;
 
 if isnumeric(in_ncols)
     dc.ImageTiling_Ncols = in_ncols;
@@ -47,17 +50,16 @@ if ~isempty({dirdata.name})
 else
     % try this arrangement: /output/fovdir1, fovdir2 etc.
     dirdata = dir([in_src_dir filesep 'output']);
-    postfix = '_2D.ome.tiff';
-    dirnames = setxor({dirdata.name},{'.','..','.directory'});
+    dirnames = setdiff({dirdata.name},{'.','..','.directory'});
     dirnames = sort_nat(dirnames);
-    dc.imgdata = [];
-    for k=1:numel(dirnames)
-        curname = char(dirnames(k)); % FOV file name base is the same as folder name
-        fullfname = [in_src_dir filesep 'output' filesep curname filesep curname postfix];
-        [~,~,I] = bfopen_v(fullfname);
-        dc.M_imgdata{k} = single(I);
-        dc.M_filenames{k} = curname;        
-    end    
+     dc.imgdata = [];
+     for k=1:numel(dirnames)
+         curname = char(dirnames(k)); % FOV file name base is the same as folder name
+         fullfname = [in_src_dir filesep 'output' filesep curname filesep curname Extension];
+         [~,~,I] = bfopen_v(fullfname);
+         dc.M_imgdata{k} = single(I);
+         dc.M_filenames{k} = curname;        
+     end    
 end
 
 [datas, captions, table_names, fig] = dc.analyze_ImageTiling(false);
@@ -65,7 +67,7 @@ end
 str = strsplit(in_src_dir,filesep);
 xlsname = [in_dst_dir filesep char(str(numel(str))) '.xls'];
 xlwrite(xlsname,[captions; datas]);
-filesavename = [in_dst_dir filesep char(str(numel(str))) '.ome.tif'];
+filesavename = [in_dst_dir filesep char(str(numel(str))) '_stitched.ome.tif'];
 bfsave(fig,filesavename,'BigTiff',true,'Compression','LZW');
 
 disp(['execution time ' num2str(toc/60) ' min']);

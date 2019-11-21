@@ -398,49 +398,14 @@ if strcmp(obj.ImageTiling_mode,'bleached_fluor')
         end
     end
     % %%%%%%%%%%%%%%%%%%%%%%%%%    
-        
-scene = zeros(SX,SY);    
-% "blending"
-    %
-    for k=1:sT
-        rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
-        ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;    
-        scene(rx,ry) = sgm(:,:,2,1,k);
-    end
-    %
-    %overlapping areas
-    oa = cell(sT,sT);
-    for k=1:sT
-            for m=1:sT
-                if m>k
-                    rct = rect_x_rect(coord(k,1),coord(k,2),sX,sY,coord(m,1),coord(m,2),sX,sY);
-                    if rct(3)>0 && rct(4)>0
-                        oa(k,m) = {rct};
-                    end
-                end
-            end
-    end    
-    %
-    for k=1:sT
-         for m=1:sT
-                if ~isempty(oa{k,m})
-                    r = oa{k,m};
-                    rxi = r(1):r(1)+r(3);
-                    ryi = r(2):r(2)+r(4);
-                        rx_k = coord(k,1) + CX : coord(k,1) + CX+sX-1;
-                        ry_k = coord(k,2) + CY : coord(k,2) + CY+sY-1;    
-                        rx_m = coord(m,1) + CX : coord(m,1) + CX+sX-1;
-                        ry_m = coord(m,2) + CY : coord(m,2) + CY+sY-1;    
-                    scene2 = zeros(SX,SY);
-                    scene2(rx_k,ry_k) = sgm(:,:,2,1,k);
-                    scene3 = zeros(SX,SY);
-                    scene3(rx_m,ry_m) = sgm(:,:,2,1,m);
-                    scene_max = pixelwise_max(scene2,scene3);
-                    scene(rxi,ryi) = scene_max(rxi,ryi);
-                end
-         end
-    end                    
-% "blending"
+ 
+% primitive "blending"    
+scene = zeros(SX,SY);
+        for k=1:sT
+            rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
+            ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;
+            scene(rx,ry) = pixelwise_max(scene(rx,ry),sgm(:,:,2,1,k));
+        end
 %    
 elseif strcmp(obj.ImageTiling_mode,'brightfield')
     % median along all acquired images for brightfield - to compensate camera dirt - thanks Sunil

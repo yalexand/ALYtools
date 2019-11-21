@@ -117,20 +117,23 @@ C = (1-(1-E)*b_A);
 obj.imgdata = []; % helps with memory
 
 lab_nukes = zeros(sX,sY,nFovs);
-parfor k=1:nFovs
+%parfor k=1:nFovs
+for k=1:nFovs
     nukes = single(fig(:,:,3,1,k));    
     lab_nukes(:,:,k) = bwlabel(nukes);
 end
 
 if 5==sC
     lab_cells = zeros(sX,sY,nFovs);
-    parfor k=1:nFovs
+    % parfor k=1:nFovs
+    for k=1:nFovs        
         cells = single(fig(:,:,5,1,k));    
         lab_cells(:,:,k) = bwlabel(cells);
     end
     %
     nuc_to_cell_luts = cell(nFovs,1);
-    parfor k=1:nFovs
+    % parfor k=1:nFovs
+    for k=1:nFovs        
         LN = lab_nukes(:,:,k);
         LC = lab_cells(:,:,k);
         nnucs = max(LN(:));
@@ -337,7 +340,8 @@ if 3==sC
     NUC_STATS = zeros(nFovs,8,5); % mean, std, median, 025Q, 075Q
     for k=1:nFovs
         nuc_data = NUCDATA{k};
-        parfor j=1:numel(indices)
+        % parfor j=1:numel(indices)
+        for j=1:numel(indices)            
             index = indices(j);
             s = squeeze(nuc_data(:,index)); %sample
             s = s(~isinf(s));
@@ -354,7 +358,8 @@ else
     NUC_STATS = zeros(nFovs,12,5); % mean, std, median, 025Q, 075Q
     for k=1:nFovs
         nuc_data = NUCDATA{k};
-        parfor j=1:numel(indices)
+        % parfor j=1:numel(indices)
+        for j=1:numel(indices)            
             index = indices(j);
             s = squeeze(nuc_data(:,index)); %sample
             s = s(~isinf(s));
@@ -388,7 +393,8 @@ xlswrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_num
           
      track_mate_input = track_mate_input*10000;
      smoothing_radius = 1;
-     parfor k=1:nFovs
+     % parfor k=1:nFovs
+     for k=1:nFovs         
         track_mate_input(:,:,1,1,k)=gsderiv(squeeze(track_mate_input(:,:,1,1,k)),smoothing_radius,0);
      end                       
      imp = copytoImagePlus(track_mate_input,'dimorder','XYCZT');
