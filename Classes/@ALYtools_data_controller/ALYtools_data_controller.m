@@ -5186,8 +5186,8 @@ disp('analyze_AI_Powered_2D_SMLM_Reconstruction - extraction started!');
                                                          
                    n_frames = sT;                
                    frame_data = cell(n_frames,1);         
-                   parfor k=1:n_frames 
-                   %for k=1:n_frames
+                   %parfor k=1:n_frames 
+                   for k=1:n_frames
 
                         frame = single(squeeze(temp_img(:,:,1,1,k)));
                                                                         
