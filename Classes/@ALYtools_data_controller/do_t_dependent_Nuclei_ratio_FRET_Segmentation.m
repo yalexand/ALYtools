@@ -128,18 +128,20 @@
                 
                 if 3==sC
                        uref = single(squeeze(obj.imgdata(:,:,1,3,k)));
-                       S = ceil(18*fac); % ..say..
-                       smooth_scale = ceil(2*fac);
-                       max_hole_size = smooth_scale^2;
-
-                       % skip? - mask zeros that may occur due to usage of warp transform
-                       K  = 2.5;
-                       % t = 0.055; 
-                       t = 0.1; % less generous
-                       z = nonlinear_tophat(uref,S,K)-1;
-                       z(z<t)=0;                 
-                       z = imopen(z,strel('disk',smooth_scale,0));
                        %
+                       if true % hey, - would it be better to substitute threshold-type segmentation here? 
+                           S = ceil(18*fac); % ..say..
+                           smooth_scale = ceil(2*fac);
+                           max_hole_size = smooth_scale^2;
+
+                           % skip? - mask zeros that may occur due to usage of warp transform
+                           K  = 2.5;
+                           % t = 0.055; 
+                           t = 0.1; % less generous
+                           z = nonlinear_tophat(uref,S,K)-1;
+                           z(z<t)=0;                 
+                           z = imopen(z,strel('disk',smooth_scale,0));
+                       end
                        z = z | nukes;
                          % fill SMALL holes                             
                          z1 = imfill(z,'holes') - z;                    

@@ -935,13 +935,15 @@ if isfield(handles,'NUC_STATS')
                     case 14 % FRET molar fraction
                         index = 8;                                                                                                
                     case 15 % 
-                        index = 12; % cell size                                                                       
+                        index = 9;  %12; % cell size                                                                       
                     case 16 % 
-                        index = 13; % cell intensity ref                                                                       
+                        index = 10; %13; % cell intensity ref                                                                       
                     case 17 % 
-                        index = 14; % nuke intensity ref                                                                       
+                        index = 11; %14; % nuke intensity ref                                                                       
                     case 18 % 
-                        index = 15; % nuc/cell ref intensity ratio                                                                                                                       
+                        index = 12; %15; % nuc/cell ref intensity ratio                                                                                                                                               
+                    case 19 % 
+                        index = 13; %16; % nuc/cell ref area ratio                                                                                                                       
               end
               
     if 0~=index  
@@ -950,7 +952,7 @@ if isfield(handles,'NUC_STATS')
             meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
             stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
             taxis = handles.dt*(1:numel(meanvals));
-            if ~isempty(intersect(index,[1 12]))
+            if ~isempty(intersect(index,[1 9]))
                 meanvals = meanvals*(handles.pixelsize)^2;
                 stdvals = stdvals*(handles.pixelsize)^2;        
             end
