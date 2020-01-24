@@ -1,16 +1,23 @@
-function [datas, captions, table_names, fig] = analyze_OPT_Embryo(obj,~,~) 
+function [datas, captions, table_names, fig] = analyze_OPT_ZFish_Embryo(obj,~,~) 
      datas = [];
      captions = [];
      table_names = 'OPT Embryos quantification';
      fig = [];
              
-     obj.do_OPT_Embryo_Segmentation(false);
+     obj.do_OPT_ZFish_Embryo_Segmentation(false);
           
 hw = waitbar(0,'quantifying OPT Embryos, please wait');
+
 for m=1:numel(obj.M_imgdata)
 TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
 
-    embr = obj.M_imgdata{m};
+    if 4==numel(size(obj.imgdata)) % this is 3-channels case
+        I = obj.M_imgdata{m};
+        embr = squeeze(I(:,:,:,1));
+    else
+        embr = obj.M_imgdata{m};
+    end
+            
     embr_sgm = obj.M_sgm{m};
     [sx,sy,sz]=size(embr);        
               
@@ -64,7 +71,7 @@ TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
                 z = round(p(1,3));
                 skel_to_fat_lut(k) = L_embr(x,y,z);
          end
-
+                  
              for k=1:n_fragments                 
                     N_k = -123456789.;
                     V_k = 123456789.;
@@ -186,6 +193,42 @@ TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
                 catch
                 end
 
+if 4==numel(size(obj.imgdata)) % this is 3-channels case
+            I = obj.M_imgdata{m};
+            head = squeeze(I(:,:,:,2));
+            tail = squeeze(I(:,:,:,3));    
+            s = 2*round(obj.OPT_ZFish_Embryo_sgm_primary_scale/obj.microns_per_pixel);
+            %
+            z = gauss3filter(head,s);
+            [~,idx]=maxN(z); % first found - but it is OK
+            z = zeros(size(head));
+            z(idx(1),idx(2),idx(3)) = 1;
+            z = bwdist(z);
+            dmap_head = max(z(:))-z;            
+            %
+            z = gauss3filter(tail,s);
+            [~,idx]=maxN(z); % first found - but it is OK
+            z = zeros(size(tail));
+            z(idx(1),idx(2),idx(3)) = 1;
+            z = bwdist(z);
+            dmap_tail = max(z(:))-z;                        
+            %
+            v = zeros(size(head,1),size(head,2),4,size(head,3),1);
+            %
+            v(:,:,1,:,1) = head.*embr_sgm;
+            v(:,:,2,:,1) = dmap_head.*embr_sgm;
+            v(:,:,3,:,1) = tail.*embr_sgm;
+            v(:,:,4,:,1) = dmap_tail.*embr_sgm;
+            %
+            s_head = head.*dmap_head.*embr_sgm/sum(head.*embr_sgm,'All');
+            s_tail = tail.*dmap_tail.*embr_sgm/sum(tail.*embr_sgm,'All');
+            %
+            % corr.coeff
+            head_x_tail = corr2(s_head(:),s_tail(:));
+            %
+            % icy_imshow(uint16(v),[TITLE ' corr2 = ' num2str(head_x_tail)]);
+end
+                
                 rec_k = {obj.current_filename, ...
                     m, ...
                     N_k, ...
@@ -258,5 +301,5 @@ if ~isempty(hw), delete(hw), drawnow; end
             'u_volume_skewness', ...
             'u_volume_kurtosis', ...     
             'N_branchpoints', ... % in pruned skeleton
-            };                    
+            };                                  
 end

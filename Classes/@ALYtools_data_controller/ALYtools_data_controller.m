@@ -310,7 +310,18 @@ classdef ALYtools_data_controller < handle
             AI_Powered_2D_SMLM_Reconstruction_wavelength = 509; % nm
             AI_Powered_2D_SMLM_Reconstruction_min_sigma = 0; % pixel
             AI_Powered_2D_SMLM_Reconstruction_max_sigma = 7; % pixel
-
+            %
+            % presuming 22 um/pix
+            OPT_ZFish_Embryo_channel_body      = 3; % blue, all-out, SYTOX
+            OPT_ZFish_Embryo_channel_rostral   = 2; % green, head, OTX2
+            OPT_ZFish_Embryo_channel_posterior = 1; % red, tail, MyoD
+            % segmentation
+            OPT_ZFish_Embryo_sgm_primary_scale     = 88; % microns
+            OPT_ZFish_Embryo_sgm_K21               = 2; % scale ratio 2:1
+            OPT_ZFish_Embryo_sgm_K31               = 4; % scale ratio 2:1
+            OPT_ZFish_Embryo_sgm_a1                = .5; %
+            OPT_ZFish_Embryo_sgm_t                 = .4; %
+            OPT_ZFish_Embryo_sgm_min_vol           = 681472000; % um3            
     end    
         
     properties(Transient,Hidden)
@@ -3036,7 +3047,7 @@ classdef ALYtools_data_controller < handle
             %[datas, captions, table_names, fig] = obj.analyze_DarkNuclei;
             %[datas, captions, table_names, fig] = obj.analyze_ImageTiling;
             %[datas, captions, table_names, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
-            [datas, captions, table_names, fig] = obj.analyze_OPT_Embryo;
+            [datas, captions, table_names, fig] = obj.analyze_OPT_ZFish_Embryo;
         end 
 %-------------------------------------------------------------------------%  also see the function above
         function sgm = do_Experimental_Segmentation(obj,send_to_Icy,~)                                    
@@ -3048,7 +3059,7 @@ classdef ALYtools_data_controller < handle
             %sgm = obj.do_DarkNuclei_Segmentation(send_to_Icy);
             %sgm = obj.do_ImageTiling_Segmentation(send_to_Icy);
             %sgm = obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(send_to_Icy);
-            sgm = obj.do_OPT_Embryo_Segmentation(send_to_Icy);
+            sgm = obj.do_OPT_ZFish_Embryo_Segmentation(send_to_Icy);
         end
 %-------------------------------------------------------------------------%          
 function [datas, captions, table_names, fig] = analyze_FIBERTHICKNESS(obj,~,~) 
