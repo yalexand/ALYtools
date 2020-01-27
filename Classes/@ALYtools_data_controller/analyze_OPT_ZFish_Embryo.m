@@ -142,6 +142,7 @@ TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
                 % do the same for inensity image - shell only
                 s_k = embr.*embr_shell_k;
                 s_k = s_k(s_k~=0);
+                s_k = s_k - min(s_k(:));
                 u_surface_k_variation = std(s_k(:))/mean(s_k(:));
                 u_surface_k_skewness = skewness(s_k(:),1); % not adjusted for bias
                 u_surface_k_kurtosis = kurtosis(s_k(:),1);
@@ -149,6 +150,7 @@ TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
                 % do the same for inensity image - the whole volume
                 s_k = embr.*(L_embr==k);
                 s_k = s_k(s_k~=0);
+                s_k = s_k - min(s_k(:));                
                 u_volume_k_variation = std(s_k(:))/mean(s_k(:));
                 u_volume_k_skewness = skewness(s_k(:),1); % not adjusted for bias
                 u_volume_k_kurtosis = kurtosis(s_k(:),1);
