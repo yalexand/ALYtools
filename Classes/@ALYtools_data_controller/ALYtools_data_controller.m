@@ -565,7 +565,8 @@ classdef ALYtools_data_controller < handle
                              obj.HL1_ref_channel = 1;
                          end                                               
                          
-                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR' 't_dependent_Nuclei_ratio_FRET', 'Image_Tiling', 'AI_Powered_2D_SMLM_Reconstruction'}
+                case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR', ...
+                        't_dependent_Nuclei_ratio_FRET', 'Image_Tiling', 'AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo'}
                     
                      % if sT<6, don't believe it is T, reinterpret as channels
                      if sT < 6 && sC ==1
@@ -633,7 +634,8 @@ classdef ALYtools_data_controller < handle
                     if 3~=sC, obj.imgdata = []; cla(obj.scene_axes); errordlg('3 channel image is expected'); return; end
                     image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes); 
                     
-                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks','Image_Tiling','AI_Powered_2D_SMLM_Reconstruction'}
+                case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks', ... 
+                        'Image_Tiling','AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo'}
                     if sT>10
                         I = double(obj.imgdata(:,:,:,:,1:10));
                     else
@@ -830,7 +832,10 @@ classdef ALYtools_data_controller < handle
                     obj.do_ImageTiling_Segmentation(true);
                     
                 case 'AI_Powered_2D_SMLM_Reconstruction'
-                    obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(true);                                                                                
+                    obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(true);  
+                    
+                case 'OPT_ZFish_Embryo'
+                    obj.do_OPT_ZFish_Embryo_Segmentation(true);                      
             end
 
         end    
@@ -942,6 +947,8 @@ classdef ALYtools_data_controller < handle
                     [datas, captions, table_names, fig] = obj.analyze_ImageTiling;
                 case 'AI_Powered_2D_SMLM_Reconstruction'
                     [datas, captions, table_names, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
+                case 'OPT_ZFish_Embryo'
+                    [datas, captions, table_names, fig] = obj.analyze_OPT_ZFish_Embryo;
                     
             end % switch
 
@@ -973,7 +980,8 @@ classdef ALYtools_data_controller < handle
                             || strcmp(obj.problem,'MPHG') || strcmp(obj.problem,'Experimental') ...
                             || strcmp(obj.problem,'Sparks') || strcmp(obj.problem,'per_image_TCSPC_FLIM') ... 
                             || strcmp(obj.problem,'Image_Tiling') ...
-                            || strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction')
+                            || strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction') ...
+                            || strcmp(obj.problem,'OPT_ZFish_Embryo')                        
                         if obj.save_analysis_output_as_xls && ~isempty(datas)
                             if ~isempty(obj.current_filename)
                                 xlsname = [dirname filesep '_' obj.problem '_' obj.current_filename '_analysis_data.xls'];
@@ -1044,7 +1052,11 @@ classdef ALYtools_data_controller < handle
 %                                 for k=1:numel(fig)
 %                                     badge = [ char(obj.M_filenames{k}) ' at ' timestamp];
 %                                     icy_imshow(fig{k},badge);
-%                                 end                                
+%                                 end
+                            elseif strcmp(obj.problem,'OPT_ZFish_Embryo')
+                                for m=1:numel(fig)
+                                    icy_imshow(fig{m},[obj.current_filename '_' num2str(m) '_analysis']);
+                                end                                
                             else
                                 icy_imshow(fig,[obj.current_filename ' ' obj.problem ' analysis']);
                             end
@@ -1074,6 +1086,11 @@ classdef ALYtools_data_controller < handle
                                     ometiffsavename = [dirname filesep obj.current_filename '_analysis_output.OME.tiff'];
                                     bfsave(fig,ometiffsavename,'Compression','LZW','dimensionOrder','XYCTZ');
                                 end
+                    elseif obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && strcmp(obj.problem,'OPT_ZFish_Embryo')
+                        for m=1:numel(fig)
+                            ometiffsavename = [dirname filesep obj.current_filename '_' num2str(m) '_analysis_output.OME.tiff'];
+                            bfsave(fig{m},ometiffsavename,'Compression','LZW','dimensionOrder','XYCZT');                            
+                        end
                     end                                                                                        
         end
 %-------------------------------------------------------------------------%
@@ -1081,7 +1098,8 @@ classdef ALYtools_data_controller < handle
             
             switch obj.problem
                             
-                case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' 't_dependent_Nuclei_ratio_FRET','AI_Powered_2D_SMLM_Reconstruction'}
+                case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' ...
+                        't_dependent_Nuclei_ratio_FRET','AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo'}
                     
                     dirname = [];           
                     cmnxlsname = [];
@@ -1133,6 +1151,8 @@ classdef ALYtools_data_controller < handle
                                 fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dirname);
                             elseif strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction')
                                 [data, caption, table_name, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
+                            elseif strcmp(obj.problem,'OPT_ZFish_Embryo')
+                                [data, caption, table_name, fig] = obj.analyze_OPT_ZFish_Embryo;
                             end
                         catch
                             disp(['failed to analyze the file ' obj.current_filename]);
@@ -1208,6 +1228,10 @@ classdef ALYtools_data_controller < handle
                                         if ~isempty(fig.isochrones)
                                             icy_imshow(fig.isochrones,[obj.current_filename ' - HL1 iscochrones']);
                                         end
+                                    elseif strcmp(obj.problem,'OPT_ZFish_Embryo')
+                                        for m=1:numel(fig)
+                                            icy_imshow(fig{m},[obj.current_filename '_' num2str(m) '_analysis']);
+                                        end                                                                        
                                     else % only 1 image is sent to Icy
                                         icy_imshow(fig,[obj.current_filename ' ' obj.problem ' analysis']);
                                     end
@@ -1232,6 +1256,11 @@ classdef ALYtools_data_controller < handle
                                         bfsave(fig.isochrones,ometiffsavename_isochrones,'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');                                        
                                     end
                                     %
+                                elseif obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && strcmp(obj.problem,'OPT_ZFish_Embryo')
+                                    for m=1:numel(fig)
+                                        ometiffsavename = [dirname filesep obj.current_filename '_' num2str(m) '_analysis_output.OME.tiff'];
+                                        bfsave(fig{m},ometiffsavename,'Compression','LZW','dimensionOrder','XYCZT');                            
+                                    end                                                               
                                 else
                                     ometiffsavename = [dirname filesep obj.current_filename '_analysis_output.OME.tiff'];
                                     bfsave(fig,ometiffsavename,'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
@@ -2330,6 +2359,16 @@ classdef ALYtools_data_controller < handle
             settings.AI_Powered_2D_SMLM_Reconstruction_min_sigma = obj.AI_Powered_2D_SMLM_Reconstruction_min_sigma;
             settings.AI_Powered_2D_SMLM_Reconstruction_max_sigma = obj.AI_Powered_2D_SMLM_Reconstruction_max_sigma;            
             
+            settings.OPT_ZFish_Embryo_channel_body = obj.OPT_ZFish_Embryo_channel_body;
+            settings.OPT_ZFish_Embryo_channel_rostral = obj.OPT_ZFish_Embryo_channel_rostral;
+            settings.OPT_ZFish_Embryo_channel_posterior = obj.OPT_ZFish_Embryo_channel_posterior;
+            settings.OPT_ZFish_Embryo_sgm_primary_scale = obj.OPT_ZFish_Embryo_sgm_primary_scale;
+            settings.OPT_ZFish_Embryo_sgm_K21 = obj.OPT_ZFish_Embryo_sgm_K21;
+            settings.OPT_ZFish_Embryo_sgm_K31 = obj.OPT_ZFish_Embryo_sgm_K31;
+            settings.OPT_ZFish_Embryo_sgm_a1 = obj.OPT_ZFish_Embryo_sgm_a1;
+            settings.OPT_ZFish_Embryo_sgm_t = obj.OPT_ZFish_Embryo_sgm_t;
+            settings.OPT_ZFish_Embryo_sgm_min_vol = obj.OPT_ZFish_Embryo_sgm_min_vol;
+                        
             xml_write(fname,settings);
         end
 %-------------------------------------------------------------------------%                        
@@ -2539,6 +2578,16 @@ classdef ALYtools_data_controller < handle
                     obj.AI_Powered_2D_SMLM_Reconstruction_wavelength = settings.AI_Powered_2D_SMLM_Reconstruction_wavelength;
                     obj.AI_Powered_2D_SMLM_Reconstruction_min_sigma = settings.AI_Powered_2D_SMLM_Reconstruction_min_sigma;
                     obj.AI_Powered_2D_SMLM_Reconstruction_max_sigma = settings.AI_Powered_2D_SMLM_Reconstruction_max_sigma;
+                    %
+                    obj.OPT_ZFish_Embryo_channel_body = settings.OPT_ZFish_Embryo_channel_body;
+                    obj.OPT_ZFish_Embryo_channel_rostral = settings.OPT_ZFish_Embryo_channel_rostral;
+                    obj.OPT_ZFish_Embryo_channel_posterior = settings.OPT_ZFish_Embryo_channel_posterior;
+                    obj.OPT_ZFish_Embryo_sgm_primary_scale = settings.OPT_ZFish_Embryo_sgm_primary_scale;
+                    obj.OPT_ZFish_Embryo_sgm_K21 = settings.OPT_ZFish_Embryo_sgm_K21;
+                    obj.OPT_ZFish_Embryo_sgm_K31 = settings.OPT_ZFish_Embryo_sgm_K31;
+                    obj.OPT_ZFish_Embryo_sgm_a1 = settings.OPT_ZFish_Embryo_sgm_a1;
+                    obj.OPT_ZFish_Embryo_sgm_t = settings.OPT_ZFish_Embryo_sgm_t;
+                    obj.OPT_ZFish_Embryo_sgm_min_vol = settings.OPT_ZFish_Embryo_sgm_min_vol;                    
                 catch
                 end  
                 

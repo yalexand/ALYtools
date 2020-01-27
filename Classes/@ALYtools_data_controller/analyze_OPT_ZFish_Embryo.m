@@ -98,6 +98,7 @@ TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
                     u_volume_k_skewness = 123456789.;
                     u_volume_k_kurtosis = 123456789.;
                     N_branchpoints_k = 123456789.;
+                    head_x_tail_k = 123456789.;
 
                 pk = stats_embr.VoxelList{k};
                 x = pk(:,1);
@@ -213,22 +214,19 @@ if 4==numel(size(obj.imgdata)) % this is 3-channels case
             z = bwdist(z);
             dmap_tail = max(z(:))-z;                        
             %
-            v = zeros(size(head,1),size(head,2),4,size(head,3),1);
-            %
-            v(:,:,1,:,1) = head.*embr_sgm;
-            v(:,:,2,:,1) = dmap_head.*embr_sgm;
-            v(:,:,3,:,1) = tail.*embr_sgm;
-            v(:,:,4,:,1) = dmap_tail.*embr_sgm;
-            %
             s_head = head.*dmap_head.*embr_sgm/sum(head.*embr_sgm,'All');
             s_tail = tail.*dmap_tail.*embr_sgm/sum(tail.*embr_sgm,'All');
             %
             % corr.coeff
-            head_x_tail = corr2(s_head(:),s_tail(:));
+            head_x_tail_k = corr2(s_head(:),s_tail(:));
             %
-            % icy_imshow(uint16(v),[TITLE ' corr2 = ' num2str(head_x_tail)]);
-end
-                
+%             v = zeros(size(head,1),size(head,2),4,size(head,3),1);            
+%             v(:,:,1,:,1) = head.*embr_sgm;
+%             v(:,:,2,:,1) = dmap_head.*embr_sgm;
+%             v(:,:,3,:,1) = tail.*embr_sgm;
+%             v(:,:,4,:,1) = dmap_tail.*embr_sgm;                        
+%             icy_imshow(uint16(v),[TITLE ' corr2 = ' num2str(head_x_tail_k)]);
+end                
                 rec_k = {obj.current_filename, ...
                     m, ...
                     N_k, ...
@@ -256,18 +254,35 @@ end
                     u_volume_k_skewness, ...
                     u_volume_k_kurtosis, ...
                     N_branchpoints_k, ...
+                    head_x_tail_k, ...
                     };
                 datas = [ datas; rec_k];
              end
              
-                % should do it here in a loop             
-                if obj.send_analysis_output_to_Icy
-                    iv = zeros(sx,sy,3,sz,1);
-                    iv(:,:,1,:,:) = embr;
-                    iv(:,:,2,:,:) = embr_sgm;
-                    iv(:,:,3,:,:) = embr_skel_pruned;   
-                    icy_imshow(uint16(iv),TITLE);
-                end             
+                % should do it here in a loop
+                    if 4==numel(size(obj.imgdata)) % this is 3-channels case
+                        iv = zeros(sx,sy,5,sz,1);
+                        iv(:,:,1,:,:) = embr;
+                        iv(:,:,2,:,:) = head;
+                        iv(:,:,3,:,:) = tail;                        
+                        iv(:,:,4,:,:) = embr_sgm;
+                        iv(:,:,5,:,:) = embr_skel_pruned;                        
+                    else
+                        iv = zeros(sx,sy,3,sz,1);
+                        iv(:,:,1,:,:) = embr;
+                        iv(:,:,2,:,:) = embr_sgm;
+                        iv(:,:,3,:,:) = embr_skel_pruned;
+                    end
+                %
+%                 if obj.send_analysis_output_to_Icy                    
+%                     icy_imshow(uint16(iv),TITLE);
+%                 end
+                %
+%                if obj.save_analysis_output_as_OMEtiff
+                    if isempty(fig), fig = cell(1,numel(obj.M_imgdata)); end
+                    fig{m} = iv;
+%                end
+                                                                
     if ~isempty(hw), waitbar(m/numel(obj.M_imgdata),hw); drawnow, end                 
 end
 if ~isempty(hw), delete(hw), drawnow; end
@@ -301,5 +316,6 @@ if ~isempty(hw), delete(hw), drawnow; end
             'u_volume_skewness', ...
             'u_volume_kurtosis', ...     
             'N_branchpoints', ... % in pruned skeleton
+            'head_x_tail', ... % in pruned skeleton            
             };                                  
 end

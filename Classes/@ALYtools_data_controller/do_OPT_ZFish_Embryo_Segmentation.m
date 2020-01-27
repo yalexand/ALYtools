@@ -81,7 +81,8 @@ function sgm = do_OPT_ZFish_Embryo_Segmentation(obj,send_to_Icy,~)
                     %
                     if send_to_Icy
                         iv = zeros(maxx-minx+1,maxy-miny+1,2,maxz-minz+1,1);
-                        iv(:,:,1,:,:) = obj.M_imgdata{k};
+                        u = obj.M_imgdata{k};
+                        iv(:,:,1,:,:) = squeeze(u(:,:,:,1));
                         iv(:,:,2,:,:) = obj.M_sgm{k};
                         icy_imshow(uint16(iv));                    
                     end
