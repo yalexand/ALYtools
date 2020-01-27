@@ -259,29 +259,22 @@ end
                 datas = [ datas; rec_k];
              end
              
-                % should do it here in a loop
-                    if 4==numel(size(obj.imgdata)) % this is 3-channels case
+             if 4==numel(size(obj.imgdata)) % this is 3-channels case
                         iv = zeros(sx,sy,5,sz,1);
                         iv(:,:,1,:,:) = embr;
                         iv(:,:,2,:,:) = head;
                         iv(:,:,3,:,:) = tail;                        
                         iv(:,:,4,:,:) = embr_sgm;
                         iv(:,:,5,:,:) = embr_skel_pruned;                        
-                    else
+             else
                         iv = zeros(sx,sy,3,sz,1);
                         iv(:,:,1,:,:) = embr;
                         iv(:,:,2,:,:) = embr_sgm;
                         iv(:,:,3,:,:) = embr_skel_pruned;
-                    end
-                %
-%                 if obj.send_analysis_output_to_Icy                    
-%                     icy_imshow(uint16(iv),TITLE);
-%                 end
-                %
-%                if obj.save_analysis_output_as_OMEtiff
-                    if isempty(fig), fig = cell(1,numel(obj.M_imgdata)); end
-                    fig{m} = iv;
-%                end
+             end
+             %
+             if isempty(fig), fig = cell(1,numel(obj.M_imgdata)); end
+             fig{m} = iv;
                                                                 
     if ~isempty(hw), waitbar(m/numel(obj.M_imgdata),hw); drawnow, end                 
 end
