@@ -222,12 +222,12 @@ if 4==numel(size(obj.imgdata)) % this is 3-channels case
             % corr.coeff
             head_x_tail_k = corr2(s_head(:),s_tail(:));
             %
-%             v = zeros(size(head,1),size(head,2),4,size(head,3),1);            
-%             v(:,:,1,:,1) = head.*embr_sgm;
-%             v(:,:,2,:,1) = dmap_head.*embr_sgm;
-%             v(:,:,3,:,1) = tail.*embr_sgm;
-%             v(:,:,4,:,1) = dmap_tail.*embr_sgm;                        
-%             icy_imshow(uint16(v),[TITLE ' corr2 = ' num2str(head_x_tail_k)]);
+            v = zeros(size(head,1),size(head,2),4,size(head,3),1);            
+            v(:,:,1,:,1) = head.*embr_sgm;
+            v(:,:,2,:,1) = dmap_head.*embr_sgm;
+            v(:,:,3,:,1) = tail.*embr_sgm;
+            v(:,:,4,:,1) = dmap_tail.*embr_sgm;                        
+            icy_imshow(uint16(v),[TITLE ' corr2 = ' num2str(head_x_tail_k)]);
 end                
                 rec_k = {obj.current_filename, ...
                     m, ...
@@ -263,16 +263,16 @@ end
              
              if 4==numel(size(obj.imgdata)) % this is 3-channels case
                         iv = zeros(sx,sy,5,sz,1);
-                        iv(:,:,1,:,:) = embr;
-                        iv(:,:,2,:,:) = head;
-                        iv(:,:,3,:,:) = tail;                        
-                        iv(:,:,4,:,:) = embr_sgm;
-                        iv(:,:,5,:,:) = embr_skel_pruned;                        
+                        iv(:,:,1,:,1) = embr;
+                        iv(:,:,2,:,1) = head;
+                        iv(:,:,3,:,1) = tail;                        
+                        iv(:,:,4,:,1) = embr_sgm;
+                        iv(:,:,5,:,1) = embr_skel_pruned;                        
              else
                         iv = zeros(sx,sy,3,sz,1);
-                        iv(:,:,1,:,:) = embr;
-                        iv(:,:,2,:,:) = embr_sgm;
-                        iv(:,:,3,:,:) = embr_skel_pruned;
+                        iv(:,:,1,:,1) = embr;
+                        iv(:,:,2,:,1) = embr_sgm;
+                        iv(:,:,3,:,1) = embr_skel_pruned;
              end
              %
              if isempty(fig), fig = cell(1,numel(obj.M_imgdata)); end

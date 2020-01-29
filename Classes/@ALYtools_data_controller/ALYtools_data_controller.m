@@ -828,7 +828,7 @@ classdef ALYtools_data_controller < handle
                 case 't_dependent_Nuclei_ratio_FRET'
                     % t_dependent_Nuclei_ratio_FRET_Segmentation_settings(obj);
                     
-                case 'ImageTiling'
+                case 'Image_Tiling'
                     obj.do_ImageTiling_Segmentation(true);
                     
                 case 'AI_Powered_2D_SMLM_Reconstruction'
