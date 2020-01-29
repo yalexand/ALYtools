@@ -337,16 +337,34 @@ linked_nodes = chosen;
 coord = nan(numel(nodes),2); % X,Y
 coord(chosen,:) = [0 0];
 
-while numel(linked_nodes) < numel(nodes)
+% compile the list of bad (unreachable) nodes
+bad_nodes = [];
+for n=1:numel(nodes)
+    node = nodes(n);
+    n_is_bad = true;
+    for e = 1:numel(edges)
+        if ismember(node,edges{e}) && edges_q(e) > QT
+            n_is_bad = false;
+            break;
+        end
+    end
+    if n_is_bad 
+        bad_nodes = [bad_nodes n];
+    end
+end
+
+while numel(linked_nodes) < numel(nodes) - numel(bad_nodes)
     %
     for k=1:Nedges
         %
         edge = edges{k};
         %
-        if edges_q(k) < QT, continue, end
-        %
         in_node = edge(1);
         out_node = edge(2);
+        %
+        if ismember(in_node,bad_nodes) || ismember(out_node,bad_nodes), continue, end        
+        %
+        if edges_q(k) < QT, continue, end
         %
         in_node_linked = ~isempty(intersect(in_node,linked_nodes));
         out_node_linked = ~isempty(intersect(out_node,linked_nodes));
@@ -387,9 +405,11 @@ if strcmp(obj.ImageTiling_mode,'bleached_fluor')
     if sT<10
         scene = zeros(SX,SY,sT,1,1);
         for k=1:sT
-            rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
-            ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;
-            scene(rx,ry,k,1,1) = sgm(:,:,2,1,k);
+            if ~isnan(coord(k,1))
+                rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
+                ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;
+                scene(rx,ry,k,1,1) = sgm(:,:,2,1,k);
+            end
         end
         try
             icy_imshow(uint16(scene));
@@ -402,9 +422,11 @@ if strcmp(obj.ImageTiling_mode,'bleached_fluor')
 % primitive "blending"    
 scene = zeros(SX,SY);
         for k=1:sT
-            rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
-            ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;
-            scene(rx,ry) = pixelwise_max(scene(rx,ry),sgm(:,:,2,1,k));
+            if ~isnan(coord(k,1))            
+                rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
+                ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;
+                scene(rx,ry) = pixelwise_max(scene(rx,ry),sgm(:,:,2,1,k));
+            end
         end
 %    
 elseif strcmp(obj.ImageTiling_mode,'brightfield')
@@ -412,10 +434,12 @@ elseif strcmp(obj.ImageTiling_mode,'brightfield')
     z = squeeze(sgm(:,:,2,1,:));
     medsgm = median(z,3);
     for k=1:sT
-        rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
-        ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;    
-        %scene(rx,ry) = sgm(:,:,2,1,k);
-        scene(rx,ry) = sgm(:,:,2,1,k) - medsgm;
+        if ~isnan(coord(k,1))
+            rx = coord(k,1) + CX : coord(k,1) + CX+sX-1;
+            ry = coord(k,2) + CY : coord(k,2) + CY+sY-1;    
+            %scene(rx,ry) = sgm(:,:,2,1,k);
+            scene(rx,ry) = sgm(:,:,2,1,k) - medsgm;
+        end
     end
     scene = scene - min(scene(:));
 end
