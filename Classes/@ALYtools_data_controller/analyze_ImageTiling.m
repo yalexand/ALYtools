@@ -1,4 +1,4 @@
-function [datas, captions, table_names, fig] = analyze_ImageTiling(obj,~,~) 
+ function [datas, captions, table_names, fig] = analyze_ImageTiling(obj,~,~) 
 
 tic
 
@@ -349,7 +349,7 @@ for n=1:numel(nodes)
         end
     end
     if n_is_bad 
-        bad_nodes = [bad_nodes n];
+        bad_nodes = [bad_nodes node];
     end
 end
 
