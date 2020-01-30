@@ -329,29 +329,29 @@ tic
 %                     end
     end
                           
-%chosen = N*M/2+M/2;
-%chosen = 64;
-chosen = 1;
-
-linked_nodes = chosen;
-coord = nan(numel(nodes),2); % X,Y
-coord(chosen,:) = [0 0];
-
 % compile the list of bad (unreachable) nodes
 bad_nodes = [];
 for n=1:numel(nodes)
     node = nodes(n);
-    n_is_bad = true;
-    for e = 1:numel(edges)
+    node_is_bad = true;
+    for e = 1:size(edges,1)
         if ismember(node,edges{e}) && edges_q(e) > QT
-            n_is_bad = false;
+            node_is_bad = false;
             break;
         end
     end
-    if n_is_bad 
-        bad_nodes = [bad_nodes node];
+    if node_is_bad 
+        bad_nodes = [bad_nodes node];  % ?????? why not to add node???
     end
 end
+
+good_nodes = setxor(nodes,bad_nodes);
+chosen = good_nodes(1);
+
+coord = nan(numel(nodes),2); % X,Y
+coord(chosen,:) = [0 0];
+
+linked_nodes = chosen;
 
 while numel(linked_nodes) < numel(nodes) - numel(bad_nodes)
     %
@@ -374,14 +374,19 @@ while numel(linked_nodes) < numel(nodes) - numel(bad_nodes)
             coord(out_node,:) = coord(in_node,:) + edges_shifts_xy(k,:);
             %
             linked_nodes = [linked_nodes out_node];
-            break;
-            %
+            break;            
         elseif out_node_linked && ~in_node_linked % invert the shift
             %
             coord(in_node,:) = coord(out_node,:) - edges_shifts_xy(k,:);
             %
             linked_nodes = [linked_nodes in_node];
             break;
+        elseif ~out_node_linked && ~in_node_linked % 
+            %
+            coord(out_node,:) = coord(in_node,:) + edges_shifts_xy(k,:);
+            %
+            linked_nodes = [linked_nodes out_node];
+            break;                        
         else
             continue, 
         end           
