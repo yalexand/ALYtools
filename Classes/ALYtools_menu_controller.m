@@ -471,6 +471,8 @@ classdef ALYtools_menu_controller < handle
              try
                 obj.data_controller.load_settings(filespec);
                 set(obj.menu_settings_microns_per_pixel,'Label',['Microns per pixel ' num2str(obj.data_controller.microns_per_pixel)]);
+                set(obj.menu_settings_problem,'Label',['Problem = ' obj.data_controller.problem]);
+                set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);
              catch
                 errordlg('Error while trying to load settings file');
              end
