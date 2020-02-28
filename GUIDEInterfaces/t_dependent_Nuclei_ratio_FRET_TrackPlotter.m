@@ -1251,7 +1251,7 @@ don  = squeeze(handles.NUC_STATS(:,3,1));
 acc  = squeeze(handles.NUC_STATS(:,4,1));
 t= handles.dt*(0:numel(acc)-1);
 h = figure;
-if 19 ~= numel(handles.features)
+if 8==size(handles.NUC_STATS,2)
         plot(t,don,'b.-',t,acc,'r.-');
         xlabel('time [h]');
         ylabel('intensity');
