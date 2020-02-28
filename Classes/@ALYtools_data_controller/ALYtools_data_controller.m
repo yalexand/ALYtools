@@ -1263,7 +1263,7 @@ classdef ALYtools_data_controller < handle
                                     end                                                               
                                 else
                                     ometiffsavename = [dirname filesep obj.current_filename '_analysis_output.OME.tiff'];
-                                    bfsave(fig,ometiffsavename,'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
+                                    bfsave(fig,ometiffsavename,'Compression','LZW','BigTiff', true,'dimensionOrder','XYCTZ');
                                 end
                             end                        
                         end
