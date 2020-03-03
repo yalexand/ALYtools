@@ -124,6 +124,50 @@
                 nukes = nukes &~ registration_exclusion_mask;     
                 nukes = bwareaopen(nukes,ceil(100/4*fac*fac)); % 100 divided by 4, because resized back
             
+%%%%%%%%%%%%%%%% if k>=2, ensure that "separated stays separated" by (k-1)-th
+                if k>=2
+                    cur = bwlabel(icyvol(:,:,3,1,k-1));
+                    nxt = bwlabel(nukes);
+
+                    stats_cur = regionprops(cur,'Centroid');
+
+                    for m=1:max(nxt(:))
+                        s=cur.*(nxt==m);
+                        s=s(s~=0);
+                        s=s(:);
+                        labels = unique(s);
+                        %
+                        cleaned_labels = labels;
+                        for n=1:length(labels)
+                            if single(sum(s==labels(n)))/single(numel(s)) < 0.2
+                                cleaned_labels = setxor(cleaned_labels,labels(n));
+                            end
+                        end
+                        if length(cleaned_labels)>1
+                                z = zeros(size(nxt));
+                                for n=1:length(cleaned_labels)
+                                    L = cleaned_labels(n);
+                                        x = fix(stats_cur(L).Centroid(2));
+                                        y = fix(stats_cur(L).Centroid(1));
+                                        z(x,y) = 1;
+                                end
+                                D = bwdist(z,'euclidean'); %distance map 
+                                z = D.*(nxt==m);
+                                D(~z)=-Inf;
+                                L = watershed(D);                                                                                
+                                % remove background    
+                                stats = regionprops(L,'Area');    
+                                bckgind = find([stats.Area]==max([stats.Area]));
+                                L(L==bckgind) = 0;
+                                %result = (L>0) + (nxt>0);
+                                %icy_imshow(result,['frame ' num2str(k) ', object ' num2str(m)]);
+                                nukes = (L>0) + (nxt>0 & nxt~=m);
+                        end                    
+                    end                                
+                    nukes = bwareaopen(nukes,ceil(100/4*fac*fac)); % 100 divided by 4, because resized back
+                end % if k>=2
+%%%%%%%%%%%%%%%% if k>=2, ensure that "separated stays separated" by (k-1)-th
+                                
                 % cell body segmentation if third channel is present
                 
                 if 3==sC
