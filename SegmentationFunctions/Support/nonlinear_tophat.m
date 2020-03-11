@@ -5,6 +5,9 @@ U2 = box_average(U,K*d);
 
 z = U.*U1./(U2.*U2);
 
+z(isnan(z))=0;
+z(isinf(z))=0;
+
 
 
 

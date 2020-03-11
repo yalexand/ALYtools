@@ -139,7 +139,7 @@
                         %
                         cleaned_labels = labels;
                         for n=1:length(labels)
-                            if single(sum(s==labels(n)))/single(numel(s)) < 0.2
+                            if single(sum(s==labels(n)))/single(numel(s)) < 0.15 % was 0.2 but...
                                 cleaned_labels = setxor(cleaned_labels,labels(n));
                             end
                         end
