@@ -2252,7 +2252,9 @@ end
                         end              
         end
 %-------------------------------------------------------------------------%         
-        function infostring = imstack_Set_Src_Single(obj,pth,verbose,~)
+        function infostring = imstack_Set_Src_Single(obj,pth_,verbose,~)
+            
+            pth = pth_;
             
             infostring = [];
             
@@ -2261,6 +2263,13 @@ end
             ext = '*.tif';
             D = dir( fullfile(pth,ext) );
             if isempty(D), ext = '*.tiff';D = dir( fullfile(pth,ext) ); end;
+            %
+            % repeat with "Default"
+            pth = [pth filesep 'Default'];
+            ext = '*.tif';
+            D = dir( fullfile(pth,ext) );
+            if isempty(D), ext = '*.tiff';D = dir( fullfile(pth,ext) ); end;            
+            %
             if isempty(D), return, end;
             %
             obj.get_angles_from_imstack_filenames({D.name});
