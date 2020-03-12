@@ -2309,7 +2309,7 @@ end
                         obj.proj = zeros(szx,szy,n_planes,class(plane));
                     end
                     obj.proj(:,:,k)=plane;
-                    if verbose, waitbar(k/n_planes,wait_handle), end;
+                    if verbose, waitbar(k/n_planes,wait_handle), end;   
                 end                                
                 if verbose, close(wait_handle), end;
                 
@@ -2564,12 +2564,18 @@ end
                 tform.T(3,2) = - s;                
                 for k = 1:n_planes
                     I = PROJ(:,:,k);
-                    if isempty(obj.proj) % proper place to crop the image?
-                            [szx,szy] = size(I);
-                            obj.proj = zeros(szx-2*s,szy,n_planes,class(I));
+%                     if isempty(obj.proj) % proper place to crop the image?
+%                             [szx,szy] = size(I);
+%                             obj.proj = zeros(szx-2*s,szy,n_planes,class(I));
+%                     end                
+%                         Icorr = imwarp(I,tform,'OutputView',imref2d(size(I)));
+%                         obj.proj(:,:,k) = Icorr(s+1:szx-s,:);
+                    %
+                    if isempty(obj.proj) % not cropping for now - negative shifts cause glitch
+                            obj.proj = zeros(size(I,1),size(I,2),n_planes,class(I));
                     end                
-                        Icorr = imwarp(I,tform,'OutputView',imref2d(size(I)));
-                        obj.proj(:,:,k) = Icorr(s+1:szx-s,:);
+                    obj.proj(:,:,k) = imwarp(I,tform,'OutputView',imref2d(size(I)));
+                    %
                     if ~isempty(hw), waitbar(k/n_planes,hw); drawnow, end
                 end
             end
