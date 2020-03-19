@@ -835,7 +835,7 @@ classdef ALYtools_data_controller < handle
                     obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(true);  
                     
                 case 'OPT_ZFish_Embryo'
-                    obj.do_OPT_ZFish_Embryo_Segmentation(true);                      
+                    OPT_ZFish_Embryo_Segmentation_settings(obj);                      
             end
 
         end    
@@ -2148,6 +2148,17 @@ classdef ALYtools_data_controller < handle
                     [sX,sY,sZ,sC,sT] = size(obj.imgdata);
                     icyvol = reshape(obj.imgdata,[sX,sY,sC,sZ,sT]);
                    
+                    %
+                    if strcmp(obj.problem,'OPT_ZFish_Embryo')
+                        f=2;
+                        sx=fix(sX/f);sy=fix(sY/f);sz=fix(sZ/f);
+                        icyvol=zeros(sx,sy,sC,sz,1);
+                        for k=1:sC
+                            icyvol(:,:,k,:,1)=resizeVolume(squeeze(obj.imgdata(:,:,:,k,:)),[sx sy sz]);
+                        end
+                    end
+                    %
+                 
                     try
                         icy_imshow(icyvol,[ 'Original ' obj.current_filename ]);
                     catch

@@ -206,6 +206,7 @@ if 4==numel(size(obj.imgdata)) % this is 3-channels case
             [~,idx]=maxN(z); % first found - but it is OK
             z = zeros(size(head));
             z(idx(1),idx(2),idx(3)) = 1;
+                head_max = [idx(1),idx(2),idx(3)];
             z = bwdist(z);
             dmap_head = max(z(:))-z;            
             %
@@ -213,6 +214,7 @@ if 4==numel(size(obj.imgdata)) % this is 3-channels case
             [~,idx]=maxN(z); % first found - but it is OK
             z = zeros(size(tail));
             z(idx(1),idx(2),idx(3)) = 1;
+                tail_max = [idx(1),idx(2),idx(3)];  
             z = bwdist(z);
             dmap_tail = max(z(:))-z;                        
             %
@@ -222,12 +224,12 @@ if 4==numel(size(obj.imgdata)) % this is 3-channels case
             % corr.coeff
             head_x_tail_k = corr2(s_head(:),s_tail(:));
             %
-            v = zeros(size(head,1),size(head,2),4,size(head,3),1);            
-            v(:,:,1,:,1) = head.*embr_sgm;
-            v(:,:,2,:,1) = dmap_head.*embr_sgm;
-            v(:,:,3,:,1) = tail.*embr_sgm;
-            v(:,:,4,:,1) = dmap_tail.*embr_sgm;                        
-            icy_imshow(uint16(v),[TITLE ' corr2 = ' num2str(head_x_tail_k)]);
+%             v = zeros(size(head,1),size(head,2),4,size(head,3),1);            
+%             v(:,:,1,:,1) = head.*embr_sgm;
+%             v(:,:,2,:,1) = dmap_head.*embr_sgm;
+%             v(:,:,3,:,1) = tail.*embr_sgm;
+%             v(:,:,4,:,1) = dmap_tail.*embr_sgm;                        
+%             icy_imshow(uint16(v),[TITLE ' corr2 = ' num2str(head_x_tail_k)]);
 end                
                 rec_k = {obj.current_filename, ...
                     m, ...
@@ -267,7 +269,13 @@ end
                         iv(:,:,2,:,1) = head;
                         iv(:,:,3,:,1) = tail;                        
                         iv(:,:,4,:,1) = embr_sgm;
-                        iv(:,:,5,:,1) = embr_skel_pruned;                        
+                            %
+                            % put there small spheres showin locus of max head and tail intensity
+                            embr_skel_pruned = single(embr_skel_pruned)*50;
+                            embr_skel_pruned  = draw_3d_sphere(embr_skel_pruned,head_max,5,150);
+                            embr_skel_pruned  = draw_3d_sphere(embr_skel_pruned,tail_max,5,250);
+                            %
+                        iv(:,:,5,:,1) = embr_skel_pruned;                       
              else
                         iv = zeros(sx,sy,3,sz,1);
                         iv(:,:,1,:,1) = embr;
@@ -313,4 +321,12 @@ if ~isempty(hw), delete(hw), drawnow; end
             'N_branchpoints', ... % in pruned skeleton
             'head_x_tail', ... % in pruned skeleton            
             };                                  
+end
+
+function v = draw_3d_sphere(v_,C,R,color)
+    v = v_;
+    z = zeros(size(v));
+    z(C(1),C(2),C(3))=1;
+    dmap = bwdist(z);
+    v(dmap<=R+1 & dmap>=R-1)=color;
 end
