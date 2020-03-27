@@ -40,7 +40,7 @@
                smooth_scale = ceil(4*fac);
                max_hole_size = smooth_scale^2;
                               
-               % mask zeros that may occur due to usage of warp transform
+               % mask zeros that may ocprv due to usage of warp transform
                if 0~=sum(sum((0==ud)))
                    z = imdilate(ud,strel('disk',S));
                    s = z(0==ud);
@@ -51,7 +51,7 @@
                    s = z(0==ua);
                    ua(0==ua) = min(s(:))/1.75;
                end               
-               % mask zeros that may occur due to usage of warp transform
+               % mask zeros that may ocprv due to usage of warp transform
                                              
                K  = 2.5;
                % t = 0.055; % good for multiphoton data
@@ -124,53 +124,59 @@
                 nukes = nukes &~ registration_exclusion_mask;     
                 nukes = bwareaopen(nukes,ceil(100/4*fac*fac)); % 100 divided by 4, because resized back
             
-%%%%%%%%%%%%%%%% if k>=2, ensure that "separated stays separated" by (k-1)-th
-                if k>=2
-                    cur = bwlabel(icyvol(:,:,3,1,k-1));
-                    nxt = bwlabel(nukes);
+                icyvol(:,:,1,1,k) = ud;
+                icyvol(:,:,2,1,k) = ua;               
+                icyvol(:,:,3,1,k) = nukes;
+                
+                disp(['basic nukes ' num2str(k) ' ' num2str(mean(ud(:))) ' ' num2str(mean(ua(:))) ' ' num2str(sum(nukes(:)))]);
+            end
+                
+%             %%%%%%%%%%%%%%%% if k>=2, ensure that "separated stays separated" by (k-1)-th             
+            for k=2:sT  
+                    prv = bwlabel(icyvol(:,:,3,1,k-1));
+                    cur = bwlabel(icyvol(:,:,3,1,k));
 
-                    stats_cur = regionprops(cur,'Centroid');
+                    stats_prv = regionprops(prv,'Centroid');
+                      
+                    %centroids image of (k-1) nuclei
+                    cim_prv = zeros(size(cur));
+                     for m=1:max(prv(:))
+                        x = fix(stats_prv(m).Centroid(2));
+                        y = fix(stats_prv(m).Centroid(1));
+                        cim_prv(x,y) = m;
+                     end
+                     %
+                     % main loop 
+                     cur_fixed = cur.*0;
+                     for m=1:max(cur(:))
+                         z=(cur==m).*cim_prv;
+                         s=z(z~=0);
+                         prevlab = unique(s(:)); % previous centroid labels within current body
+                         if numel(prevlab)>1 % then (cur==m) needs to be corrected
 
-                    for m=1:max(nxt(:))
-                        s=cur.*(nxt==m);
-                        s=s(s~=0);
-                        s=s(:);
-                        labels = unique(s);
-                        %
-                        cleaned_labels = labels;
-                        for n=1:length(labels)
-                            if single(sum(s==labels(n)))/single(numel(s)) < 0.15 % was 0.2 but...
-                                cleaned_labels = setxor(cleaned_labels,labels(n));
-                            end
-                        end
-                        if length(cleaned_labels)>1
-                                z = zeros(size(nxt));
-                                for n=1:length(cleaned_labels)
-                                    L = cleaned_labels(n);
-                                        x = fix(stats_cur(L).Centroid(2));
-                                        y = fix(stats_cur(L).Centroid(1));
-                                        z(x,y) = 1;
-                                end
-                                D = bwdist(z,'euclidean'); %distance map 
-                                z = D.*(nxt==m);
+                                D = bwdist(z>0,'euclidean'); %distance map 
+                                z = D.*(cur==m);
                                 D(~z)=-Inf;
                                 L = watershed(D);                                                                                
                                 % remove background    
                                 stats = regionprops(L,'Area');    
                                 bckgind = find([stats.Area]==max([stats.Area]));
                                 L(L==bckgind) = 0;
-                                %result = (L>0) + (nxt>0);
+                                %result = (L>0) + (cur>0);
                                 %icy_imshow(result,['frame ' num2str(k) ', object ' num2str(m)]);
-                                nukes = (L>0) + (nxt>0 & nxt~=m);
-                        end                    
-                    end                                
-                    nukes = bwareaopen(nukes,ceil(100/4*fac*fac)); % 100 divided by 4, because resized back
-                end % if k>=2
-%%%%%%%%%%%%%%%% if k>=2, ensure that "separated stays separated" by (k-1)-th
-                                
-                % cell body segmentation if third channel is present
-                
-                if 3==sC
+                                cur_fixed = cur_fixed + (L>0);
+                                disp(['fixed! #labels ' num2str(numel(prevlab))]);
+                         else
+                                cur_fixed = cur_fixed + (cur==m);
+                         end  
+                     end
+                     icyvol(:,:,3,1,k) = cur_fixed;
+                     disp(['separated stays separated ' num2str(k) ' ' num2str(sum(cur(:)))]);
+            end
+%             %%%%%%%%%%%%%%%% if k>=2, ensure that "separated stays separated" by (k-1)-th           
+
+            if 3==sC
+            for k=1:sT
                        uref = single(squeeze(obj.imgdata(:,:,1,3,k)));
                        %
                        if true % hey, - would it be better to substitute threshold-type segmentation here? 
@@ -178,7 +184,7 @@
                            smooth_scale = ceil(2*fac);
                            max_hole_size = smooth_scale^2;
 
-                           % skip? - mask zeros that may occur due to usage of warp transform
+                           % skip? - mask zeros that may ocprv due to usage of warp transform
                            K  = 2.5;
                            % t = 0.055; 
                            t = 0.1; % less generous
@@ -213,18 +219,11 @@
                                 L_c(L_c==cell_label)=0;
                             end            
                             cell_bodies(L_c~=0)=0;          
-                            % remove orphan pieces of cellular stuff - ends                                                          
-                end
-                %                                
-                icyvol(:,:,1,1,k) = ud;
-                icyvol(:,:,2,1,k) = ua;               
-                icyvol(:,:,3,1,k) = nukes;
-                if 3==sC
-                    icyvol(:,:,4,1,k) = uref;
-                    icyvol(:,:,5,1,k) = cell_bodies;               
-                end
-               % 
-               disp([num2str(k) ' ' num2str(mean(ud(:))) ' ' num2str(mean(ua(:))) ' ' num2str(sum(nukes(:)))]);
+                            % remove orphan pieces of cellular stuff - ends
+                            icyvol(:,:,4,1,k) = uref;
+                            icyvol(:,:,5,1,k) = cell_bodies;
+                            disp(['cell segmentation ' num2str(k) ' ' num2str(sum(uref(:))) ' ' num2str(sum(cell_bodies(:)))]);
+            end
             end
             %
             % fix possible missing frames by assigning a previous one
@@ -255,7 +254,7 @@
                                                            
                 if send_to_Icy                
                     try
-                        notification = [obj.current_filename ' - Segmentation:SmallNucleiTimeStack_Segmentation'];
+                        notification = [obj.prvrent_filename ' - Segmentation:SmallNucleiTimeStack_Segmentation'];
                         if isempty(obj.h_Icy_segmentation_adjustment)
                             obj.h_Icy_segmentation_adjustment = icy_imshow(icyvol,notification);                    
                         else
@@ -267,4 +266,4 @@
                 end
         %
         end                
-        
+          

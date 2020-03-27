@@ -24,7 +24,7 @@ TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
         embr_skel = Skeleton3D(embr_sgm);            
         [w,l,h] = size(embr_skel);
 
-        THR = 50;
+        THR = 25;
         [A,node,link] = Skel2Graph3D(embr_skel,THR);
         % this is needed to erase void branchpoints 
         skel2 = Graph2Skel3D(node,link,sx,sy,sz);
