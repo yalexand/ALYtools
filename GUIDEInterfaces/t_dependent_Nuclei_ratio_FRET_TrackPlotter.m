@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 31-Oct-2018 21:19:15
+% Last Modified by GUIDE v2.5 20-Apr-2020 12:21:55
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn, ...
@@ -119,10 +119,10 @@ elseif 5 == nargin-3
     handles.dt = varargin{2};
     handles.pixelsize = varargin{3};
     handles.track_breaking_flag = varargin{5};
-        % convention - the data saved by ALYtools are not refined, so one needs
-        % to refine it now
-        handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
-        %handles.raw_data = tracks;
+%         % convention - the data saved by ALYtools are not refined, so one needs
+%         % to refine it now
+%         handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
+%         %handles.raw_data = tracks;
     [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
     %
     % set filename in window title
@@ -151,17 +151,19 @@ elseif 2 == nargin-3
             set(handles.pixel_size_edit,'String',handles.pixelsize);
             set(handles.delta_t_edit,'String',handles.dt);    
         %
-        % convention - the data saved by ALYtools are not refined, so one needs
-        % to refine it now optionally
-        if handles.track_breaking_flag    
-            handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
-            if isempty(handles.raw_data)
-                disp('refine_tracks_by_sorting_mitotic_intervals - failed');
-                handles.raw_data = tracks;                
-            end
-        else
-            handles.raw_data = tracks;
-        end
+%         % convention - the data saved by ALYtools are not refined, so one needs
+%         % to refine it now optionally
+%         if handles.track_breaking_flag    
+%             handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
+%             if isempty(handles.raw_data)
+%                 disp('refine_tracks_by_sorting_mitotic_intervals - failed');
+%                 handles.raw_data = tracks;                
+%             end
+%         else
+%             handles.raw_data = tracks;
+%         end 
+        handles.raw_data = tracks;
+
         % this object is for visualizing       
         [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
 
@@ -188,6 +190,16 @@ else
     return;
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+handles.MI_LLeft = 120;
+handles.MI_LRight = 140;
+handles.MI_peak_proximity_tol = 15;
+handles.MI_large_smoothing_window = 280;
+handles.MI_small_smoothing_window = 35; % minutes
+handles.MI_FRET_peak_tol = 0.32;
+handles.MI_nucsize_peak_tol = 0.32;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
+
 guidata(hObject, handles);
 
 set(handles.time_plot_Y_feature,'String',handles.features);
@@ -198,6 +210,7 @@ set(handles.histo2_X_feature,'String',handles.features);
 set(handles.pixel_size_edit,'String',handles.pixelsize);
 set(handles.delta_t_edit,'String',handles.dt);
 set(handles.histo2_mode,'String',{'scatter','histo2'});
+set(handles.tracks_to_show,'String',{'tracks','mitotic intervals'});
 
 str = [{'time'} handles.features];
 minmaxlimits = zeros(numel(str),2);
@@ -468,11 +481,13 @@ function load_trackmate_plus_data_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
     [filename,pathname] = uigetfile({'*.mat','TrackMate+ Files'}, ...
                     'Select data file',pwd);
-    if filename == 0, return, end;
+    if filename == 0, return, end
     load_trackmate_plus_data(pathname,filename,hObject,handles);
             
 % --------------------------------------------------------------------    
 function load_trackmate_plus_data(pathname,filename,hObject,handles)
+
+    single_FOVs_options(handles,'on');
 
     load([pathname filesep filename]);
     handles.fullfilename = [pathname filesep filename];
@@ -489,17 +504,20 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
         set(handles.pixel_size_edit,'String',handles.pixelsize);
         set(handles.delta_t_edit,'String',handles.dt);    
     %
-    % convention - the data saved by ALYtools are not refined, so one needs
-    % to refine it now - optionally
-    if handles.track_breaking_flag
-        handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
-        if isempty(handles.raw_data)
-            disp('refine_tracks_by_sorting_mitotic_intervals - failed');
-            handles.raw_data = tracks;
-        end            
-    else
-        handles.raw_data = tracks;
-    end
+    handles.raw_data = tracks;
+    
+%     % convention - the data saved by ALYtools are not refined, so one needs
+%     % to refine it now - optionally
+%     if handles.track_breaking_flag
+%         handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
+%         if isempty(handles.raw_data)
+%             disp('refine_tracks_by_sorting_mitotic_intervals - failed');
+%             handles.raw_data = tracks;
+%         end            
+%     else
+%         handles.raw_data = tracks;
+%     end
+       
     % this object is for visualizing       
     [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
        
@@ -1095,123 +1113,127 @@ function actual_dependence_checkbox_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of actual_dependence_checkbox
 visualize_time_dependence(hObject,handles);
 
+% function ref_tracks = refine_tracks_by_sorting_mitotic_intervals(handles,tracks)
+% [ref_tracks,fnames,start_indices,track_indices,norm_FRET_ratio,norm_nuc_size,peak_shift] = ... 
+%                     get_mitotic_intervals(handles,tracks,handles.fullfilename);
+
 % this is highly specific function that exploits correlation between
 % FRET_ratio(t) and nuclear_size(t) during mitosis, relying on many hardcoded params
-function ref_tracks = refine_tracks_by_sorting_mitotic_intervals(handles,tracks)
-ref_tracks = {};
-dt = handles.dt*60; % interval between frames in minutes 
-for k=1:numel(tracks)
-    track = tracks{k};
-    FRET_ratio = squeeze(track(:,4));
-    nucleus_size = squeeze(track(:,7));
-    %
-    big_smoothing_window  = round((40*7)/dt);
-    small_smoothing_window  = round((5*7)/dt);
-    correlation_window  = round((15*7)/dt);
-    t = 0.08; % threshold
-    fill_little_gaps_size = round((3*7)/dt);
-    pre_mit = round((3*7)/dt);
-    post_mit = round((5*7)/dt);
-    min_track_length = round((10*7)/dt);
-    
-    % interested in mitotic intervals
-    if ~strcmpi('exclude',handles.mitotic_intervals_option)
-        pre_mit = pre_mit*2;
-        post_mit = post_mit*2;        
-    end
-    %
-    sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]); % small smoothing window - HARDCODED
-    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
-    s1 = sm_s-lf;
-    % repeat for nuclei size
-    sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
-    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
-    s2 = sm_s-lf;
-    %
-    % some black magic ...
-    %
-    % normalize signals
-    s1 = (s1-mean(s1(:)))/(max(s1(:)) - min(s1(:)));
-    s2 = (s2-mean(s2(:)))/(max(s2(:)) - min(s2(:)));    
-    r = movcorr(s1,s2,correlation_window);    
-    r = r.*s1.*s2.*(s1>0 & s2>0); % where both local signals are positive
-    r = r > t; % thresholding
-    %
-    r = imclose(r,ones(fill_little_gaps_size,1)); % to fill little gaps - HARDCODED
-    
-%      if length(s1)>200
-%         figure(22);
-%         f=1:length(s1);
-%         h1=gca;
-%         plot(f,s1,'k.-',f,s2,'b.-',f,r,'g-');   
-%         grid(h1,'on');
-%         pause(1e-3); % put your breakpoint here
-%     end   
-    
-    
-%      if length(s1)>200
-%         figure(22);
-%         f=1:length(s1);
-%         h1 = subplot(2,1,1);
-%         plot(f,s1,'k.-');   
-%         grid(h1,'on');
-%         legend(h1,{'trend-subtracted FRET ratio'},'fontsize',14);
-%         axis(h1,[0 199 -0.8 0.8]);
-%         h3=subplot(2,1,2);
-%         [ac,lags,bounds] = autocorr(s1);
-%         plot(lags,ac,'k.-',lags,max(bounds)*ones(size(lags)),'r:','linewidth',2);
-%         t=max(bounds);  
-%          for mm=1:length(lags)
-%             if ac(mm)<t, break, end
-%         end
-%         index = mm-1;
-%         deix=(ac(index)-t)/(ac(index)-ac(index+1));
-%         critlag = lags(index)+deix;
-%         title(h3,[ num2str(critlag) ' [frame]']);
-%         grid(h3,'on');
-%         legend(h3,{'autocorrelation','up. confidence bound'},'fontsize',14);
-%         pause(1e-3); % put your breakpoint here
+% function ref_tracks = refine_tracks_by_sorting_mitotic_intervals(handles,tracks)
+% ref_tracks = {};
+% dt = handles.dt*60; % interval between frames in minutes 
+% for k=1:numel(tracks)
+%     track = tracks{k};
+%     FRET_ratio = squeeze(track(:,4));
+%     nucleus_size = squeeze(track(:,7));
+%     %
+%     big_smoothing_window  = round((40*7)/dt);
+%     small_smoothing_window  = round((5*7)/dt);
+%     correlation_window  = round((15*7)/dt);
+%     t = 0.08; % threshold
+%     fill_little_gaps_size = round((3*7)/dt);
+%     pre_mit = round((3*7)/dt);
+%     post_mit = round((5*7)/dt);
+%     min_track_length = round((10*7)/dt);
+%     
+%     % interested in mitotic intervals
+%     if ~strcmpi('exclude',handles.mitotic_intervals_option)
+%         pre_mit = pre_mit*2;
+%         post_mit = post_mit*2;        
 %     end
-
-    excl = zeros(size(r)); % exclusion mask   
-    L = bwlabel(r);
-    s = regionprops(L,'Centroid');
-    for m=1:numel(s)
-        c = s(m).Centroid;
-        x = round(c(2));        
-        min_ind = max(1,x-pre_mit);
-        max_ind = min(length(r),x+post_mit);
-        excl(min_ind:max_ind) = 1;
-    end    
-    %
-%      if length(s1)>200
-%         figure(22);
-%         f=1:length(s1);
-%         h1=gca;
-%         plot(f,s1,'k.-',f,s2,'b.-',f,excl,'g-');   
-%         grid(h1,'on');
-%         pause(1e-3); % put your breakpoint here
-%     end       
-    
-    if strcmpi('exclude',handles.mitotic_intervals_option)
-        continue;
-    else
-        excl = ~excl;
-    end
-    %
-    indices = 1:length(excl);
-    if 0~=sum(excl(:))
-        L = bwlabel(~excl);
-        for z=1:max(L)
-            s = indices'.*(L==z);
-            s=s(s~=0);
-            part_track = track(min(s):max(s),:);
-            if size(part_track,1) > min_track_length % minimal length of a track - HARDCODED
-                ref_tracks = [ref_tracks; part_track];
-            end
-        end
-    end          
-end
+%     %
+%     sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]); % small smoothing window - HARDCODED
+%     [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+%     s1 = sm_s-lf;
+%     % repeat for nuclei size
+%     sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
+%     [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+%     s2 = sm_s-lf;
+%     %
+%     % some black magic ...
+%     %
+%     % normalize signals
+%     s1 = (s1-mean(s1(:)))/(max(s1(:)) - min(s1(:)));
+%     s2 = (s2-mean(s2(:)))/(max(s2(:)) - min(s2(:)));    
+%     r = movcorr(s1,s2,correlation_window);    
+%     r = r.*s1.*s2.*(s1>0 & s2>0); % where both local signals are positive
+%     r = r > t; % thresholding
+%     %
+%     r = imclose(r,ones(fill_little_gaps_size,1)); % to fill little gaps - HARDCODED
+%     
+% %      if length(s1)>200
+% %         figure(22);
+% %         f=1:length(s1);
+% %         h1=gca;
+% %         plot(f,s1,'k.-',f,s2,'b.-',f,r,'g-');   
+% %         grid(h1,'on');
+% %         pause(1e-3); % put your breakpoint here
+% %     end   
+%     
+%     
+% %      if length(s1)>200
+% %         figure(22);
+% %         f=1:length(s1);
+% %         h1 = subplot(2,1,1);
+% %         plot(f,s1,'k.-');   
+% %         grid(h1,'on');
+% %         legend(h1,{'trend-subtracted FRET ratio'},'fontsize',14);
+% %         axis(h1,[0 199 -0.8 0.8]);
+% %         h3=subplot(2,1,2);
+% %         [ac,lags,bounds] = autocorr(s1);
+% %         plot(lags,ac,'k.-',lags,max(bounds)*ones(size(lags)),'r:','linewidth',2);
+% %         t=max(bounds);  
+% %          for mm=1:length(lags)
+% %             if ac(mm)<t, break, end
+% %         end
+% %         index = mm-1;
+% %         deix=(ac(index)-t)/(ac(index)-ac(index+1));
+% %         critlag = lags(index)+deix;
+% %         title(h3,[ num2str(critlag) ' [frame]']);
+% %         grid(h3,'on');
+% %         legend(h3,{'autocorrelation','up. confidence bound'},'fontsize',14);
+% %         pause(1e-3); % put your breakpoint here
+% %     end
+% 
+%     excl = zeros(size(r)); % exclusion mask   
+%     L = bwlabel(r);
+%     s = regionprops(L,'Centroid');
+%     for m=1:numel(s)
+%         c = s(m).Centroid;
+%         x = round(c(2));        
+%         min_ind = max(1,x-pre_mit);
+%         max_ind = min(length(r),x+post_mit);
+%         excl(min_ind:max_ind) = 1;
+%     end    
+%     %
+% %      if length(s1)>200
+% %         figure(22);
+% %         f=1:length(s1);
+% %         h1=gca;
+% %         plot(f,s1,'k.-',f,s2,'b.-',f,excl,'g-');   
+% %         grid(h1,'on');
+% %         pause(1e-3); % put your breakpoint here
+% %     end       
+%     
+%     if strcmpi('exclude',handles.mitotic_intervals_option)
+%         continue;
+%     else
+%         excl = ~excl;
+%     end
+%     %
+%     indices = 1:length(excl);
+%     if 0~=sum(excl(:))
+%         L = bwlabel(~excl);
+%         for z=1:max(L)
+%             s = indices'.*(L==z);
+%             s=s(s~=0);
+%             part_track = track(min(s):max(s),:);
+%             if size(part_track,1) > min_track_length % minimal length of a track - HARDCODED
+%                 ref_tracks = [ref_tracks; part_track];
+%             end
+%         end
+%     end          
+% end
 
 
 % --------------------------------------------------------------------
@@ -1370,3 +1392,220 @@ if strcmp(handles.mitotic_intervals_option,'LEAVE ONLY')
     t_dependent_Nuclei_ratio_FRET_ratio_heatmapper(handles);
 end
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [tracks_out,track_indices,norm_FRET_ratio,norm_nuc_size,peak_shift] = ... 
+                    get_mitotic_intervals(handles,tracks)
+tracks_out = [];
+track_indices = [];
+norm_FRET_ratio = [];
+norm_nuc_size = [];
+peak_shift = [];
+
+LLeft = handles.MI_LLeft;
+LRight = handles.MI_LRight;
+peaktol = handles.MI_peak_proximity_tol;
+t1 = handles.MI_FRET_peak_tol;
+t2 = handles.MI_nucsize_peak_tol;
+dt = handles.dt*60; % interval between frames in minutes
+big_smoothing_window  = round(handles.MI_large_smoothing_window/dt);
+small_smoothing_window  = round(handles.MI_small_smoothing_window/dt);
+
+hw = waitbar(0,'finding mitotic intervals.. please wait');
+for k=1:numel(tracks)
+    track = tracks{k};
+    %FRET_ratio = 1./squeeze(track(:,4)); % use if only D,A swapped :) 
+    FRET_ratio = squeeze(track(:,4)); % the correct one
+    nucleus_size = squeeze(track(:,7));
+    %
+    sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]); % small smoothing window - HARDCODED
+    [~,lf_FRET] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s1 = sm_s-lf_FRET;
+    % repeat for nuclei size
+    sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
+    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s2 = sm_s-lf;
+    % normalize signals
+    s1 = (s1-mean(s1(:)))/std(s1(:));
+    s2 = (s2-mean(s2(:)))/std(s2(:));     
+    
+    s1_v = s1; %vanilla
+    s2_v = s2; %vanilla
+
+    L = fix(6/handles.dt);
+    if length(s1)<=L, continue, end
+    % one minute/step upsampling
+    f = fix(handles.dt/(1/60));
+    s1 = interp(s1,f);
+    s2 = interp(s2,f);
+    
+    r1 = -diff(s1);
+    r2 = -diff(s2);
+
+      [pks_1,locs_1] = findpeaks(r1,'MinPeakWidth',f,'MinPeakHeight',t1);
+      [pks_2,locs_2] = findpeaks(r2,'MinPeakWidth',f,'MinPeakHeight',t2);
+
+     ranges = [];
+     shifts = [];
+     
+     for kk=1:length(locs_1)
+         L1 = locs_1(kk);
+         for mm=1:length(locs_2)
+             L2 = locs_2(mm);
+             if abs(L1-L2)<peaktol
+                % range
+                rb = locs_1(kk) - LLeft;
+                re = locs_1(kk) + LRight;
+                if rb>=1 && re <= length(s1)
+                    ranges = [ranges; [rb re] ];
+                    shifts = [shifts; locs_1(kk)-locs_2(mm) ];
+                end
+             end
+         end
+     end
+
+     LV = floor((handles.MI_LLeft+handles.MI_LRight+1)/f);
+     for kk=1:size(ranges,1)
+                    rb=max(1,fix(ranges(kk,1)/f));
+                    re=rb+LV;
+                    % OUTPUTS ASSIGNMENT
+                    tracks_out = [tracks_out; {track(rb:re,:)}];
+                    track_indices = [ track_indices; k];
+                    norm_FRET_ratio = [norm_FRET_ratio; s1_v(rb:re)'];
+                    norm_nuc_size = [norm_nuc_size; s2_v(rb:re)'];
+                    peak_shift = [peak_shift; fix(shifts(kk)/f)];
+      end
+%         figure;
+%         f=1:length(s1);
+%         h1=gca;
+%         plot(f,s1,'k.-',f,s2,'b.-');
+%         hold on
+%             plot(1:length(r1),r1,'r-',1:length(r2),r2,'m-','linewidth',3); 
+%             hold on
+%                 plot(locs_1,pks_1,'gs',locs_2,pks_2,'c^','linewidth',3); 
+%                 
+%                 for kk=1:size(ranges,1)
+%                     rb=ranges(kk,1);
+%                     re=ranges(kk,2);
+%                     range = zeros(size(s1));
+%                     range(rb:re) = 1;
+%                     plot(f,range,'g--','linewidth',3);
+%                     hold on;
+%                 end
+%                 hold off;
+%                 
+%         grid(h1,'on');
+%         legend({'FRET ratio','nuc. size','-d/dt(FRET ratio)','-d/dt(nuc. size)'});   
+
+if ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, end
+end
+if ~isempty(hw), delete(hw), drawnow; end
+
+function single_FOVs_options(handles,flag)  % 'off' or 'on'
+    set(handles.show_per_frame_mean_std,'Enable',flag);
+    set(handles.update_vidi_immediately,'Enable',flag);
+    
+    set(handles.show_cell_numbers,'Enable',flag);
+    set(handles.average_pixel_brightness,'Enable',flag);
+    set(handles.visualize_selection,'Enable',flag);
+    
+
+% --------------------------------------------------------------------
+function load_trackmate_plus_data_multiple_Callback(hObject, eventdata, handles)
+%
+single_FOVs_options(handles,'off');
+
+[filenames,pathname] = uigetfile('*.mat','Select track data files',pwd,'MultiSelect','on');                
+if isempty(filenames), return, end       
+if isnumeric(filenames) && 0==filenames, return, end
+if ~iscell(filenames), filenames = cellstr(filenames); end % if single FOV
+
+handles.MI_tracks = cell(0);
+handles.MI_fnames = cell(0);
+handles.MI_track_indices = [];
+handles.MI_norm_FRET_ratio = [];
+handles.MI_norm_nuc_size = [];
+handles.MI_peak_shift = [];
+handles.filenames = filenames;
+
+handles.ST_raw_data = cell(0); % "storage"
+
+for k=1:numel(filenames)
+    load([pathname filesep filenames{k}]);
+    handles.ST_raw_data = [handles.ST_raw_data; tracks];
+    
+    [MI_tracks, ... 
+    MI_track_indices, ...
+    MI_norm_FRET_ratio, ...
+    MI_norm_nuc_size, ...
+    MI_peak_shift] = get_mitotic_intervals(handles,tracks);
+    %
+    if ~isempty(MI_tracks)
+        handles.MI_tracks = [handles.MI_tracks; MI_tracks];
+        handles.MI_norm_FRET_ratio = [handles.MI_norm_FRET_ratio; MI_norm_FRET_ratio];
+        handles.MI_norm_nuc_size = [handles.MI_norm_nuc_size; MI_norm_nuc_size]; 
+        handles.MI_fnames = cat(1,handles.MI_fnames,repmat(cellstr(filenames{k}),[size(MI_tracks,1) 1]));
+        handles.MI_track_indices = [handles.MI_track_indices; MI_track_indices];
+        handles.MI_peak_shift = [handles.MI_peak_shift; MI_peak_shift];
+    end
+end
+
+handles.dt = dt;
+handles.pixelsize = microns_per_pixel;
+set(handles.pixel_size_edit,'String',handles.pixelsize);
+set(handles.delta_t_edit,'String',handles.dt); 
+
+tracks_to_show_Callback(hObject, eventdata, handles);
+% sic!
+
+% --- Executes on selection change in tracks_to_show.
+function tracks_to_show_Callback(hObject, eventdata, handles)
+
+    if ~isfield(handles,'MI_tracks'), return, end    
+
+    str = get(handles.tracks_to_show,'String');
+    mode = str{get(handles.tracks_to_show,'Value')};
+
+    if strcmp(mode,'tracks')
+        handles.raw_data = handles.ST_raw_data;
+    elseif strcmp(mode,'mitotic intervals')    
+        handles.raw_data = handles.MI_tracks;
+    end
+
+    % this object is for visualizing       
+    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
+
+    handles.fullfilename = [handles.filenames{1} ' .. ' handles.filenames{numel(handles.filenames)}];
+    set(handles.figure1, 'Name', [handles.figureName ' : ' handles.fullfilename]);    
+    
+    str = [{'time'} handles.features];
+    minmaxlimits = zeros(numel(str),2);
+    minmaxlimits(:,1)=-Inf;
+    minmaxlimits(:,2)=Inf;
+    if ~isempty(handles.track_data)
+    minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
+    minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
+        for k=1:numel(handles.features)
+            minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
+            minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
+        end
+    end
+    set(handles.filter_table, 'Data', minmaxlimits);
+    
+    handles.mask = calculate_mask(hObject,handles);
+
+    visualize_histo2(hObject,handles);
+    visualize_time_dependence(hObject,handles);            
+            
+guidata(hObject, handles);
+% --- Executes during object creation, after setting all properties.
+function tracks_to_show_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to tracks_to_show (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

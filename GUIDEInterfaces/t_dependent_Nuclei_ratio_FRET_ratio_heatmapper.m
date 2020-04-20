@@ -106,115 +106,64 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
+% ------------------------------------------------------
 function visualize(handles)
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    tracks = handles.TrackPlotter_handles.raw_data;
-    locmaxpeaks = zeros(1,numel(tracks));
-    %peakstrengthindicator = zeros(1,numel(tracks));
-    maxlength = -Inf;
-
-    if get(handles.selection_only,'Value')
-        mask = handles.TrackPlotter_handles.mask;
-        tracks = tracks(mask~=0);    
-        Dall = handles.TrackPlotter_handles.track_data;
-        D = [];
-        for k=1:numel(mask)
-            rec = Dall(k,:);
-            if 1==mask(k)
-                D=[D;rec];
-            end
-        end
-    else
-        D = handles.TrackPlotter_handles.track_data; % impose mask on D in a loop
-    end
-    
-    dt=handles.TrackPlotter_handles.dt;
-    
-    for k=1:numel(tracks)
-        track = tracks{k};
-        FRET_ratio = squeeze(track(:,4));
-        % set side parts to zero
-            L=length(FRET_ratio);dL = fix(L/6);
-            FRET_ratio(1:dL)=0;
-            FRET_ratio(L-dL:L)=0;
-        % set side parts to zero
-        nucleus_size = squeeze(track(:,7));
-        [pks,locs]= findpeaks(FRET_ratio,'MINPEAKDISTANCE',2);
-        maxpks = max(pks);
-        if ~isempty(maxpks)
-            locmaxpeaks(k) = locs(pks==maxpks(1)); 
-        else
-            maxpks=max(FRET_ratio);
-            locmaxpeaks(k) = find(FRET_ratio==maxpks(1));
-        end
-        % exceptional case when after-peak is stronger than the first peak
-        if ~isempty(maxpks) && numel(pks)>=2
-            sortedpks = flip(sort(pks));
-            p1=sortedpks(1);
-            p2=sortedpks(2);
-            if abs(p1-p2)/max(p1,p2)<0.02 % 2% only if difference in peaks
-                loc1 = find(FRET_ratio==p1);
-                loc2 = find(FRET_ratio==p2);
-                loc1=loc1(1);
-                loc2=loc2(1);
-                d=abs(loc1-loc2)*dt;
-                preferred_location = min(loc1,loc2);
-                if d<1.2 && preferred_location ~= locmaxpeaks(k) % 1.2 of an hour
-                    %[locmaxpeaks(k) preferred_location d p1 p2]
-                    locmaxpeaks(k) = preferred_location; % first peak                    
-                end
-            end
-        end        
-        % exceptional case when after-peak is stronger than the first peak
-        l=numel(FRET_ratio);
-        if l>maxlength
-            maxlength=l;
-        end
-        %peakstrengthindicator(k) = max(pks)/median(pks);
-    end
-    %[~,indices]=sort(peakstrengthindicator);
-    
-    par_ind = get(handles.features_chooser,'Value');
-         
-%      par_ind = 1; % duration
-%      par_ind = 2; % velocity 
-%      par_ind = 3; % directionality
-%      par_ind = 4; % nnghb          
-%      par_ind = 5; % cell density
-%      par_ind = 6; % FRET ratio
-%      par_ind = 7; % FRET ratio variability     
-%      par_ind = 8; % donor 
-%      par_ind = 9; % acceptor
-%      par_ind = 10; % nuclear size      
-%      par_ind = 11; % Pearson corr
-%      par_ind = 12; % start time
-%      par_ind = 13; % autocorr
-%      par_ind = 14; % beta FRET
+    tracks = handles.TrackPlotter_handles.MI_tracks;
+    display_tracks = handles.TrackPlotter_handles.MI_norm_FRET_ratio;
         
-     sortarr = D(:,par_ind+2);
-     [~,indices]=sort(sortarr);
-     indices=flip(indices); 
-    
-    Ldiv2 = floor(maxlength/2);
-    L = 2*Ldiv2+1;
-    M = zeros(numel(tracks),L);
-       for k=1:numel(tracks)
-            track = tracks{indices(k)};
-            FRET_ratio = squeeze(track(:,4));
-            l=length(FRET_ratio);
-            shift = locmaxpeaks(indices(k));
-            c = Ldiv2+1;
-            range = c-shift:c+l-shift-1;
-            if range(1)>0
-                M(k,range)=FRET_ratio';
-            else
-                r2=range(range>0);
-                M(k,r2)=FRET_ratio(-range(1)+1+r2)'; % hopefully
-            end
-       end    
-       s=M(M~=0);M(M==0)=min(s(:)); 
-       M=M(:,1:L-1);
+    par_ind = get(handles.features_chooser,'Value');        
+              index = 0;
+                 switch par_ind                    
+                    case 4 % #nghbrs                    
+                        if ismember(size(tracks,2),[10 11 15])
+                            index = 9;
+                        end
+                    case 5 % cell density
+                        if ismember(size(tracks,2),[10 11 15])
+                            index = 10;
+                        end
+                    case 6 % FRET ratio
+                            index = 4;
+                    case 8 % donor intensity                     
+                        index = 5;
+                    case 9 % acceptor intensity
+                        index = 6;
+                    case 10 % nucleus size
+                        index = 7;
+                    case 11 % Pearson                      
+                        index = 8;
+                    case 14 % FRET molar fraction
+                        index = 11;
+                    case 15 % cell size
+                        if 15== size(tracks,2)
+                        index = 12;
+                        end
+                    case 16 % 
+                       if 15== size(tracks,2)
+                        index = 13;
+                        end
+                    case 17 % 
+                        if 15== size(tracks,2)
+                        index = 14;
+                        end
+                    case 18 % 
+                         if 15== size(tracks,2)
+                        index = 15;
+                        end
+                 end                  
+   
+                 if 0==index, return, end
+                 
+                 sortarr = [];
+                 for k=1:numel(tracks)
+                    track = tracks{k};
+                    vals = squeeze(track(:,index));
+                    sortarr = [sortarr; median(vals)];
+                 end
+                   
+     [~,I]=sort(sortarr,'descend');
+     
+     M = display_tracks(I,:);
         
 %     import bioma.data.*
 %     M=map(M,0,1);
@@ -230,9 +179,11 @@ xlabel(handles.heatmap_axes,'time [h]');
 str = get(handles.features_chooser,'String'); 
 ylabel(handles.heatmap_axes,str{par_ind});
 tax =  handles.TrackPlotter_handles.dt*(1:size(M,2));
+tax = 0.1*fix(tax*10);
+sortarr = 0.1*fix(sortarr*10);
 set(handles.heatmap_axes, 'xticklabel', {linspace(min(tax),max(tax),11)}, ... 
     'yticklabel', {flip(linspace(min(sortarr),max(sortarr),11))});
-
+grid on
 
 % --- Executes on button press in selection_only.
 function selection_only_Callback(hObject, eventdata, handles)
