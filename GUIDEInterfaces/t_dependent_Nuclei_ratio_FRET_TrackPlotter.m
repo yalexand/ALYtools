@@ -504,46 +504,60 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
         set(handles.pixel_size_edit,'String',handles.pixelsize);
         set(handles.delta_t_edit,'String',handles.dt);    
     %
-    handles.raw_data = tracks;
     
-%     % convention - the data saved by ALYtools are not refined, so one needs
-%     % to refine it now - optionally
-%     if handles.track_breaking_flag
-%         handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
-%         if isempty(handles.raw_data)
-%             disp('refine_tracks_by_sorting_mitotic_intervals - failed');
-%             handles.raw_data = tracks;
-%         end            
-%     else
-%         handles.raw_data = tracks;
-%     end
-       
-    % this object is for visualizing       
-    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
-       
-    set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
+    handles.ST_raw_data = tracks;
+  
+    handles.MI_tracks = cell(0);
+    handles.MI_fnames = cell(0);
+    handles.MI_track_indices = [];
+    handles.MI_norm_FRET_ratio = [];
+    handles.MI_norm_nuc_size = [];
+    handles.MI_peak_shift = [];
 
-    str = [{'time'} handles.features];
-    minmaxlimits = zeros(numel(str),2);
-    minmaxlimits(:,1)=-Inf;
-    minmaxlimits(:,2)=Inf;
-    if ~isempty(handles.track_data)
-    minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
-    minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
-        for k=1:numel(handles.features)
-            minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
-            minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
-        end
+    [MI_tracks, ... 
+    MI_track_indices, ...
+    MI_norm_FRET_ratio, ...
+    MI_norm_nuc_size, ...
+    MI_peak_shift] = get_mitotic_intervals(handles,tracks);
+    %
+    if ~isempty(MI_tracks)
+        handles.MI_tracks = MI_tracks;
+        handles.MI_norm_FRET_ratio = MI_norm_FRET_ratio;
+        handles.MI_norm_nuc_size = MI_norm_nuc_size; 
+        handles.MI_fnames = repmat(filename,[size(MI_tracks,1) 1]);
+        handles.MI_track_indices = MI_track_indices;
+        handles.MI_peak_shift = MI_peak_shift;
     end
-    set(handles.filter_table, 'Data', minmaxlimits);
     
-    handles.mask = calculate_mask(hObject,handles);
-
-    visualize_histo2(hObject,handles);
-    visualize_time_dependence(hObject,handles);
-    
-    % Update handles structure
-    guidata(hObject, handles);
+    tracks_to_show_Callback(hObject, [], handles);
+%     
+%        
+%     % this object is for visualizing       
+%     [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
+%        
+%     set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
+% 
+%     str = [{'time'} handles.features];
+%     minmaxlimits = zeros(numel(str),2);
+%     minmaxlimits(:,1)=-Inf;
+%     minmaxlimits(:,2)=Inf;
+%     if ~isempty(handles.track_data)
+%     minmaxlimits(1,1)=min(squeeze(handles.track_data(:,1)));
+%     minmaxlimits(1,2)=max(squeeze(handles.track_data(:,2)));
+%         for k=1:numel(handles.features)
+%             minmaxlimits(k+1,1)=min(squeeze(handles.track_data(:,k+2)));
+%             minmaxlimits(k+1,2)=max(squeeze(handles.track_data(:,k+2)));
+%         end
+%     end
+%     set(handles.filter_table, 'Data', minmaxlimits);
+%     
+%     handles.mask = calculate_mask(hObject,handles);
+% 
+%     visualize_histo2(hObject,handles);
+%     visualize_time_dependence(hObject,handles);
+%     
+%     % Update handles structure
+%     guidata(hObject, handles);
 
 % --------------------------------------------------------------------
 function [track_data,velocity_t,nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles)

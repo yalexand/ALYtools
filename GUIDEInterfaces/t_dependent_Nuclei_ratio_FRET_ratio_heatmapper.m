@@ -111,15 +111,17 @@ function visualize(handles)
     tracks = handles.TrackPlotter_handles.MI_tracks;
     display_tracks = handles.TrackPlotter_handles.MI_norm_FRET_ratio;
         
+    track = tracks{1};
+    
     par_ind = get(handles.features_chooser,'Value');        
               index = 0;
                  switch par_ind                    
                     case 4 % #nghbrs                    
-                        if ismember(size(tracks,2),[10 11 15])
+                        if ismember(size(track,2),[10 11 15])
                             index = 9;
                         end
                     case 5 % cell density
-                        if ismember(size(tracks,2),[10 11 15])
+                        if ismember(size(track,2),[10 11 15])
                             index = 10;
                         end
                     case 6 % FRET ratio
@@ -135,19 +137,19 @@ function visualize(handles)
                     case 14 % FRET molar fraction
                         index = 11;
                     case 15 % cell size
-                        if 15== size(tracks,2)
+                        if 15== size(track,2)
                         index = 12;
                         end
                     case 16 % 
-                       if 15== size(tracks,2)
+                       if 15== size(track,2)
                         index = 13;
                         end
                     case 17 % 
-                        if 15== size(tracks,2)
+                        if 15== size(track,2)
                         index = 14;
                         end
                     case 18 % 
-                         if 15== size(tracks,2)
+                         if 15== size(track,2)
                         index = 15;
                         end
                  end                  
@@ -161,7 +163,7 @@ function visualize(handles)
                     sortarr = [sortarr; median(vals)];
                  end
                    
-     [~,I]=sort(sortarr,'descend');
+     [~,I] = sort(sortarr,'descend');
      
      M = display_tracks(I,:);
         
