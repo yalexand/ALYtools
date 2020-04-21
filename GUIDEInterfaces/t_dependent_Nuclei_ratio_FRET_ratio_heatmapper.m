@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_ratio_heatmapper(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_ratio_heatmapper
 
-% Last Modified by GUIDE v2.5 01-Nov-2018 16:00:21
+% Last Modified by GUIDE v2.5 21-Apr-2020 14:11:06
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_ratio_heatmapper_OpeningFcn, ...
@@ -61,8 +61,8 @@ handles.TrackPlotter_handles = varargin{1};
 set(handles.figure1, 'Name', ['FRET ratio heatmap : ' NAME EXT]);
 
 set(handles.features_chooser,'String',handles.TrackPlotter_handles.features);
-
 set(handles.features_chooser,'Value',6);
+set(handles.curve_type,'String',{'mean','median'});
 
 % Update handles structure
 guidata(hObject, handles);
@@ -201,15 +201,59 @@ imagesc(handles.heatmap_axes,M);
     cmap(1,:)=[0,0,0];
     colormap(handles.heatmap_axes,cmap);
 
-xlabel(handles.heatmap_axes,'time [h]');
+%%%% 2 default curves
+   cla(handles.curves_axes,'reset');
+   N = size(M,1);
+if true && N>=2
+    
+   m1 = M(1:fix(N/2),:);
+   m2 = M(fix(N/2):N,:);
+   
+   mode_ind = get(handles.curve_type,'Value');
+   mode_str = get(handles.curve_type,'String');
+   if 1 == mode_ind % 'mean'
+       curve1 = mean(m1,1);
+       curve2 = mean(m2,1);
+   else
+       curve1 = median(m1,1);
+       curve2 = median(m2,1);       
+   end
+   
+t = round((0:length(curve1)-1)*handles.TrackPlotter_handles.dt*60);
+plot(handles.curves_axes,t,curve1,'k--',t,curve2,'k:','linewidth',2);
+legend(handles.curves_axes,{['upper half: ' mode_str{mode_ind}],['lower half: ' mode_str{mode_ind}]});
+xlabel(handles.curves_axes,'time [min]');
+set(handles.curves_axes,'yticklabel', []);
+axis(handles.curves_axes,[min(t) max(t) min(min(curve1(:)),min(curve2(:))) max(max(curve1(:)),max(curve2(:)))]);
+grid(handles.curves_axes,'on'); 
+
 str = get(handles.features_chooser,'String'); 
 ylabel(handles.heatmap_axes,str{par_ind});
-tax =  handles.TrackPlotter_handles.dt*(1:size(M,2));
-tax = 0.1*fix(tax*10);
-sortarr = 0.1*fix(sortarr*10);
-set(handles.heatmap_axes, 'xticklabel', {linspace(min(tax),max(tax),11)}, ... 
-    'yticklabel', {flip(linspace(min(sortarr),max(sortarr),11))});
-grid on
+%
+sarr = 0.1*round(sortarr*10);
+b1=min(sarr(:));
+b2=max(sarr(:));
+step = min(length(sarr),fix(length(sarr)/10));
+yticks(handles.heatmap_axes,0:step:(length(sarr)));
+step_val = (b2 - b1)/10;
+yticklabels(handles.heatmap_axes,flip(b1+step_val*(0:10)));
+%
+b1=min(t);
+b2=max(t);
+step = fix(length(t)/4);
+xticks(handles.heatmap_axes,0:step:(length(t)));
+step_val = round((b2 - b1)/4);
+xticklabels(handles.heatmap_axes,b1+step_val*(0:4));
+%
+xlabel(handles.heatmap_axes,'time [min]');
+grid(handles.heatmap_axes,'on'); 
+    
+end
+
+
+
+
+
 
 % --- Executes on button press in selection_only.
 function selection_only_Callback(hObject, eventdata, handles)
@@ -219,3 +263,57 @@ function selection_only_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of selection_only
 visualize(hObject,handles);
+
+
+% --- Executes on button press in add_curve.
+function add_curve_Callback(hObject, eventdata, handles)
+% hObject    handle to add_curve (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function sorting_parameter_range_Callback(hObject, eventdata, handles)
+% hObject    handle to sorting_parameter_range (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of sorting_parameter_range as text
+%        str2double(get(hObject,'String')) returns contents of sorting_parameter_range as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function sorting_parameter_range_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sorting_parameter_range (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in curve_type.
+function curve_type_Callback(hObject, eventdata, handles)
+visualize(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function curve_type_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to curve_type (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in clear_curves_axes.
+function clear_curves_axes_Callback(hObject, eventdata, handles)
+% hObject    handle to clear_curves_axes (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
