@@ -67,7 +67,7 @@ set(handles.features_chooser,'Value',6);
 % Update handles structure
 guidata(hObject, handles);
 
-visualize(handles);
+visualize(hObject,handles);
 
 % UIWAIT makes t_dependent_Nuclei_ratio_FRET_ratio_heatmapper wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -92,7 +92,7 @@ function features_chooser_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns features_chooser contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from features_chooser
-visualize(handles);
+visualize(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function features_chooser_CreateFcn(hObject, eventdata, handles)
@@ -107,10 +107,34 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 % ------------------------------------------------------
-function visualize(handles)
+function visualize(hObject,handles)
+
+    % to update mask
+    fullfilename = handles.TrackPlotter_handles.fullfilename;
+    FIGS = findobj(0, 'type', 'figure');
+    for k=1:size(FIGS,1)
+        h = FIGS(k,1);
+        cur_handles = guidata(h);
+        try
+        if strcmp(cur_handles.fullfilename,fullfilename) % mine
+            handles.TrackPlotter_handles = cur_handles;
+            guidata(hObject, handles); 
+            break;
+        end
+        catch
+        end
+    end
+    % to update mask
+
     tracks = handles.TrackPlotter_handles.MI_tracks;
     display_tracks = handles.TrackPlotter_handles.MI_norm_FRET_ratio;
-        
+    
+    if 1==get(handles.selection_only,'Value') % if masking option is on
+        mask = handles.TrackPlotter_handles.mask;
+        tracks = tracks(mask);
+        display_tracks = display_tracks(mask,:);
+    end
+    
     track = tracks{1};
     
     par_ind = get(handles.features_chooser,'Value');        
@@ -194,4 +218,4 @@ function selection_only_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of selection_only
-visualize(handles);
+visualize(hObject,handles);

@@ -1401,11 +1401,13 @@ function mitotic_interval_FRET_ratio_heatmap_Callback(hObject, eventdata, handle
 % hObject    handle to mitotic_interval_FRET_ratio_heatmap (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-if strcmp(handles.mitotic_intervals_option,'LEAVE ONLY')
+    if ~isfield(handles,'MI_tracks'), return, end    
+    mode = get(handles.tracks_to_show,'Value');
+    if 2~=mode
+        set(handles.tracks_to_show,'Value',2); % mitotics
+        tracks_to_show_Callback(hObject, eventdata, handles);
+    end
     t_dependent_Nuclei_ratio_FRET_ratio_heatmapper(handles);
-end
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [tracks_out,track_indices,norm_FRET_ratio,norm_nuc_size,peak_shift] = ... 
@@ -1589,7 +1591,9 @@ function tracks_to_show_Callback(hObject, eventdata, handles)
     % this object is for visualizing       
     [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
 
-    handles.fullfilename = [handles.filenames{1} ' .. ' handles.filenames{numel(handles.filenames)}];
+    if isfield(handles,'filenames')
+        handles.fullfilename = [handles.filenames{1} ' .. ' handles.filenames{numel(handles.filenames)}];
+    end
     set(handles.figure1, 'Name', [handles.figureName ' : ' handles.fullfilename]);    
     
     str = [{'time'} handles.features];
