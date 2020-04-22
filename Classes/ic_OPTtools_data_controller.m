@@ -2293,7 +2293,14 @@ end
                 end;                 
                 %                
                 for k=1:n_planes
-                    plane = imread([pth filesep char(D(k).name)]);
+                    try
+                        plane = imread([pth filesep char(D(k).name)]);
+                    catch me
+                        disp(['glitch ' me.message ' at ' char(D(k).name)]);
+                        if verbose, close(wait_handle), end;
+                        obj.proj = [];
+                        return;                        
+                    end
                     %
                     % do median filtration if needed
                     s = obj.Prefiltering_Size;
@@ -2320,7 +2327,7 @@ end
                 % possibly correcting orientation
                 if strcmp('AUTO',obj.swap_XY_dimensions) && ~obj.proj_rect_orientation_is_OK % needs to reload with swapped dims
                     %
-                    waitmsg = 'Oops.. swappig dimensions..';
+                    waitmsg = 'Oops.. swapping dimensions..';
                     if verbose
                         hw = waitbar(0,waitmsg);
                     end
