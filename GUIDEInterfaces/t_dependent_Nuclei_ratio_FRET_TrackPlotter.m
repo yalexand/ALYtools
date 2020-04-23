@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 20-Apr-2020 12:21:55
+% Last Modified by GUIDE v2.5 23-Apr-2020 15:26:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1627,3 +1627,14 @@ function tracks_to_show_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --------------------------------------------------------------------
+function mitotic_interval_ERK_FRET_paramsetup_Callback(hObject, eventdata, handles)
+% hObject    handle to mitotic_interval_ERK_FRET_paramsetup (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+t_dependent_Nuclei_ratio_FRET_mitotic_intvl_settings(handles);
+
+
+

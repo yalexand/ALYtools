@@ -211,14 +211,19 @@ function visualize(hObject,handles)
     cmap = jet(256);       
     cmap(1,:)=[0,0,0];
     colormap(handles.heatmap_axes,cmap);
-    %
-    
+    %   
     qntvals = [0 .2 .4 .6 .8 1];
     quantiles = quantile(handles.CRV_valarr,qntvals);
     qntsteps = ceil(length(handles.CRV_valarr)*qntvals);
     qntsteps(1)=1;
+    if numel(unique(qntsteps)) < numel(qntvals) % switch to range
+        quantiles = [min(handles.CRV_valarr) max(handles.CRV_valarr)];
+        qntsteps = [ 1 length(handles.CRV_valarr)];
+    end
     yticks(handles.heatmap_axes,qntsteps);
-    yticklabels(handles.heatmap_axes,flip(0.01*round(100*quantiles)));
+    yticklabels(handles.heatmap_axes,flip(quantiles));
+        a = get(handles.heatmap_axes,'YTickLabel');
+        set(handles.heatmap_axes,'YTickLabel',a,'fontsize',8)
     str = get(handles.features_chooser,'String'); 
     ylabel(handles.heatmap_axes,str{par_ind},'fontsize',8);
     %
