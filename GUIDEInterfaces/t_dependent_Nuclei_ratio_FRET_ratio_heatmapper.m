@@ -300,7 +300,15 @@ function plot_curves(handles,display_tracks)
 
     if length(handles.CRV_type)> 7, return, end % too many curves, c'mon
 
-    colors = {'#0072BD','#D95319','#EDB120','#7E2F8E','#77AC30','#4DBEEE','#A2142F'};
+    colors = zeros(7,3);
+    colors(1,:) = [0 0.4470 0.7410];
+    colors(2,:) = [0.8500 0.3250 0.0980];
+    colors(3,:) = [0.9290 0.6940 0.1250];
+    colors(4,:) = [0.4940 0.1840 0.5560];
+    colors(5,:) = [0.4660 0.6740 0.1880];
+    colors(6,:) = [0.3010 0.7450 0.9330];
+    colors(7,:) = [0.6350 0.0780 0.1840];
+    
     styles = {'-',':','--','-.','-',':','--'};
     
     t = round((0:size(display_tracks,2)-1)*handles.TrackPlotter_handles.dt*60);
@@ -326,7 +334,7 @@ function plot_curves(handles,display_tracks)
         end
         maxval = max(maxval,max(curve));
         minval = min(minval,min(curve));
-        plot(handles.curves_axes,t,curve,'linestyle',styles{k},'Color',colors{k},'linewidth',2);
+        plot(handles.curves_axes,t,curve,'linestyle',styles{k},'Color',colors(k,:),'linewidth',2);
         LEGEND = [LEGEND cellstr([type_lab num2str(b1) ' : ' num2str(b2)])];
     end
     hold(handles.curves_axes,'off');
