@@ -64,6 +64,11 @@ set(handles.features_chooser,'String',handles.TrackPlotter_handles.features);
 set(handles.features_chooser,'Value',6);
 set(handles.curve_type,'String',{'mean','median'});
 
+handles.CRV_range = [];     %2 x Ncurv array
+handles.CRV_type = [];      % for simplicity: 1(mean), 2(median)
+handles.CRV_valarr = [];   % to check bounds
+handles.CRV_add = false;    % default - not adding curves
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -92,6 +97,11 @@ function features_chooser_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns features_chooser contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from features_chooser
+handles.CRV_range = [];
+handles.CRV_type = [];
+handles.CRV_valarr = [];
+handles.CRV_add = false;
+guidata(hObject, handles);
 visualize(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
@@ -180,106 +190,205 @@ function visualize(hObject,handles)
    
                  if 0==index, return, end
                  
-                 sortarr = [];
+                 valarr = [];
                  for k=1:numel(tracks)
                     track = tracks{k};
                     vals = squeeze(track(:,index));
-                    sortarr = [sortarr; median(vals)];
+                    valarr = [valarr; median(vals)];
                  end
-                   
-     [~,I] = sort(sortarr,'descend');
-     
+
+     handles.CRV_valarr = valarr; % not sorted, essential
+     guidata(hObject, handles);
+                 
+     [~,I] = sort(valarr,'descend');
      M = display_tracks(I,:);
         
 %     import bioma.data.*
 %     M=map(M,0,1);
 %     DMobj = DataMatrix(M);
 %     hmo = HeatMap(DMobj,'Colormap',redgreencmap);
-imagesc(handles.heatmap_axes,M);
-
+    imagesc(handles.heatmap_axes,M);
     cmap = jet(256);       
     cmap(1,:)=[0,0,0];
     colormap(handles.heatmap_axes,cmap);
-
+    %
+    
+    qntvals = [0 .2 .4 .6 .8 1];
+    quantiles = quantile(handles.CRV_valarr,qntvals);
+    qntsteps = ceil(length(handles.CRV_valarr)*qntvals);
+    qntsteps(1)=1;
+    yticks(handles.heatmap_axes,qntsteps);
+    yticklabels(handles.heatmap_axes,flip(0.01*round(100*quantiles)));
+    str = get(handles.features_chooser,'String'); 
+    ylabel(handles.heatmap_axes,str{par_ind},'fontsize',8);
+    %
+    t = round((0:size(display_tracks,2)-1)*handles.TrackPlotter_handles.dt*60);
+    %
+    b1=min(t);
+    b2=max(t);
+    step = fix(length(t)/4);
+    xticks(handles.heatmap_axes,0:step:(length(t)));
+    step_val = round((b2 - b1)/4);
+    xticklabels(handles.heatmap_axes,b1+step_val*(0:4));
+    %
+    xlabel(handles.heatmap_axes,'time [min]');
+    grid(handles.heatmap_axes,'on'); 
+    
+    % 2 default curves
+    if ~ handles.CRV_add % default
+        mode = get(handles.curve_type,'Value'); % either 1(mean) or 2(median)
+        if isempty(handles.CRV_range)
+            handles.CRV_range = [handles.CRV_range; [min(valarr) median(valarr)]];
+            handles.CRV_type = [handles.CRV_type; mode];
+            handles.CRV_range = [handles.CRV_range; [median(valarr) max(valarr)]];
+            handles.CRV_type = [handles.CRV_type; mode];        
+        end
+        guidata(hObject, handles);
+    end
+    %
+    plot_curves(handles,display_tracks)
+    
 %%%% 2 default curves
-   cla(handles.curves_axes,'reset');
-   N = size(M,1);
-if true && N>=2
+% % % % %    cla(handles.curves_axes,'reset');
+% % % % %    N = size(M,1);
+% % % % % if true && N>=2
+% % % % %     
+% % % % %    m1 = M(1:fix(N/2),:);
+% % % % %    m2 = M(fix(N/2):N,:);
+% % % % %    
+% % % % %    mode_ind = get(handles.curve_type,'Value');
+% % % % %    mode_str = get(handles.curve_type,'String');
+% % % % %    if 1 == mode_ind % 'mean'
+% % % % %        curve1 = mean(m1,1);
+% % % % %        curve2 = mean(m2,1);
+% % % % %    else
+% % % % %        curve1 = median(m1,1);
+% % % % %        curve2 = median(m2,1);       
+% % % % %    end
+% % % % %    
+% % % % % t = round((0:length(curve1)-1)*handles.TrackPlotter_handles.dt*60);
+% % % % % plot(handles.curves_axes,t,curve1,'k--',t,curve2,'k:','linewidth',2);
+% % % % % legend(handles.curves_axes,{['upper half: ' mode_str{mode_ind}],['lower half: ' mode_str{mode_ind}]});
+% % % % % xlabel(handles.curves_axes,'time [min]');
+% % % % % set(handles.curves_axes,'yticklabel', []);
+% % % % % axis(handles.curves_axes,[min(t) max(t) min(min(curve1(:)),min(curve2(:))) max(max(curve1(:)),max(curve2(:)))]);
+% % % % % grid(handles.curves_axes,'on'); 
+% % % % % 
+% % % % % str = get(handles.features_chooser,'String'); 
+% % % % % ylabel(handles.heatmap_axes,str{par_ind});
+% % % % % %
+% % % % % sarr = 0.1*round(handles.CRV_valarr*10);
+% % % % % b1=min(sarr(:));
+% % % % % b2=max(sarr(:));
+% % % % % step = min(length(sarr),fix(length(sarr)/10));
+% % % % % yticks(handles.heatmap_axes,0:step:(length(sarr)));
+% % % % % step_val = (b2 - b1)/10;
+% % % % % yticklabels(handles.heatmap_axes,flip(b1+step_val*(0:10)));
+% % % % % %
+% % % % % b1=min(t);
+% % % % % b2=max(t);
+% % % % % step = fix(length(t)/4);
+% % % % % xticks(handles.heatmap_axes,0:step:(length(t)));
+% % % % % step_val = round((b2 - b1)/4);
+% % % % % xticklabels(handles.heatmap_axes,b1+step_val*(0:4));
+% % % % % %
+% % % % % xlabel(handles.heatmap_axes,'time [min]');
+% % % % % grid(handles.heatmap_axes,'on'); 
+% % % % % end
+
+function plot_curves(handles,display_tracks)
+
+    if length(handles.CRV_type)> 7, return, end % too many curves, c'mon
+
+    colors = {'#0072BD','#D95319','#EDB120','#7E2F8E','#77AC30','#4DBEEE','#A2142F'};
+    styles = {'-',':','--','-.','-',':','--'};
     
-   m1 = M(1:fix(N/2),:);
-   m2 = M(fix(N/2):N,:);
-   
-   mode_ind = get(handles.curve_type,'Value');
-   mode_str = get(handles.curve_type,'String');
-   if 1 == mode_ind % 'mean'
-       curve1 = mean(m1,1);
-       curve2 = mean(m2,1);
-   else
-       curve1 = median(m1,1);
-       curve2 = median(m2,1);       
-   end
-   
-t = round((0:length(curve1)-1)*handles.TrackPlotter_handles.dt*60);
-plot(handles.curves_axes,t,curve1,'k--',t,curve2,'k:','linewidth',2);
-legend(handles.curves_axes,{['upper half: ' mode_str{mode_ind}],['lower half: ' mode_str{mode_ind}]});
-xlabel(handles.curves_axes,'time [min]');
-set(handles.curves_axes,'yticklabel', []);
-axis(handles.curves_axes,[min(t) max(t) min(min(curve1(:)),min(curve2(:))) max(max(curve1(:)),max(curve2(:)))]);
-grid(handles.curves_axes,'on'); 
+    t = round((0:size(display_tracks,2)-1)*handles.TrackPlotter_handles.dt*60);
 
-str = get(handles.features_chooser,'String'); 
-ylabel(handles.heatmap_axes,str{par_ind});
-%
-sarr = 0.1*round(sortarr*10);
-b1=min(sarr(:));
-b2=max(sarr(:));
-step = min(length(sarr),fix(length(sarr)/10));
-yticks(handles.heatmap_axes,0:step:(length(sarr)));
-step_val = (b2 - b1)/10;
-yticklabels(handles.heatmap_axes,flip(b1+step_val*(0:10)));
-%
-b1=min(t);
-b2=max(t);
-step = fix(length(t)/4);
-xticks(handles.heatmap_axes,0:step:(length(t)));
-step_val = round((b2 - b1)/4);
-xticklabels(handles.heatmap_axes,b1+step_val*(0:4));
-%
-xlabel(handles.heatmap_axes,'time [min]');
-grid(handles.heatmap_axes,'on'); 
-    
-end
-
-
-
-
-
+    cla(handles.curves_axes,'reset'); 
+    maxval = -inf;
+    minval = inf;
+    LEGEND = cell(1,0);
+    for k=1:length(handles.CRV_type)
+        hold(handles.curves_axes,'on');
+        mode = handles.CRV_type(k);
+        b1 = handles.CRV_range(k,1);
+        b2 = handles.CRV_range(k,2);
+        I = handles.CRV_valarr>=b1 & handles.CRV_valarr<=b2;
+        s = display_tracks(I,:);
+        switch mode
+            case 1 
+                curve = mean(s,1);
+                type_lab = 'mean ';
+            case 2 
+                curve = median(s,1);
+                type_lab = 'median ';
+        end
+        maxval = max(maxval,max(curve));
+        minval = min(minval,min(curve));
+        plot(handles.curves_axes,t,curve,'linestyle',styles{k},'Color',colors{k},'linewidth',2);
+        LEGEND = [LEGEND cellstr([type_lab num2str(b1) ' : ' num2str(b2)])];
+    end
+    hold(handles.curves_axes,'off');
+    xlabel(handles.curves_axes,'time [min]');
+    set(handles.curves_axes,'yticklabel', []);
+    axis(handles.curves_axes,[min(t) max(t) minval maxval]);
+    grid(handles.curves_axes,'on'); 
+    ylabel(handles.curves_axes,'normalized FRET ratio');
+    legend(handles.curves_axes,LEGEND);
+    %
+    str = get(handles.features_chooser,'String'); 
+    par_ind = get(handles.features_chooser,'Value');
+    title(handles.curves_axes,['partitioned by ' str{par_ind}],'fontsize',8);
 
 % --- Executes on button press in selection_only.
 function selection_only_Callback(hObject, eventdata, handles)
-% hObject    handle to selection_only (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of selection_only
-visualize(hObject,handles);
-
+    handles.CRV_range = [];
+    handles.CRV_type = [];
+    handles.CRV_valarr = [];
+    handles.CRV_add = false; % default
+    guidata(hObject, handles);
+    visualize(hObject,handles);
 
 % --- Executes on button press in add_curve.
 function add_curve_Callback(hObject, eventdata, handles)
-% hObject    handle to add_curve (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
+    range = get_CRV_range(get(handles.sorting_parameter_range,'String'),handles);
+    if isempty(range), return, end
+    %
+    if ~handles.CRV_add % if default
+        handles.CRV_range = [];
+        handles.CRV_type = [];
+        handles.CRV_add = true;
+        guidata(hObject, handles);
+        cla(handles.curves_axes,'reset');
+    end
+    %
+    curve_type = get(handles.curve_type,'Value'); % 1(mean) 2(median)
+    handles.CRV_range = [handles.CRV_range; range];
+    handles.CRV_type = [handles.CRV_type; curve_type];
+        set(handles.sorting_parameter_range,'String','');
+        guidata(hObject, handles);
+    visualize(hObject,handles);
+    handles.CRV_range
+    handles.CRV_type
 
 function sorting_parameter_range_Callback(hObject, eventdata, handles)
-% hObject    handle to sorting_parameter_range (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    if isempty(get_CRV_range(get(hObject,'String'),handles))
+        set(hObject,'String','');
+        guidata(hObject, handles);
+    end
 
-% Hints: get(hObject,'String') returns contents of sorting_parameter_range as text
-%        str2double(get(hObject,'String')) returns contents of sorting_parameter_range as a double
+function range = get_CRV_range(str,handles)
+    range = [];
+    s = strsplit(str);
+    if 2~=numel(s), return, end
+        b1 = str2double(s{1});
+        b2 = str2double(s{2});
+        if isnan(b1) || isnan(b2), return, end 
+            minv = min(handles.CRV_valarr);
+            maxv = max(handles.CRV_valarr);
+                if b1>maxv || b2<minv, return, end
+                    range = [b1 b2];
 
 
 % --- Executes during object creation, after setting all properties.
@@ -297,7 +406,13 @@ end
 
 % --- Executes on selection change in curve_type.
 function curve_type_Callback(hObject, eventdata, handles)
-visualize(hObject,handles);
+if ~handles.CRV_add % default
+    handles.CRV_range = [];
+    handles.CRV_type = [];
+    handles.CRV_valarr = [];
+    guidata(hObject, handles);
+    visualize(hObject,handles);
+end
 
 % --- Executes during object creation, after setting all properties.
 function curve_type_CreateFcn(hObject, eventdata, handles)
@@ -314,6 +429,18 @@ end
 
 % --- Executes on button press in clear_curves_axes.
 function clear_curves_axes_Callback(hObject, eventdata, handles)
-% hObject    handle to clear_curves_axes (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    if handles.CRV_add
+        n = length(handles.CRV_type)-1;
+        if 0==n
+            handles.CRV_add = false;
+            handles.CRV_range = [];
+            handles.CRV_type = [];        
+        else
+            handles.CRV_range = handles.CRV_range(1:n,:);
+            handles.CRV_type = handles.CRV_type(1:n);
+        end
+        guidata(hObject, handles);
+        visualize(hObject,handles);
+    end
+
+
