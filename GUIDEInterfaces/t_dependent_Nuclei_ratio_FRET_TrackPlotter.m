@@ -106,6 +106,8 @@ handles.rng_intensity_ref_nuc_cyt_ratio = [0 7];
 handles.rng_nuc_cell_area_ratio = [0 1];
 % ranges for visualization
 
+handles.timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS'); %to ID from outside 
+
 %handles.mitotic_intervals_option = 'EXCLUDE';
 handles.mitotic_intervals_option = 'LEAVE ONLY';
 

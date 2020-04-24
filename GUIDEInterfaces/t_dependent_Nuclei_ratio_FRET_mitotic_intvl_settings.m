@@ -269,7 +269,7 @@ for k=1:size(FIGS,1)
     h = FIGS(k,1);
     cur_handles = guidata(h);
     try
-    if strcmp(cur_handles.fullfilename,handles.TrackPlotter_handles.fullfilename) % mine
+    if strcmp(cur_handles.timestamp,handles.TrackPlotter_handles.timestamp) % mine
         cur_handles.MI_LLeft = handles.MI_LLeft;
         cur_handles.MI_LRight = handles.MI_LRight;
         cur_handles.MI_peak_proximity_tol = handles.MI_peak_proximity_tol;
