@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_ratio_heatmapper(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_ratio_heatmapper
 
-% Last Modified by GUIDE v2.5 21-Apr-2020 14:11:06
+% Last Modified by GUIDE v2.5 26-Apr-2020 11:34:35
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,6 +63,8 @@ set(handles.figure1, 'Name', ['FRET ratio heatmap : ' NAME EXT]);
 set(handles.features_chooser,'String',handles.TrackPlotter_handles.features);
 set(handles.features_chooser,'Value',6);
 set(handles.curve_type,'String',{'mean','median'});
+set(handles.n_clusters,'String',{'2','3','4','5'});
+set(handles.clustering_method,'String',{'kmeans','kmedoids','hierarchical'});
 
 handles.CRV_range = [];     %2 x Ncurv array
 handles.CRV_type = [];      % for simplicity: 1(mean), 2(median)
@@ -457,3 +459,223 @@ function clear_curves_axes_Callback(hObject, eventdata, handles)
     end
 
 
+
+
+% --- Executes on button press in show_clustering.
+function show_clustering_Callback(hObject, eventdata, handles)
+
+n_clusters = get(handles.n_clusters,'Value') + 1 % :)
+
+        MI_tracks = handles.TrackPlotter_handles.MI_tracks;
+        MI_norm_FRET_ratio = handles.TrackPlotter_handles.MI_norm_FRET_ratio;
+        MI_norm_nuc_size = handles.TrackPlotter_handles.MI_norm_nuc_size; 
+        MI_fnames = handles.TrackPlotter_handles.MI_fnames;
+        MI_track_indices = handles.TrackPlotter_handles.MI_track_indices;
+        MI_peak_shift = handles.TrackPlotter_handles.MI_peak_shift;  
+        dt = handles.TrackPlotter_handles.dt;
+        pixelsize = handles.TrackPlotter_handles.pixelsize;
+
+[N,mi_length] = size(MI_norm_FRET_ratio);
+
+FRET_ratio = zeros(N,mi_length);
+nucleus_size = zeros(N,mi_length);
+Pearson = zeros(N,mi_length);
+nneighbours = zeros(N,mi_length);
+cell_density = zeros(N,mi_length);
+
+for k=1:size(MI_tracks,1)
+    track = MI_tracks{k};
+    %
+    FRET_ratio(k,:) = track(:,4);
+    nucleus_size(k,:) = track(:,7);
+    Pearson(k,:) = track(:,8);
+    nneighbours(k,:) = track(:,9);
+    cell_density(k,:) = track(:,10);
+end
+
+avr_FRET = median(FRET_ratio,2);
+avr_nucleus_size = median(nucleus_size,2);
+avr_Pearson = median(Pearson,2);
+avr_nneighbours = median(nneighbours,2);
+avr_cell_density = median(cell_density,2);
+
+% data = MI_norm_FRET_ratio;
+% data = [data MI_peak_shift avr_FRET avr_nucleus_size avr_Pearson avr_nneighbours avr_cell_density];
+% data = [data avr_FRET avr_Pearson avr_nneighbours avr_cell_density];
+data = [MI_norm_FRET_ratio avr_FRET avr_Pearson avr_nneighbours avr_cell_density MI_peak_shift];
+
+% dimensionality reduction
+truncation = 2;
+V = cov(data);
+SD = sqrt(diag(V));
+R = V./(SD*SD');
+COEFF = pcacov(R);
+U = data*COEFF;
+data = U(:,1:truncation);                                
+
+mode = get(handles.clustering_method,'Value');
+switch mode
+    case 1
+        % KMEANS
+        IDX = kmeans(data,n_clusters);
+        %IDX = kmeans(data,n_clusters,'OnlinePhase','on','Distance','correlation');
+        %IDX = kmeans(data,n_clusters,'Replicates',10);
+        %IDX = kmeans(data,n_clusters,'Start','cluster');
+        %IDX = kmeans(data,n_clusters,'OnlinePhase','on','Distance','correlation','Start','cluster','Replicates',10);        
+    case 2
+        % KMEDOIDS
+        IDX = kmedoids(data,n_clusters);
+        %IDX = kmedoids(data,n_clusters,'Algorithm','clara');        
+    case 3
+        % HIERARCHICAL CLUSTERING
+        Z = linkage(data,'ward');
+        IDX = cluster(Z,'Maxclust',n_clusters);        
+end
+
+% PCA COORDINATES
+% [coeff,score] = pca(data);
+% figure;
+% colormap(jet)
+% scatter(score(:,1),score(:,2),20,IDX,'filled');
+% colorbar(gca)
+% grid on;
+
+% CANONICAL COORDINATES
+[~,~,stats] = manova1(data,IDX);
+C1 = stats.canon(:,1);
+C2 = stats.canon(:,2);
+
+    colors = zeros(7,3);
+    colors(1,:) = [0 0.4470 0.7410];
+    colors(2,:) = [0.8500 0.3250 0.0980];
+    colors(3,:) = [0.9290 0.6940 0.1250];
+    colors(4,:) = [0.4940 0.1840 0.5560];
+    colors(5,:) = [0.4660 0.6740 0.1880];
+    colors(6,:) = [0.3010 0.7450 0.9330];
+    colors(7,:) = [0.6350 0.0780 0.1840];
+    markers = {'o','s','^','d','p'};
+    styles = {'-',':','--','-.','-',':','--'};
+    
+str = get(handles.clustering_method,'String');   
+figure('units','normalized','outerposition',[0 0 1 1],'name',[' clustering method: ' str{mode}]);
+nrows = 3;
+ncols = 5;
+h_canon = subplot(nrows,ncols,1);
+h_curves = subplot(nrows,ncols,2);
+maxy=-inf;
+miny=inf;
+t = dt*(0:(size(MI_norm_FRET_ratio,2)-1));
+
+LEGEND = [];
+for k=1:n_clusters
+    subplot(h_curves);
+    hold(h_curves,'on');
+    m = MI_norm_FRET_ratio(IDX==k,:);
+    crv = mean(m,1);
+    maxy = max(maxy,max(crv));
+    miny = min(miny,min(crv));
+    plot(h_curves,t,crv,'marker',markers{k},'linestyle',styles{k},'markersize',4,'linewidth',2);
+    axis(h_curves,[min(t) max(t) miny maxy]);
+    xlabel(h_curves,'time [min]');
+    ylabel(h_curves,'normalized FRET ratio');
+    grid(h_curves,'on');
+    hold(h_curves,'off');
+    
+    subplot(h_canon);
+    hold(h_canon,'on');
+    c1 = C1(IDX==k);
+    c2 = C2(IDX==k);
+    plot(h_canon,c1,c2,'color',colors(k,:),'marker',markers{k},'linestyle','none','markersize',4,'linewidth',2);
+    xticks([]);yticks([]);
+    set(h_canon,'XColor','none');
+    set(h_canon,'YColor','none');
+    hold(h_canon,'off');
+    
+    h = subplot(nrows,ncols,ncols+k);
+    subplot(h);
+    hold(h,'on');
+    imagesc(m);
+    xticks([]);yticks([]);   
+    axis(h,[1 size(m,2) 1 size(m,1)]);
+    title(h,['cl. ' num2str(k) ', ncells = ' num2str(size(m,1))],'color',colors(k,:));    
+    hold(h,'off');
+    
+    LEGEND = [LEGEND {['cl. ' num2str(k)]}];
+    
+end
+hold off
+subplot(h_curves);
+legend(h_curves,LEGEND);
+
+PD = zeros(5,N);
+PD(1,:) = avr_FRET;
+PD(2,:) = avr_nucleus_size;
+PD(3,:) = avr_Pearson;
+PD(4,:) = avr_nneighbours;
+PD(5,:) = avr_cell_density;
+PD_labels = {'FRET ratio','nucleus size','Pearson coeff','#neighbours','cell density'};
+for m=1:5
+    h = subplot(nrows,ncols,2*ncols+m);
+    subplot(h);
+    d = PD(m,:);
+    
+    x = linspace(min(d),max(d),40);
+    for k=1:n_clusters
+        hold(h,'on');
+        d_k = d(IDX==k);
+        histogram(h,d_k,x,'facecolor',colors(k,:),'facealpha',.5,'edgecolor','none','normalization','probability');
+        % histogram(h,d_k,x,'facecolor','none','edgecolor',colors(k,:),'displaystyle','stairs','linewidth',2);
+    end
+    xlabel(h,PD_labels{m});
+    %yticklabels(h,[]);
+    if 1==m
+        ylabel(h,'probability');
+    end
+    grid(h,'on');
+    hold(h,'off');   
+end
+
+% --- Executes on selection change in clustering_method.
+function clustering_method_Callback(hObject, eventdata, handles)
+% hObject    handle to clustering_method (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns clustering_method contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from clustering_method
+
+
+% --- Executes during object creation, after setting all properties.
+function clustering_method_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to clustering_method (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in n_clusters.
+function n_clusters_Callback(hObject, eventdata, handles)
+% hObject    handle to n_clusters (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns n_clusters contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from n_clusters
+
+
+% --- Executes during object creation, after setting all properties.
+function n_clusters_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to n_clusters (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
