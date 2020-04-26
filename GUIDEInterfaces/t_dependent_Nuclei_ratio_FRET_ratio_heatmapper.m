@@ -494,7 +494,7 @@ for k=1:size(MI_tracks,1)
 end
 
 avr_FRET = median(FRET_ratio,2);
-avr_nucleus_size = median(nucleus_size,2);
+avr_nucleus_size = median(nucleus_size,2)*pixelsize*pixelsize;
 avr_Pearson = median(Pearson,2);
 avr_nneighbours = median(nneighbours,2);
 avr_cell_density = median(cell_density,2);
@@ -613,7 +613,7 @@ PD(2,:) = avr_nucleus_size;
 PD(3,:) = avr_Pearson;
 PD(4,:) = avr_nneighbours;
 PD(5,:) = avr_cell_density;
-PD_labels = {'FRET ratio','nucleus size','Pearson coeff','#neighbours','cell density'};
+PD_labels = {'FRET ratio','nucleus size [\mum^2]','Pearson coeff','#neighbours','cell density [\mum^{-2}]'};
 for m=1:5
     h = subplot(nrows,ncols,2*ncols+m);
     subplot(h);
