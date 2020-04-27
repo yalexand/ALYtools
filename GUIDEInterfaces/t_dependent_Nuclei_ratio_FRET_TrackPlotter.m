@@ -1323,11 +1323,13 @@ for k=1:numel(tracks)
                     norm_FRET_ratio = [norm_FRET_ratio; s1_v(rb:re)'];
                     norm_nuc_size = [norm_nuc_size; s2_v(rb:re)'];
                     peak_shift = [peak_shift; fix(shifts(kk)/f)];
-      end
+     end
+      
+%      if 0~=size(ranges,1)
 %         figure;
 %         f=1:length(s1);
 %         h1=gca;
-%         plot(f,s1,'k.-',f,s2,'b.-');
+%         plot(f,s1,'k.-',f,s2,'b.-','linewidth',2);
 %         hold on
 %             plot(1:length(r1),r1,'r-',1:length(r2),r2,'m-','linewidth',3); 
 %             hold on
@@ -1344,7 +1346,8 @@ for k=1:numel(tracks)
 %                 hold off;
 %                 
 %         grid(h1,'on');
-%         legend({'FRET ratio','nuc. size','-d/dt(FRET ratio)','-d/dt(nuc. size)'});   
+%         legend({'FRET ratio','nuc. size','-d/dt(FRET ratio)','-d/dt(nuc. size)','FRET derivative peak','nuc. size derivative peak','interval'},'fontsize',14);
+%      end
 
 if ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, end
 end

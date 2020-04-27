@@ -589,6 +589,7 @@ for k=1:n_clusters
     xticks([]);yticks([]);
     set(h_canon,'XColor','none');
     set(h_canon,'YColor','none');
+    title(h_canon,str{mode}); 
     hold(h_canon,'off');
     
     h = subplot(nrows,ncols,ncols+k);
