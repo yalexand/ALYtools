@@ -196,7 +196,7 @@ function visualize(hObject,handles)
                  for k=1:numel(tracks)
                     track = tracks{k};
                     vals = squeeze(track(:,index));
-                    valarr = [valarr; median(vals)];
+                    valarr = [valarr; mean(vals)];
                  end
 
      handles.CRV_valarr = valarr; % not sorted, essential
@@ -255,54 +255,7 @@ function visualize(hObject,handles)
     %
     plot_curves(handles,display_tracks)
     
-%%%% 2 default curves
-% % % % %    cla(handles.curves_axes,'reset');
-% % % % %    N = size(M,1);
-% % % % % if true && N>=2
-% % % % %     
-% % % % %    m1 = M(1:fix(N/2),:);
-% % % % %    m2 = M(fix(N/2):N,:);
-% % % % %    
-% % % % %    mode_ind = get(handles.curve_type,'Value');
-% % % % %    mode_str = get(handles.curve_type,'String');
-% % % % %    if 1 == mode_ind % 'mean'
-% % % % %        curve1 = mean(m1,1);
-% % % % %        curve2 = mean(m2,1);
-% % % % %    else
-% % % % %        curve1 = median(m1,1);
-% % % % %        curve2 = median(m2,1);       
-% % % % %    end
-% % % % %    
-% % % % % t = round((0:length(curve1)-1)*handles.TrackPlotter_handles.dt*60);
-% % % % % plot(handles.curves_axes,t,curve1,'k--',t,curve2,'k:','linewidth',2);
-% % % % % legend(handles.curves_axes,{['upper half: ' mode_str{mode_ind}],['lower half: ' mode_str{mode_ind}]});
-% % % % % xlabel(handles.curves_axes,'time [min]');
-% % % % % set(handles.curves_axes,'yticklabel', []);
-% % % % % axis(handles.curves_axes,[min(t) max(t) min(min(curve1(:)),min(curve2(:))) max(max(curve1(:)),max(curve2(:)))]);
-% % % % % grid(handles.curves_axes,'on'); 
-% % % % % 
-% % % % % str = get(handles.features_chooser,'String'); 
-% % % % % ylabel(handles.heatmap_axes,str{par_ind});
-% % % % % %
-% % % % % sarr = 0.1*round(handles.CRV_valarr*10);
-% % % % % b1=min(sarr(:));
-% % % % % b2=max(sarr(:));
-% % % % % step = min(length(sarr),fix(length(sarr)/10));
-% % % % % yticks(handles.heatmap_axes,0:step:(length(sarr)));
-% % % % % step_val = (b2 - b1)/10;
-% % % % % yticklabels(handles.heatmap_axes,flip(b1+step_val*(0:10)));
-% % % % % %
-% % % % % b1=min(t);
-% % % % % b2=max(t);
-% % % % % step = fix(length(t)/4);
-% % % % % xticks(handles.heatmap_axes,0:step:(length(t)));
-% % % % % step_val = round((b2 - b1)/4);
-% % % % % xticklabels(handles.heatmap_axes,b1+step_val*(0:4));
-% % % % % %
-% % % % % xlabel(handles.heatmap_axes,'time [min]');
-% % % % % grid(handles.heatmap_axes,'on'); 
-% % % % % end
-
+%--------------
 function plot_curves(handles,display_tracks)
 
     if length(handles.CRV_type)> 7, return, end % too many curves, c'mon
