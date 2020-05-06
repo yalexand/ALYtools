@@ -100,7 +100,7 @@ varargout{1} = handles.output;
 
 function mi_left_margin_Callback(hObject, eventdata, handles)
     value = fix(str2double(get(hObject,'String')));
-    if ~isnan(value) && value>30 && value<360
+    if ~isnan(value) && value>0 && value<360
         handles.MI_LLeft = value;
         guidata(hObject,handles);
     else

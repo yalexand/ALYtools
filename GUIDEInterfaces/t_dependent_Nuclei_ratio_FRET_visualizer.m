@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_visualizer(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_visualizer
 
-% Last Modified by GUIDE v2.5 24-Sep-2018 11:13:58
+% Last Modified by GUIDE v2.5 06-May-2020 10:22:31
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
@@ -142,6 +142,13 @@ try
     handles.highestValue = highestValue;
     %
     handles.image_mask = calculate_image_mask(hObject, eventdata, handles);
+
+    dt = handles.TrackPlotter_handles.dt;
+    t = (0:(sT-1))*dt;
+    plot(handles.time_axis,t,zeros(length(t)),'k-');
+    axis(handles.time_axis,[min(t) max(t) 0 1e-6]);
+    yticklabels(handles.time_axis,[]);
+    xlabel(handles.time_axis,'time [h]');
     
     % update_button handles structure
     guidata(hObject, handles);    
