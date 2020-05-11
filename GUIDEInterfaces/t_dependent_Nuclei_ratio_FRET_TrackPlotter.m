@@ -474,6 +474,10 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
 
     single_FOVs_options(handles,'on');
 
+    if isfield(handles,'filenames') && ~isempty(handles.filenames)
+        handles.filenames = [];
+    end
+    
     load([pathname filesep filename]);
     handles.fullfilename = [pathname filesep filename];
 
@@ -1234,7 +1238,7 @@ function mitotic_interval_FRET_ratio_heatmap_Callback(hObject, eventdata, handle
 % hObject    handle to mitotic_interval_FRET_ratio_heatmap (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-    if ~isfield(handles,'MI_tracks'), return, end    
+    if ~isfield(handles,'MI_tracks') || isempty(handles.MI_tracks), return, end    
     mode = get(handles.tracks_to_show,'Value');
     if 2~=mode
         set(handles.tracks_to_show,'Value',2); % mitotics
@@ -1267,6 +1271,10 @@ for k=1:numel(tracks)
     FRET_ratio = squeeze(track(:,4)); % the correct one
     nucleus_size = squeeze(track(:,7));
     %
+    if ismember(size(track,2),[10 11 15])
+        cell_density = squeeze(track(:,10))/(handles.pixelsize)^2;
+    end    
+    %
     sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]); % small smoothing window - HARDCODED
     [~,lf_FRET] = TD_high_pass_filter(sm_s,big_smoothing_window);
     s1 = sm_s-lf_FRET;
@@ -1274,9 +1282,14 @@ for k=1:numel(tracks)
     sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
     [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
     s2 = sm_s-lf;
+    % repeat for cell density
+    sm_s = medfilt2(cell_density,[small_smoothing_window 1]);
+    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s3 = sm_s-lf;    
     % normalize signals
     s1 = (s1-mean(s1(:)))/std(s1(:));
-    s2 = (s2-mean(s2(:)))/std(s2(:));     
+    s2 = (s2-mean(s2(:)))/std(s2(:));  
+    s3 = (s3-mean(s3(:)))/std(s3(:));
     
     s1_v = s1; %vanilla
     s2_v = s2; %vanilla
@@ -1287,32 +1300,88 @@ for k=1:numel(tracks)
     f = fix(handles.dt/(1/60));
     s1 = interp(s1,f);
     s2 = interp(s2,f);
+    s3 = interp(s3,f);
     
     r1 = -diff(s1);
     r2 = -diff(s2);
+    r3 = +diff(s3);
 
       [pks_1,locs_1] = findpeaks(r1,'MinPeakWidth',f,'MinPeakHeight',t1);
       [pks_2,locs_2] = findpeaks(r2,'MinPeakWidth',f,'MinPeakHeight',t2);
+      [pks_3,locs_3] = findpeaks(r3,'MinPeakWidth',f,'MinPeakHeight',.001);      
 
      ranges = [];
      shifts = [];
-     
-     for kk=1:length(locs_1)
-         L1 = locs_1(kk);
-         for mm=1:length(locs_2)
-             L2 = locs_2(mm);
-             if abs(L1-L2)<peaktol
-                % range
-                rb = locs_1(kk) - LLeft;
-                re = locs_1(kk) + LRight;
-                if rb>=1 && re <= length(s1)
-                    ranges = [ranges; [rb re] ];
-                    shifts = [shifts; locs_1(kk)-locs_2(mm) ];
-                end
-             end
-         end
-     end
+   
+% initial version considernig nuc.size and FRET ratio derivative peaks only     
+%      for kk=1:length(locs_1)
+%          L1 = locs_1(kk);
+%          for mm=1:length(locs_2)
+%              L2 = locs_2(mm);
+%              if abs(L1-L2)<peaktol
+%                 % range
+%                 rb = locs_1(kk) - LLeft;
+%                 re = locs_1(kk) + LRight;
+%                 if rb>=1 && re <= length(s1)
+%                     ranges = [ranges; [rb re] ];
+%                     shifts = [shifts; locs_1(kk)-locs_2(mm) ];
+%                 end
+%              end
+%          end
+%      end
 
+% this way one can take into account cell density
+     % intervals defintion.. quite experimental - starts
+     se=strel('disk',peaktol);
+     z1=zeros(size(r1));
+     z2=z1;
+     z1(locs_1)=1;
+     z2(locs_2)=1; 
+        % removing from z2 nuc.size drops not reuslting in cell density jump
+        z3=z1;
+        z3(locs_3)=1;
+        i2 = find(z2~=0);
+        i3 = find(z3~=0);
+        d = max(1,floor(peaktol/2)); 
+        for kk=1:numel(i2)
+            L2=i2(kk);
+            L2_is_OK = false;
+            for mm=1:numel(i3)
+                L3=i3(mm);
+                distance = L3-L2;
+                if d>distance&&distance>=0
+                    L2_is_OK = true;
+                    break;
+                end
+            end
+            if ~L2_is_OK
+                z2(L2)=0;
+            end
+        end
+        % removing from z2 nuc.size drops not reuslting in cell density jump
+     z2_dil=imdilate(z2,se);
+     locs_1_OK=find((z1&(z2_dil))>0);
+     %
+     for kk=1:numel(locs_1_OK)
+                L1 = locs_1(kk); % my index
+                rb = L1 - LLeft;
+                re = L1 + LRight;
+                if rb>=1 && re <= length(s1)
+                    ranges = [ranges; [rb re] ];                    
+                         %find shift
+                         shift = 0;
+                         for mm=1:length(locs_2)
+                            L2 = locs_2(mm);
+                            if abs(L1-L2)<peaktol
+                                shift = L1-L2;
+                                break;
+                            end
+                         end
+                    shifts = [shifts; shift];
+                end         
+     end
+     % intervals defintion.. quite experimental - ends
+     %  
      LV = floor((handles.MI_LLeft+handles.MI_LRight+1)/f);
      for kk=1:size(ranges,1)
                     rb=max(1,fix(ranges(kk,1)/f));
@@ -1331,9 +1400,9 @@ for k=1:numel(tracks)
 %         h1=gca;
 %         plot(f,s1,'k.-',f,s2,'b.-','linewidth',2);
 %         hold on
-%             plot(1:length(r1),r1,'r-',1:length(r2),r2,'m-','linewidth',3); 
+%             plot(1:length(r1),r1,'r-',1:length(r2),r2,'m-',1:length(r2),r3,'k:','linewidth',3); 
 %             hold on
-%                 plot(locs_1,pks_1,'gs',locs_2,pks_2,'c^','linewidth',3); 
+%                 plot(locs_1,pks_1,'gs',locs_2,pks_2,'c^',locs_3,pks_3,'k*','linewidth',3); 
 %                 
 %                 for kk=1:size(ranges,1)
 %                     rb=ranges(kk,1);
@@ -1346,7 +1415,7 @@ for k=1:numel(tracks)
 %                 hold off;
 %                 
 %         grid(h1,'on');
-%         legend({'FRET ratio','nuc. size','-d/dt(FRET ratio)','-d/dt(nuc. size)','FRET derivative peak','nuc. size derivative peak','interval'},'fontsize',14);
+%         %legend({'FRET ratio','nuc. size','-d/dt(FRET ratio)','-d/dt(nuc. size)','FRET derivative peak','nuc. size derivative peak','interval'},'fontsize',14);
 %      end
 
 if ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, end
@@ -1420,14 +1489,19 @@ function tracks_to_show_Callback(hObject, eventdata, handles)
 
     if strcmp(mode,'tracks')
         handles.raw_data = handles.ST_raw_data;
-    elseif strcmp(mode,'mitotic intervals')    
-        handles.raw_data = handles.MI_tracks;
+    elseif strcmp(mode,'mitotic intervals')
+        if ~isempty(handles.MI_tracks)
+            handles.raw_data = handles.MI_tracks;
+        else
+            handles.raw_data = handles.ST_raw_data;
+            set(handles.tracks_to_show,'Value',1); % tracks only
+        end
     end
 
     % this object is for visualizing       
     [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
 
-    if isfield(handles,'filenames')
+    if isfield(handles,'filenames') && ~isempty(handles.filenames)
         handles.fullfilename = [handles.filenames{1} ' .. ' handles.filenames{numel(handles.filenames)}];
     end
     set(handles.figure1, 'Name', [handles.figureName ' : ' handles.fullfilename]);    
@@ -1474,11 +1548,11 @@ t_dependent_Nuclei_ratio_FRET_mitotic_intvl_settings(handles);
 
 % --------------------------------------------------------------------
 function mitotic_interval_ERK_FRET_save_intervals_Callback(hObject, eventdata, handles)
-    [fname, fpath] = uiputfile('*.mat','Save Intervals as..','_mitotic_intervals.mat');
-    if fpath == 0; return; end
-    filespec = fullfile(fpath,fname);
-    %        
     if isfield(handles,'MI_tracks') && ~isempty(handles.MI_tracks)    
+        [fname, fpath] = uiputfile('*.mat','Save Intervals as..','_mitotic_intervals.mat');
+        if fpath == 0; return; end
+        filespec = fullfile(fpath,fname);
+        %                
         MI_tracks = handles.MI_tracks;
         MI_norm_FRET_ratio = handles.MI_norm_FRET_ratio;
         MI_norm_nuc_size = handles.MI_norm_nuc_size; 
