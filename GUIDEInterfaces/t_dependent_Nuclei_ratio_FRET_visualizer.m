@@ -25,7 +25,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_visualizer(varargin)
 % Last Modified by GUIDE v2.5 06-May-2020 10:22:31
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0;
 
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
