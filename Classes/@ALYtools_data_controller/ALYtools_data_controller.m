@@ -1084,7 +1084,7 @@ classdef ALYtools_data_controller < handle
                                     %
                                 else
                                     ometiffsavename = [dirname filesep obj.current_filename '_analysis_output.OME.tiff'];
-                                    bfsave(fig,ometiffsavename,'Compression','LZW','dimensionOrder','XYCTZ');
+                                    bfsave(fig,ometiffsavename,'Compression','LZW','BigTiff',true,'dimensionOrder','XYCTZ');
                                 end
                     elseif obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && strcmp(obj.problem,'OPT_ZFish_Embryo')
                         for m=1:numel(fig)
