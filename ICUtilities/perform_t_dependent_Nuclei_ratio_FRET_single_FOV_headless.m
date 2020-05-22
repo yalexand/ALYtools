@@ -1,4 +1,4 @@
-function perform_t_dependent_Nuclei_ratio_FRET_headless(src_dir,dst_dir,extension,full_settings_file_name)
+function perform_t_dependent_Nuclei_ratio_FRET_single_FOV_headless(fullfilename,dst_dir,full_settings_file_name)
 
 %{
 IMPORTANT
@@ -30,13 +30,7 @@ else
     return;
 end
 
-dirdata = dir([src_dir filesep '*.' extension]);
-if ~isempty({dirdata.name})
-    fnames = sort_nat({dirdata.name});
-else
-    disp('no data, cannot continue');
-    return;    
-end
+tic
 
 %%%%%%%%
             % verify that enough memory is allocated
@@ -67,18 +61,16 @@ end
             end           
 %%%%%%%%
 
-tic
-
-for k = 1:numel(fnames)
-    dc.current_filename = fnames{k};
-    dc.open_image([src_dir filesep dc.current_filename]);
+    [filepath,~,~] = fileparts(fullfilename);
+    dc.current_filename = strrep(fullfilename,filepath,'');
+    dc.current_filename = strrep(dc.current_filename,filesep,''); % ?
+    dc.open_image(fullfilename);
     %
     [~,~,~,fig] = dc.analyze_t_dependent_Nuclei_ratio_FRET;
     fig = dc.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dst_dir);
     %
     ometiffsavename = [dst_dir filesep dc.current_filename '_analysis_output.OME.tiff'];
     bfsave(fig,ometiffsavename,'Compression','LZW','BigTiff', true,'dimensionOrder','XYCTZ');
-end
 
 disp(['execution time ' num2str(toc/60) ' min']);
 

@@ -9,7 +9,9 @@ function fig = t_dependent_Nuclei_ratio_FRET_postprocess(obj,in_fig,output_direc
 % for saving - don't override!!!     
         fname = obj.current_filename;
         fname = strrep(fname,'.OME.tiff','');
+        fname = strrep(fname,'.ome.tiff','');        
         fname = strrep(fname,'.OME.tif','');
+        fname = strrep(fname,'.ome.tiff','');        
         fname = strrep(fname,'.tif','');
         fname = strrep(fname,'.lsm','');            
           
