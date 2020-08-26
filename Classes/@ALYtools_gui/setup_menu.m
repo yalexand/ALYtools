@@ -87,7 +87,8 @@ function handles = setup_menu(obj,handles)
     handles.menu_settings_problem_t_dependent_Nuclei_ratio_FRET = uimenu(handles.menu_settings_problem,'Label','t_dependent_Nuclei_ratio_FRET','Separator','on');
     handles.menu_settings_problem_Image_Tiling = uimenu(handles.menu_settings_problem,'Label','Image_Tiling','Separator','on');
     handles.menu_settings_prblm_AI_Powered_2D_SMLM_Reconstruction = uimenu(handles.menu_settings_problem,'Label','AI_Powered_2D_SMLM_Reconstruction','Separator','on');
-    handles.menu_settings_problem_OPT_ZFish_Embryo = uimenu(handles.menu_settings_problem,'Label','OPT_ZFish_Embryo','Separator','on');        
+    handles.menu_settings_problem_OPT_ZFish_Embryo = uimenu(handles.menu_settings_problem,'Label','OPT_ZFish_Embryo','Separator','on');
+    handles.menu_settings_problem_SIFNE = uimenu(handles.menu_settings_problem,'Label','SIFNE','Separator','on');
     
     handles.menu_settings_problem_dependent = uimenu(menu_settings,'Label','Problem-Specific','Separator','on');                    
     handles.menu_settings_general = uimenu(menu_settings,'Label','General','Separator','on');                        

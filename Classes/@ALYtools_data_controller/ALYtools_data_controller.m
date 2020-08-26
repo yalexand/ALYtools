@@ -322,6 +322,26 @@ classdef ALYtools_data_controller < handle
             OPT_ZFish_Embryo_sgm_a1                = .5; %
             OPT_ZFish_Embryo_sgm_t                 = .4; %
             OPT_ZFish_Embryo_sgm_min_vol           = 681472000; % um3            
+            
+            % SIFNE % SMLM Image Filament Network Extractor
+            %
+            SIFNE_LFT_OFT_Radius_of_Filter = 10; % pixels
+            SIFNE_LFT_OFT_Number_of_Filter_Orinetations = 20;
+            SIFNE_SGM_Filaments_Threshold = 0.5;
+            SIFNE_SGM_Junction_Size = 4; % pixels
+            SIFNE_SGM_Minimum_Filaments_Number_of_Pixels = 6;
+            SIFNE_SGM_Iterations = 1;
+            SIFNE_Multi_Core = false;
+            SIFNE_Max_Curvature = 1; %rad/um
+            SIFNE_Search_Angle = 120; % degrees
+            SIFNE_Search_Radius = 50; % pixels
+            SIFNE_Orientation_Difference = 60; % degrees
+            SIFNE_Orientation_Difference_Weight = 1;
+            SIFNE_Gap_Orientation = 30; % degrees
+            SIFNE_Gap_Orientation_Weight = 1;
+            SIFNE_Filament_Overlap = 'None (For Intricate Network)'; % 'Allowed'
+            SIFNE_Sorting_Minimum_Filament_Size = 20; % pixels
+                    
     end    
         
     properties(Transient,Hidden)
@@ -566,7 +586,7 @@ classdef ALYtools_data_controller < handle
                          end                                               
                          
                 case { 'Experimental', 'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR', ...
-                        't_dependent_Nuclei_ratio_FRET', 'Image_Tiling', 'AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo'}
+                        't_dependent_Nuclei_ratio_FRET', 'Image_Tiling', 'AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo','SIFNE'}
                     
                      % if sT<6, don't believe it is T, reinterpret as channels
                      if sT < 6 && sC ==1
@@ -635,7 +655,7 @@ classdef ALYtools_data_controller < handle
                     image(cat(3,uint8(map(I(:,:,1,1,1),0,255)),uint8(map(I(:,:,1,2,1),0,255)),uint8(map(I(:,:,1,3,1),0,255))),'Parent',obj.scene_axes); 
                     
                 case {'CIDR' 'TTO' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks', ... 
-                        'Image_Tiling','AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo'}
+                        'Image_Tiling','AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo','SIFNE'}
                     if sT>10
                         I = double(obj.imgdata(:,:,:,:,1:10));
                     else
@@ -835,7 +855,10 @@ classdef ALYtools_data_controller < handle
                     obj.do_AI_Powered_2D_SMLM_Reconstruction_Segmentation(true);  
                     
                 case 'OPT_ZFish_Embryo'
-                    OPT_ZFish_Embryo_Segmentation_settings(obj);                      
+                    OPT_ZFish_Embryo_Segmentation_settings(obj); 
+                    
+                case 'SIFNE'
+                    obj.do_SIFNE_Segmentation(true);
             end
 
         end    
@@ -949,6 +972,8 @@ classdef ALYtools_data_controller < handle
                     [datas, captions, table_names, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
                 case 'OPT_ZFish_Embryo'
                     [datas, captions, table_names, fig] = obj.analyze_OPT_ZFish_Embryo;
+                case 'SIFNE'
+                    [datas, captions, table_names, fig] = obj.analyze_SIFNE;
                     
             end % switch
 
@@ -1153,6 +1178,8 @@ classdef ALYtools_data_controller < handle
                                 [data, caption, table_name, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
                             elseif strcmp(obj.problem,'OPT_ZFish_Embryo')
                                 [data, caption, table_name, fig] = obj.analyze_OPT_ZFish_Embryo;
+                            elseif strcmp(obj.problem,'SIFNE')
+                                [data, caption, table_name, fig] = obj.analyze_SIFNE;                                
                             end
                         catch
                             disp(['failed to analyze the file ' obj.current_filename]);

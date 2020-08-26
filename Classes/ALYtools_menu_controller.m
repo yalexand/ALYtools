@@ -81,6 +81,7 @@ classdef ALYtools_menu_controller < handle
     menu_settings_problem_Image_Tiling;
     menu_settings_prblm_AI_Powered_2D_SMLM_Reconstruction; 
     menu_settings_problem_OPT_ZFish_Embryo;
+    menu_settings_problem_SIFNE;
         
     %================================= visualization    
     menu_visualization_setup_Icy_directory;
@@ -380,6 +381,11 @@ classdef ALYtools_menu_controller < handle
          set(obj.menu_settings_problem,'Label',['Problem = ' obj.data_controller.problem]);        
          set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
     end
+    function menu_settings_problem_SIFNE_callback(obj, ~, ~) 
+         obj.data_controller.problem = 'SIFNE';        
+         set(obj.menu_settings_problem,'Label',['Problem = ' obj.data_controller.problem]);        
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+    end    
            
     %------------------------------------------------------------------                        
     function menu_settings_problem_dependent_callback(obj, ~, ~)
