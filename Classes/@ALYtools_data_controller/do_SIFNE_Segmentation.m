@@ -17,12 +17,15 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             %ROI_Mask = ones(size(OriginImg_Margin)); % !!!
             % try vulgar segmentation
             ROI_Mask = zeros(size(OriginImg_Margin));
-            S = 50; % scale;
+            % segmnentation setups
+            S = obj.SIFNE_vulgar_ROI_sgm_scale; % 50; % scale;
+            t = obj.SIFNE_vulgar_ROI_sgm_threshold; % 0.1;           
+            % segmnentation setups - ends
             u = single(obj.imgdata);
             u = gsderiv(u,S,0);
             u = map(u,0,1);
-            t = 0.1;           
             ROI_Mask(R+1:H+R,R+1:W+R) = u>t;                        
+            % vulgar segmentation - ends
 
             [OFT_Img, LFT_Img, LFT_Orientations] = LFT_OFT_mex(double(OriginImg_Margin),double(R),double(NofOrientations_FT),double(ROI_Mask));
                                                 

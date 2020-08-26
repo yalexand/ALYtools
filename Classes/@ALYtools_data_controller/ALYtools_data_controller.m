@@ -324,14 +324,12 @@ classdef ALYtools_data_controller < handle
             OPT_ZFish_Embryo_sgm_min_vol           = 681472000; % um3            
             
             % SIFNE % SMLM Image Filament Network Extractor
-            %
             SIFNE_LFT_OFT_Radius_of_Filter = 10; % pixels
             SIFNE_LFT_OFT_Number_of_Filter_Orinetations = 20;
             SIFNE_SGM_Filaments_Threshold = 0.5;
             SIFNE_SGM_Junction_Size = 4; % pixels
             SIFNE_SGM_Minimum_Filaments_Number_of_Pixels = 6;
             SIFNE_SGM_Iterations = 1;
-            SIFNE_Multi_Core = false;
             SIFNE_Max_Curvature = 1; %rad/um
             SIFNE_Search_Angle = 120; % degrees
             SIFNE_Search_Radius = 50; % pixels
@@ -341,6 +339,9 @@ classdef ALYtools_data_controller < handle
             SIFNE_Gap_Orientation_Weight = 1;
             SIFNE_Filament_Overlap = 'None (For Intricate Network)'; % 'Allowed'
             SIFNE_Sorting_Minimum_Filament_Size = 20; % pixels
+            %
+            SIFNE_vulgar_ROI_sgm_scale = 50;
+            SIFNE_vulgar_ROI_sgm_threshold = .1;
                     
     end    
         
@@ -2406,7 +2407,25 @@ classdef ALYtools_data_controller < handle
             settings.OPT_ZFish_Embryo_sgm_a1 = obj.OPT_ZFish_Embryo_sgm_a1;
             settings.OPT_ZFish_Embryo_sgm_t = obj.OPT_ZFish_Embryo_sgm_t;
             settings.OPT_ZFish_Embryo_sgm_min_vol = obj.OPT_ZFish_Embryo_sgm_min_vol;
-                        
+            
+            settings.SIFNE_LFT_OFT_Radius_of_Filter = obj.SIFNE_LFT_OFT_Radius_of_Filter;
+            settings.SIFNE_LFT_OFT_Number_of_Filter_Orinetations = obj.SIFNE_LFT_OFT_Number_of_Filter_Orinetations;
+            settings.SIFNE_SGM_Filaments_Threshold = obj.SIFNE_SGM_Filaments_Threshold;
+            settings.SIFNE_SGM_Junction_Size = obj.SIFNE_SGM_Junction_Size;
+            settings.SIFNE_SGM_Minimum_Filaments_Number_of_Pixels = obj.SIFNE_SGM_Minimum_Filaments_Number_of_Pixels;
+            settings.SIFNE_SGM_Iterations = obj.SIFNE_SGM_Iterations;
+            settings.SIFNE_Max_Curvature = obj.SIFNE_Max_Curvature;
+            settings.SIFNE_Search_Angle = obj.SIFNE_Search_Angle;
+            settings.SIFNE_Search_Radius = obj.SIFNE_Search_Radius;
+            settings.SIFNE_Orientation_Difference = obj.SIFNE_Orientation_Difference;
+            settings.SIFNE_Orientation_Difference_Weight = obj.SIFNE_Orientation_Difference_Weight;
+            settings.SIFNE_Gap_Orientation = obj.SIFNE_Gap_Orientation;
+            settings.SIFNE_Gap_Orientation_Weight = obj.SIFNE_Gap_Orientation_Weight;
+            settings.SIFNE_Filament_Overlap = obj.SIFNE_Filament_Overlap;
+            settings.SIFNE_Sorting_Minimum_Filament_Size  = obj.SIFNE_Sorting_Minimum_Filament_Size;
+            settings.SIFNE_vulgar_ROI_sgm_scale = obj.SIFNE_vulgar_ROI_sgm_scale;
+            settings.SIFNE_vulgar_ROI_sgm_threshold = obj.SIFNE_vulgar_ROI_sgm_threshold;
+                                    
             xml_write(fname,settings);
         end
 %-------------------------------------------------------------------------%                        
@@ -2628,6 +2647,27 @@ classdef ALYtools_data_controller < handle
                     obj.OPT_ZFish_Embryo_sgm_min_vol = settings.OPT_ZFish_Embryo_sgm_min_vol;                    
                 catch
                 end  
+                                
+                try
+                    obj.SIFNE_LFT_OFT_Radius_of_Filter = settings.SIFNE_LFT_OFT_Radius_of_Filter;
+                    obj.SIFNE_LFT_OFT_Number_of_Filter_Orinetations = settings.SIFNE_LFT_OFT_Number_of_Filter_Orinetations;
+                    obj.SIFNE_SGM_Filaments_Threshold = settings.SIFNE_SGM_Filaments_Threshold;
+                    obj.SIFNE_SGM_Junction_Size = settings.SIFNE_SGM_Junction_Size;
+                    obj.SIFNE_SGM_Minimum_Filaments_Number_of_Pixels = settings.SIFNE_SGM_Minimum_Filaments_Number_of_Pixels;
+                    obj.SIFNE_SGM_Iterations = settings.SIFNE_SGM_Iterations;
+                    obj.SIFNE_Max_Curvature = settings.SIFNE_Max_Curvature;
+                    obj.SIFNE_Search_Angle = settings.SIFNE_Search_Angle;
+                    obj.SIFNE_Search_Radius = settings.SIFNE_Search_Radius;
+                    obj.SIFNE_Orientation_Difference = settings.SIFNE_Orientation_Difference;
+                    obj.SIFNE_Orientation_Difference_Weight = settings.SIFNE_Orientation_Difference_Weight;
+                    obj.SIFNE_Gap_Orientation = settings.SIFNE_Gap_Orientation;
+                    obj.SIFNE_Gap_Orientation_Weight = settings.SIFNE_Gap_Orientation_Weight;
+                    obj.SIFNE_Filament_Overlap = settings.SIFNE_Filament_Overlap;
+                    obj.SIFNE_Sorting_Minimum_Filament_Size  = settings.SIFNE_Sorting_Minimum_Filament_Size;
+                    obj.SIFNE_vulgar_ROI_sgm_scale = settings.SIFNE_vulgar_ROI_sgm_scale;
+                    obj.SIFNE_vulgar_ROI_sgm_threshold = settings.SIFNE_vulgar_ROI_sgm_threshold;                   
+                catch
+                end
                 
              end
         end

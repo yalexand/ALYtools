@@ -5,6 +5,12 @@ function [datas, captions, table_names, fig] = analyze_SIFNE(obj,~,~)
     ROI_Mask = squeeze(sgm(:,:,2,1,1)); 
     clear('sgm');
     
+    save_dir = obj.DefaultDirectory;
+    
+    fname = obj.current_filename;
+    fname = strsplit(fname,'.');
+    fname = fname{1};
+    
     R = obj.SIFNE_LFT_OFT_Radius_of_Filter;
 
             % Remove Junctions & Single Points button
@@ -491,9 +497,10 @@ disp('Analysis and Sorting Done !');
         end
         close(h);
         
-        figure;
+        h22=figure(22);
         imshow(mat2gray(AllFragments((R+1):(size(AllFragments,1)-R), (R+1):(size(AllFragments,2)-R))));hold on;axis off;
-        screen_size = get(0, 'ScreenSize'); set(figure(1), 'Position', [0 0 screen_size(3) screen_size(4) ] );
+        screen_size = get(0, 'ScreenSize'); 
+        set(h22, 'Position', [0 0 screen_size(3) screen_size(4) ] );
         ColorList = rand(32,3);
         temp = 1:size(all_sorted_filament,3);
         for i = 1:32
@@ -512,7 +519,8 @@ disp('Analysis and Sorting Done !');
         B = B{1};
         plot(B(:,2),B(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;        
 %         mkdir result;
-%         saveas(figure(1),'result\Extracted_Filaments.fig');
+        saveas(h22,[save_dir filesep fname '_' 'Extracted_Filaments.fig']);
+        close(h22);
 %Analysis 1
 
 %Analysis 2
@@ -555,7 +563,7 @@ disp('Analysis and Sorting Done !');
         disF = disF.*mask;
         disF = disF*PixelSize;
         
-        figure;
+        h22=figure(22);
         imagesc(disF);colormap(jet);hold on;axis off;axis image;colorbar;
         [xx yy] = find(Overlay_Map~=0);
         plot(yy,xx,'k.');
@@ -570,15 +578,17 @@ disp('Analysis and Sorting Done !');
         mask(mask==0)=-1;
         disF = disF.*mask;
         d = disF(sub2ind(size(disF),x,y))*PixelSize;
-        figure(2);
+        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions.fig']);
+        close(h22);
+        
+        h22 = figure(22);
         %         histogram(d);%axis square;
         histfit(d,50,'kernel');xlim([0 inf]);
         ylabel('Frequency');
         xlabel('Distance to Cell Edge (\mum)');
         title('Distribution of Junctions');
-        %mkdir result;
-        %saveas(figure(1),'result\Distribution_Junctions.fig');
-        %saveas(figure(2),'result\Distribution_Junctions_Analysis.fig');
+        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions_Analysis.fig']);
+        close(h22);
 %Analysis 2
 
 %Analysis 3
@@ -591,12 +601,14 @@ disp('Analysis and Sorting Done !');
 %         load data\ROI_Mask;
         % plot of information of all filaments
         %PixelSize = str2num(get(handles.EditPixelSize,'String'));
-        figure;
+        h22 = figure;
         h=rose(pi*AnalysisInfo(:,1)/180,30);axis off;
         set(h,'linewidth',3)
         axis square;
         daspect([1 1 1]);
         title('Histogram of Filaments Orientations');
+        saveas(h22,[save_dir filesep fname '_' 'Histogram_of_Orientations.fig']);
+        close(h22);
         
 %         mkdir result;
 %         saveas(figure(1),'result\Histogram_of_Orientations.fig');
@@ -619,12 +631,14 @@ disp('Analysis and Sorting Done !');
             end
         end
         close(h);
-        figure;
+        
+        h22 = figure(22);
         imagesc(finalmap);colormap(jet);colorbar;
         set(gca,'ytick',[]);
         xlabel('Distance to Cell Edge (\mum)');ylabel('-90 degrees to 90 degrees');
         title('Distribution of Filament Orientations');
-        %saveas(figure(2),'result\Distribution_Orientations.fig');
+        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Orientations.fig']);
+        close(h22);
 %Analysis 3
 
 % Analysis 4
@@ -686,10 +700,12 @@ disp('Analysis and Sorting Done !');
         end
         close(h);
         M = M/PixelSize;
-        figure;
+        h22 = figure(22);
         imagesc(M); colormap(jet);colorbar; title('Distribution of Curvatures');axis off;axis image;
+        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures.fig']);
+        close(h22);
           
-        figure;
+        h22 = figure(22);
         subplot(1,2,1);
         histfit(all_mean_cur,50,'kernel');xlim([0 inf]);
         xlabel('Curvature (unit: \mum^-^1)');ylabel('Frequency');
@@ -735,6 +751,8 @@ disp('Analysis and Sorting Done !');
         plot(x1*0.02, y1,  'r');hold on;axis([0 inf 0 inf]);
         xlabel('Distance to Cell Edge (unit: \mum)');ylabel('Mean Curvature (unit: \mum^-^1)');
         title('Distribution of Curvatures');
+        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures_Analysis.fig']);
+        close(h22);
         %save data\all_filament_curs.mat all_filament_curs;
         %mkdir result;
         %saveas(figure(1),'result\Distribution_of_Curvatures.fig');
