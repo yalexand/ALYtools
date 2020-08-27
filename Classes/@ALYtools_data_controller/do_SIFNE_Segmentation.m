@@ -18,13 +18,18 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             % try vulgar segmentation
             ROI_Mask = zeros(size(OriginImg_Margin));
             % segmnentation setups
-            S = obj.SIFNE_vulgar_ROI_sgm_scale; % 50; % scale;
-            t = obj.SIFNE_vulgar_ROI_sgm_threshold; % 0.1;           
+            S = obj.SIFNE_vulgar_ROI_sgm_scale;
+            t = obj.SIFNE_vulgar_ROI_sgm_threshold; 
             % segmnentation setups - ends
             u = single(obj.imgdata);
             u = gsderiv(u,S,0);
             u = map(u,0,1);
-            ROI_Mask(R+1:H+R,R+1:W+R) = u>t;                        
+            ROI_Mask(R+1:H+R,R+1:W+R) = u>t; 
+            %
+            % remove small patches
+            min_patch_size = round(100/((obj.microns_per_pixel).^2)); %remove objects smaller than 100 square microns
+            ROI_Mask = bwareaopen(ROI_Mask,min_patch_size);
+            %
             % vulgar segmentation - ends
 
             [OFT_Img, LFT_Img, LFT_Orientations] = LFT_OFT_mex(double(OriginImg_Margin),double(R),double(NofOrientations_FT),double(ROI_Mask));

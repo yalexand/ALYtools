@@ -516,9 +516,11 @@ disp('Analysis and Sorting Done !');
             plot(y-R,x-R,'r.','MarkerSize',6);hold on;
         end
         B = bwboundaries(ROI_Mask);
-        B = B{1};
-        plot(B(:,2),B(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;        
-%         mkdir result;
+        for k=1:numel(B)
+            B_k = B{k};
+            plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
+        end          
+        set(gcf, 'Name', fname, 'numbertitle', 'off');
         saveas(h22,[save_dir filesep fname '_' 'Extracted_Filaments.fig']);
         close(h22);
 %Analysis 1
@@ -569,8 +571,10 @@ disp('Analysis and Sorting Done !');
         plot(yy,xx,'k.');
         plot(y,x,'g.','MarkerSize',15);title('Distribution of Junctions');
         B = bwboundaries(ROI_Mask);
-        B = B{1};
-        plot(B(:,2),B(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
+        for k=1:numel(B)
+            B_k = B{k};
+            plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
+        end        
         
         disF=bwdist(bwmorph(ROI_Mask,'remove'));
         mask = ROI_Mask;
@@ -578,6 +582,7 @@ disp('Analysis and Sorting Done !');
         mask(mask==0)=-1;
         disF = disF.*mask;
         d = disF(sub2ind(size(disF),x,y))*PixelSize;
+        set(gcf, 'Name', fname, 'numbertitle', 'off');
         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions.fig']);
         close(h22);
         
@@ -587,7 +592,8 @@ disp('Analysis and Sorting Done !');
         ylabel('Frequency');
         xlabel('Distance to Cell Edge (\mum)');
         title('Distribution of Junctions');
-        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions_Analysis.fig']);
+        set(gcf, 'Name', fname, 'numbertitle', 'off');
+        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions_Analysis.fig']);        
         close(h22);
 %Analysis 2
 
@@ -607,6 +613,7 @@ disp('Analysis and Sorting Done !');
         axis square;
         daspect([1 1 1]);
         title('Histogram of Filaments Orientations');
+        set(gcf, 'Name', fname, 'numbertitle', 'off');
         saveas(h22,[save_dir filesep fname '_' 'Histogram_of_Orientations.fig']);
         close(h22);
         
@@ -637,6 +644,7 @@ disp('Analysis and Sorting Done !');
         set(gca,'ytick',[]);
         xlabel('Distance to Cell Edge (\mum)');ylabel('-90 degrees to 90 degrees');
         title('Distribution of Filament Orientations');
+        set(gcf, 'Name', fname, 'numbertitle', 'off');
         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Orientations.fig']);
         close(h22);
 %Analysis 3
@@ -702,15 +710,10 @@ disp('Analysis and Sorting Done !');
         M = M/PixelSize;
         h22 = figure(22);
         imagesc(M); colormap(jet);colorbar; title('Distribution of Curvatures');axis off;axis image;
+        set(gcf, 'Name', fname, 'numbertitle', 'off');
         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures.fig']);
         close(h22);
           
-        h22 = figure(22);
-        subplot(1,2,1);
-        histfit(all_mean_cur,50,'kernel');xlim([0 inf]);
-        xlabel('Curvature (unit: \mum^-^1)');ylabel('Frequency');
-        title('Distribution of Means of Filament Curvatures');
-
         All_Curs = [];
         All_Curs_4plot = [];
         disF=bwdist(bwmorph(ROI_Mask,'remove'));
@@ -718,6 +721,7 @@ disp('Analysis and Sorting Done !');
         mask = single(mask);
         mask(mask==0)=-1;
         disF = disF.*mask;
+        %
         h = waitbar(0,'Calculating the Distribution of Curvatures ...');
         for m = 1:size(all_filament_curs,3)
             waitbar(m/size(all_filament_curs,3),h);
@@ -746,11 +750,19 @@ disp('Analysis and Sorting Done !');
                 y1 = [y1  mean(All_Curs_4plot(k,2))];
             end
         end
+
+        h22 = figure(22);
+        subplot(1,2,1);
+        histfit(all_mean_cur,50,'kernel');xlim([0 inf]);
+        xlabel('Curvature (unit: \mum^-^1)');ylabel('Frequency');
+        title('Distribution of Means of Filament Curvatures');
+        %        
         
         subplot(1,2,2);
         plot(x1*0.02, y1,  'r');hold on;axis([0 inf 0 inf]);
         xlabel('Distance to Cell Edge (unit: \mum)');ylabel('Mean Curvature (unit: \mum^-^1)');
         title('Distribution of Curvatures');
+        set(gcf, 'Name', fname, 'numbertitle', 'off');
         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures_Analysis.fig']);
         close(h22);
         %save data\all_filament_curs.mat all_filament_curs;
@@ -759,6 +771,187 @@ disp('Analysis and Sorting Done !');
         %saveas(figure(2),'result\Distribution_of_Curvatures_Analysis.fig');
 
 % Analysis 4
+
+% Analysis 5 %xls saving...
+%         warning off;
+%         close(figure(1));close(figure(2));
+%         load data\AnalysisInfo;
+%         load data\all_sorted_filament;
+%         load data\NewCrPts;
+%         load data\Size_Junc;
+%         load data\ROI_Mask;
+%         load data\L.mat;
+%         load data\all_tips.mat;
+%         load data\all_connects.mat;
+%         load data\all_connects_shortlist.mat;
+        
+%         % generate information of all filaments
+%         % PixelSize = str2num(get(handles.EditPixelSize,'String'));
+%         titles = {'Filament ID','1st X pos','1st Y pos','last X pos','last Y pos','Orientation','Total Length','End-to-End Distance','Centroid X','Centroid Y'};
+%         titles = [titles,repmat({'X','Y'},[1 size(all_sorted_filament,1)]) ];
+%         InfoExcel = zeros(size(all_sorted_filament,3)*2, size(all_sorted_filament,1)*2+9);
+%         
+%         h = waitbar(0,'Generating information of composite filaments ...');
+%         for i = 1:size(all_sorted_filament,3)
+%             waitbar(i/size(all_sorted_filament,3),h);
+%             curr_filament = all_sorted_filament(:,:,i);
+%             curr_filament(find(curr_filament(:,1)==0),:) = [];
+%             InfoExcel((i*2-1), 1:9) = [curr_filament(1,:), curr_filament(end,:), AnalysisInfo(i,:)];
+%             temp = zeros(1,size(all_sorted_filament,1)*2);
+%             temp((1:size(all_sorted_filament,1))*2-1) = all_sorted_filament(:,1,i);
+%             temp((1:size(all_sorted_filament,1))*2) = all_sorted_filament(:,2,i);
+%             InfoExcel((i*2-1), 10:end) = temp;
+%             ks = dsearchn(curr_filament,NewCrPts);
+%             for j = 1:length(ks)
+%                 if pdist([curr_filament(ks(j),:); NewCrPts(j,:)])<=Size_Junc
+%                     InfoExcel((i*2), ((9+ks(j)*2-1):(9+ks(j)*2))) = NewCrPts(j,:);
+%                 end
+%             end
+%         end
+%         FragID = 1:size(all_sorted_filament,3);
+%         FragID = [FragID; FragID];
+%         FragID = FragID(:);
+%         InfoExcel = [FragID, InfoExcel];
+%         %save data\InfoExcel.mat InfoExcel;
+%         close(h);
+%         InfoExcel = [titles;num2cell(InfoExcel)];
+%         
+%         
+%         % ------ generate fragment information ------
+%         FragmentInfo = zeros(num,size(L,1));
+% 
+%         if ~MultiCore
+%             h = waitbar(0,'Fragment Information ...');
+%             for i = 1:num
+%                 waitbar(i/num,h);
+%                 FragmentInfo(i,:) = GenFragmentInfo(L,i,all_tips,FragmentInfo(i,:));
+%             end
+%             close(h);
+%         else
+%             %delete(gcp);
+%             %parpool ('local',feature('numCores'));            
+%             % parellel computing is used and it may take a few minutes for large data set
+% %             load data\L.mat;
+% %             L = L;
+% %             load data\all_tips.mat;
+% %             all_tips = all_tips;
+%             parfor i = 1:num
+%                 FragmentInfo(i,:) = GenFragmentInfo(L,i,all_tips,FragmentInfo(i,:));
+%             end
+%         end
+%         
+%         
+%         sumlist = sum(FragmentInfo,1);
+%         FragmentInfo(:,(find(sumlist==0))) = [];
+%         %save data\FragmentInfo.mat FragmentInfo;
+%         MaxFragL = size(FragmentInfo,2)-6;
+%         disp('Fragment Information Generated !');
+%         titles = {'Fragment ID','# of Pixels','Beginning X','Beginning Y','Ending X','Ending Y'};
+%         titles = [titles,repmat({'X','Y'},[1 (size(FragmentInfo,2)-6)/2]) ];
+%         FragmentInfo = [titles;num2cell(FragmentInfo)];
+%                        
+%         % ------ generate linkage information before removing short------
+%         
+%         LinkInfo = zeros(size(all_connects,1),2+MaxFragL*2,size(all_connects,3));
+%         if ~MultiCore
+%             h = waitbar(0,'Linkage1 Information ...');
+%             for i = 1:size(all_connects,3)
+%                 waitbar(i/size(all_connects,3),h);
+%                 LinkInfo(:,:,i) = GenLinkageInfo(i,L,all_connects(:,:,i),LinkInfo(:,:,i));
+%             end
+%             close(h);
+%         else
+% %             load data\L.mat;
+% %             L = L;
+%             parfor i = 1:size(all_connects,3)
+%                 LinkInfo(:,:,i) = GenLinkageInfo(i,L,all_connects(:,:,i),LinkInfo(:,:,i));
+%             end
+%         end
+%         
+%         disp('Linkage1 Information Generated !');
+%                 
+%         LinkageInfo1 = [];
+%         h = waitbar(0,'Integrating Linkage1 Information ...');
+%         tic;
+%         for i = 1:size(LinkInfo,3)
+%             waitbar(i/size(LinkInfo,3),h);
+%             tempLinkage = LinkInfo(:,:,i);
+%             tempLinkage(find(tempLinkage(:,1)==0),:) = [];
+%             LinkageInfo1 = [LinkageInfo1; tempLinkage];
+%         end
+%         close(h);
+%         disp('Linkage1 Integration Done !');
+%         sumlist = sum(LinkageInfo1,1);
+%         LinkageInfo1(find(LinkageInfo1(:,1)==0),:) = [];
+%         LinkageInfo1(:,(find(sumlist==0))) = [];
+%         % save data\LinkageInfo1.mat LinkageInfo1;
+%         titles = {'Composite Filament ID','Fragment ID'};
+%         titles = [titles,repmat({'X','Y'},[1 (size(LinkageInfo1,2)-2)/2]) ];
+%         LinkageInfo1 = [titles;num2cell(LinkageInfo1)];
+%         
+%         
+%         % ------ generate linkage information after removing short------
+%         
+%         LinkInfo = zeros(size(all_connects_shortlist,1),2+MaxFragL*2,size(all_connects_shortlist,3));
+%         if ~MultiCore
+%             h = waitbar(0,'Linkage2 Information ...');
+%             for i = 1:size(all_connects_shortlist,3)
+%                 waitbar(i/size(all_connects_shortlist,3),h);
+%                 LinkInfo(:,:,i) = GenLinkageInfo(i,L,all_connects_shortlist(:,:,i),LinkInfo(:,:,i));
+%             end
+%             close(h);
+%         else
+%             parfor i = 1:size(all_connects_shortlist,3)
+%                 LinkInfo(:,:,i) = GenLinkageInfo(i,L,all_connects_shortlist(:,:,i),LinkInfo(:,:,i));
+%             end
+%         end
+%         
+%         disp('Linkage2 Information Generated !');
+%         
+%         
+%         LinkageInfo2 = [];
+%         h = waitbar(0,'Integrating Linkage2 Information ...');
+%         tic;
+%         for i = 1:size(LinkInfo,3)
+%             waitbar(i/size(LinkInfo,3),h);
+%             tempLinkage = LinkInfo(:,:,i);
+%             tempLinkage(find(tempLinkage(:,1)==0),:) = [];
+%             LinkageInfo2 = [LinkageInfo2; tempLinkage];
+%         end
+%         close(h);
+%         disp('Linkage2 Integration Done !');
+%         sumlist = sum(LinkageInfo2,1);
+%         LinkageInfo2(find(LinkageInfo2(:,1)==0),:) = [];
+%         LinkageInfo2(:,(find(sumlist==0))) = [];
+%         % save data\LinkageInfo2.mat LinkageInfo2;
+%         titles = {'Composite Filament ID','Fragment ID'};
+%         titles = [titles,repmat({'X','Y'},[1 (size(LinkageInfo2,2)-2)/2]) ];
+%         LinkageInfo2 = [titles;num2cell(LinkageInfo2)];
+%         
+%         % mkdir result;
+%         % write inforamtion to excel
+%         %cd result;
+%         
+%         xlswrite([save_dir filesep 'IntegratedInfo.xlsx'],InfoExcel,1,'A1');
+%         xlswrite([save_dir filesep 'IntegratedInfo.xlsx'],FragmentInfo,2,'A1');
+%         xlswrite([save_dir filesep 'IntegratedInfo.xlsx'],LinkageInfo1,3,'A1');
+%         xlswrite([save_dir filesep 'IntegratedInfo.xlsx'],LinkageInfo2,4,'A1');
+%         %curDir = pwd;
+%         %filaname = [curDir,'\IntegratedInfo.xlsx'];
+%         e = actxserver('Excel.Application');
+%         ewb = e.Workbooks.Open([save_dir filesep 'IntegratedInfo.xlsx']);
+%         ewb.Worksheets.Item(1).Name = 'Ultimate Filaments';
+%         ewb.Worksheets.Item(2).Name = 'Fragment Info';
+%         ewb.Worksheets.Item(3).Name = 'Linkage Info1';
+%         ewb.Worksheets.Item(4).Name = 'Linkage Info2';
+%         ewb.Save
+%         ewb.Close(false);
+%         e.Quit;
+%         %cd ..;
+%         %msgbox('Excel Generated !');
+%         disp('Excel Generated !');
+        
+% Analysis 5
 
 
 % Analyses

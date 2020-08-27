@@ -1122,10 +1122,12 @@ classdef ALYtools_data_controller < handle
 %-------------------------------------------------------------------------%
         function run_batch(obj,filenames, pathname,verbose,~)
             
+            obj.DefaultDirectory = pathname;
+            
             switch obj.problem
                             
                 case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' ...
-                        't_dependent_Nuclei_ratio_FRET','AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo'}
+                        't_dependent_Nuclei_ratio_FRET','AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo','SIFNE'}
                     
                     dirname = [];           
                     cmnxlsname = [];
