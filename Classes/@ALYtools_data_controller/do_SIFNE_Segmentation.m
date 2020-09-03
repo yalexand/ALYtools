@@ -27,22 +27,28 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             ROI_Mask(R+1:H+R,R+1:W+R) = u>t; 
             %
             % remove small patches
-            min_patch_size = round(100/((obj.microns_per_pixel).^2)); %remove objects smaller than 100 square microns
+            min_patch_size = round(obj.SIFNE_vulgar_ROI_sgm_min_patch_size/((obj.microns_per_pixel).^2)); %remove objects smaller than 110 square microns
             ROI_Mask = bwareaopen(ROI_Mask,min_patch_size);
+            % should be OK ...
+            ROI_Mask = fill_small_holes(ROI_Mask,round(min_patch_size/4));
             %
             % vulgar segmentation - ends
 
-            [OFT_Img, LFT_Img, LFT_Orientations] = LFT_OFT_mex(double(OriginImg_Margin),double(R),double(NofOrientations_FT),double(ROI_Mask));
-                                                
-            [sx,sy]=size(OFT_Img);
-            iv = zeros(sx,sy,3,1,1,class(OFT_Img));
-            iv(:,:,1,1,1)=OFT_Img;
-            iv(:,:,2,1,1)=LFT_Img;
-            iv(:,:,3,1,1)=LFT_Orientations;                        
                     if send_to_Icy
-                        icy_imshow(iv);                    
-                    end
-                    
+                        [sx,sy]=size(ROI_Mask);
+                        iv = zeros(sx,sy,3,1,1,'uint8');                        
+                      iv(:,:,1,1,1)=uint8(OriginImg_Margin); %uint8(map(OriginImg_Margin,0,255));
+                      iv(:,:,2,1,1)=uint8(ROI_Mask*100);
+                      try                          
+                        icy_imshow(iv);
+                      catch
+                          disp('cannot send image to Icy');
+                      end
+                      return;
+                    end            
+                        
+            [OFT_Img, LFT_Img, LFT_Orientations] = LFT_OFT_mex(double(OriginImg_Margin),double(R),double(NofOrientations_FT),double(ROI_Mask));
+                                                                    
             % Automatic threshold button                    
             DefaultFactor = 1.42;
             I = mat2gray(OFT_Img);

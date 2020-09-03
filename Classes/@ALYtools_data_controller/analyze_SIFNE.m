@@ -75,12 +75,6 @@ function [datas, captions, table_names, fig] = analyze_SIFNE(obj,~,~)
             [L num] = bwlabel(AllFragments,8);
 
             RawCrPts = CrPts;
-%             save data\L.mat L num;
-%             save data\AllFragments.mat AllFragments;
-%             save data\Allpts.mat Allpts;
-%             save data\Size_Junc.mat Size_Junc;
-%             save data\RawCrPts.mat RawCrPts;
-
 %             figure('name','Individual Filamentous Fragments');
 %             OriginImg = imadjust(im2uint8(obj.imgdata));
 %             imshow(mat2gray(OriginImg));hold on;plot(y-R,x-R,'r.');axis off;
@@ -93,10 +87,7 @@ function [datas, captions, table_names, fig] = analyze_SIFNE(obj,~,~)
             [L num] = bwlabel(AllFragments,8);
             [x y] = find(AllFragments==1);
             Allpts = [x y];
-%             save data\AllFragments.mat AllFragments;
-%             save data\Allpts.mat Allpts;
-%             save data\L.mat L num;
-            %
+
 %             figure('name','Filtered Skeleton (Short Filaments Removed)');
 %             imshow(mat2gray(OriginImg));hold on;
 %             plot(y-R,x-R,'r.');axis off;            
@@ -118,7 +109,7 @@ all_tips(:,3) = L(sub2ind(size(L),all_tips(:,1),all_tips(:,2)));
 
 % may register tip orientation using parallel computing below
 RegR = 2*R; % to register the direction, we need to consider only a local region around a tip
-% save data\RegR.mat RegR;
+%
 tempInfo = zeros(size(all_tips,1),3);
 
 n_cores = feature('numCores');
@@ -151,7 +142,6 @@ all_tips = [all_tips, tempInfo];
 %     text(all_tips(idx,2),all_tips(idx,1),num2str(all_tips(idx,4)),'color','g');
 % end
 
-%save data\all_tips.mat all_tips;            
             %Registration of tips direction
             
 % fileID = fopen('UserSettings\GroupingSettings.txt','w');
@@ -168,12 +158,9 @@ all_tips = [all_tips, tempInfo];
                                                         
 % tips pairing - start
 
-% load data\all_tips.mat;
-% load data\AllFragments;
-% load data\L.mat;
-
-% auto set condition    
-pixelsize   = obj.microns_per_pixel;
+% auto set condition  
+PixelSize = obj.microns_per_pixel; % str2num(get(handles.EditPixelSize,'String'));
+pixelsize   = obj.microns_per_pixel; % :)
 MaxCur      = obj.SIFNE_Max_Curvature;
 FanRadius   = 1/MaxCur/pixelsize;
 FanAngle    = 360/2/pi;     % C1          
@@ -205,7 +192,7 @@ if ~MultiCore==1
     h = waitbar(0,'Tip Searching in Progress ...');
     for i = 1:size(all_tips,1)
         waitbar(i/size(all_tips,1),h);
-        new_partner_list(i,:) = local_search(L_GlobalIndex, ...            % image of skeleton and its tips are labeled with global index
+        new_partner_list(i,:) = local_search_YA(L_GlobalIndex, ...            % image of skeleton and its tips are labeled with global index
             label_list, ...               % this list will be frequently updated (if a tip has been used, it will be removed from this list)
             FanAngle, ...                 % size of the fan-shape searching region
             all_tips, ...                 % information of all tips
@@ -269,8 +256,7 @@ close(h);
 [L num] = bwlabel(AllFragments,8);
 L_GlobalIndex = zeros(size(L));
 L_GlobalIndex(sub2ind(size(L),all_tips(:,1),all_tips(:,2))) = 1:length(all_tips(:,1));
-%save data\L_GlobalIndex.mat L_GlobalIndex;
-%msgbox('Tip Search Done ! Please Proceed to GROUPING !');
+%
 disp('Tip Search Done ! Please Proceed to GROUPING !');
 
 % assign number of lives to each fragments according to the max number of lives of its two tips
@@ -288,8 +274,6 @@ all_tips = biDirPairing(all_tips);
 if Overlap == 1
     all_tips(:,8) = ones(size(all_tips,1),1); % if overlap is not allowed, the number of lives should be '1'
 end
-
-%save data\all_tips.mat all_tips;
 
 % ****** structure of all_tips so far ******   #: Number
 %           colume1            colume2           colume3         colume4         colume5            colume6        colume7          colume8          colume9               colume10                colume11          ...
@@ -427,10 +411,6 @@ disp('Grouping Done !');
 close(h);
 
 % filamentous fragment grouping ends
-% save data\all_filament.mat all_filament;
-% save data\all_connects.mat all_connects;
-% all_connects_shortlist = all_connects;
-% save data\all_connects_shortlist.mat all_connects_shortlist;
 
 % Grouping - ends
 
@@ -464,313 +444,370 @@ for i = 1:size(all_sorted_filament,1)
         break;
     end
 end
-%msgbox('Analysis and Sorting Done !');
+%
 disp('Analysis and Sorting Done !');
-
-% save data\all_sorted_filament.mat all_sorted_filament;
-% save data\AnalysisInfo.mat AnalysisInfo;
 
 % Sorting - ends
 
+% remove short filaments
+ShortFilament = obj.SIFNE_Sorting_Minimum_Filament_Size;
+
+RemoveIdx = [];
+
+h = waitbar(0,'Removing Short Filaments...');
+for i = 1:size(all_sorted_filament,3)
+    waitbar(i/size(all_sorted_filament,3),h);
+    if AnalysisInfo(i,2) <= ShortFilament
+        RemoveIdx = [RemoveIdx i];
+    end
+end
+close(h);
+all_sorted_filament(:,:,RemoveIdx) = [];
+AnalysisInfo(RemoveIdx,:) = [];
+all_connects(:,:,RemoveIdx) = [];
+
+% % remove ungrouped below
+% RemoveUngrp = 1; % get(handles.RemoveUngrp,'Value');
+% if RemoveUngrp==1
+%     AllFragments = im2bw(AllFragments);
+%     RemoveIdx = [];
+%     h = waitbar(0,'Removing Ungrouped Fragments...');
+%     for i = 1:size(all_sorted_filament,3)
+%         waitbar(i/size(all_sorted_filament,3),h);
+%         temp = all_sorted_filament(:,:,i);
+%         temp(find(temp(:,1)==0),:) = [];
+%         if size(temp,1)==sum(AllFragments(sub2ind(size(AllFragments),temp(:,1),temp(:,2))))
+%             RemoveIdx = [RemoveIdx  i];
+%         end
+%     end
+%     close(h);
+%     all_sorted_filament(:,:,RemoveIdx) = [];
+%     AnalysisInfo(RemoveIdx,:) = [];
+%     all_connects(:,:,RemoveIdx) = [];
+% end
+
+% remove ungrouped above
+
+% remove short filaments
+
+% COMMENTED - PREV. ANALYSES - STARTS
 % Analyses
 
-%Analysis 1
-        warning off;
-%         close(figure(1));close(figure(2));
-%         load data\R.mat;
-%         load data\AllFragments.mat;
-%         load data\L.mat;
-%         load data\all_sorted_filament.mat all_sorted_filament;
-%         load data\AnalysisInfo.mat;
-%         load data\ROI_Mask;
-        % reconstruct network
-        allpts_IncludeDup = [];
-        Overlay_Map = zeros(size(L));
-        h = waitbar(0,'Retrieve All Filaments');
-        for i = 1:size(all_sorted_filament,3)
-            waitbar(i/size(all_sorted_filament,3),h);
-            temp1 = all_sorted_filament(:,:,i); % get all coordinates
-            temp1(find(temp1(:,1)==0),:) = []; % remove zeros
-            allpts_IncludeDup = [allpts_IncludeDup;temp1];
-            % check points used more than once
-            Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) = Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) + 1;
-        end
-        close(h);
-        
-        h22=figure(22);
-        imshow(mat2gray(AllFragments((R+1):(size(AllFragments,1)-R), (R+1):(size(AllFragments,2)-R))));hold on;axis off;
-        screen_size = get(0, 'ScreenSize'); 
-        set(h22, 'Position', [0 0 screen_size(3) screen_size(4) ] );
-        ColorList = rand(32,3);
-        temp = 1:size(all_sorted_filament,3);
-        for i = 1:32
-            idx = find(mod(temp,32)==(i-1));
-            temp1 = all_sorted_filament(:,1,idx);  temp1 = temp1(:);  temp1(find(temp1==0)) = [];
-            temp2 = all_sorted_filament(:,2,idx);  temp2 = temp2(:);  temp2(find(temp2==0)) = [];
-            plot(temp2-R,temp1-R,'.','color',ColorList(i,:),'MarkerSize',6);hold on;
-        end
-        %Overlap = get(handles.OverlapList,'Value');
-        %if Overlap==2
-        if Overlap~=1
-            [x y] = find(Overlay_Map>1);
-            plot(y-R,x-R,'r.','MarkerSize',6);hold on;
-        end
-        B = bwboundaries(ROI_Mask);
-        for k=1:numel(B)
-            B_k = B{k};
-            plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
-        end          
-        set(gcf, 'Name', fname, 'numbertitle', 'off');
-        saveas(h22,[save_dir filesep fname '_' 'Extracted_Filaments.fig']);
-        close(h22);
-%Analysis 1
-
-%Analysis 2
-        warning off;
-%         load data\R.mat;
-%         load data\OriginImg.mat;
-%         load data\L.mat;
-%         load data\all_sorted_filament.mat all_sorted_filament;
-%         load data\ROI_Mask;
-
-        PixelSize = obj.microns_per_pixel; % str2num(get(handles.EditPixelSize,'String'));
-                
-        Overlay_Map = zeros(size(L));
-        h = waitbar(0,'Checking Junctions ...');
-        for i = 1:size(all_sorted_filament,3)
-            waitbar(i/size(all_sorted_filament,3),h);
-            temp1 = all_sorted_filament(:,:,i);
-            temp1(find(temp1(:,1)==0),:) = [];
-            Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) = Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) + 1;
-        end
-        close(h);
-        [x y] = find(Overlay_Map>1);
-        
-        CroMap = zeros(size(L));
-        CroMap(sub2ind(size(L),x,y)) = 1;
-        for i = 1:length(x)
-            temp = CroMap((x(i)-1):(x(i)+1), (y(i)-1):(y(i)+1));
-            if sum(temp(:))>1
-                CroMap(x(i),y(i)) = 0;
-            end
-        end
-        [x y] = find(CroMap==1);
-        NewCrPts = [x y];
-        %save data\NewCrPts.mat NewCrPts;
-        
-        disF=bwdist(bwmorph(ROI_Mask,'remove'));
-        mask = ROI_Mask;
-        mask = single(mask);
-        mask(mask==0)=0;
-        disF = disF.*mask;
-        disF = disF*PixelSize;
-        
-        h22=figure(22);
-        imagesc(disF);colormap(jet);hold on;axis off;axis image;colorbar;
-        [xx yy] = find(Overlay_Map~=0);
-        plot(yy,xx,'k.');
-        plot(y,x,'g.','MarkerSize',15);title('Distribution of Junctions');
-        B = bwboundaries(ROI_Mask);
-        for k=1:numel(B)
-            B_k = B{k};
-            plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
-        end        
-        
-        disF=bwdist(bwmorph(ROI_Mask,'remove'));
-        mask = ROI_Mask;
-        mask = single(mask);
-        mask(mask==0)=-1;
-        disF = disF.*mask;
-        d = disF(sub2ind(size(disF),x,y))*PixelSize;
-        set(gcf, 'Name', fname, 'numbertitle', 'off');
-        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions.fig']);
-        close(h22);
-        
-        h22 = figure(22);
-        %         histogram(d);%axis square;
-        histfit(d,50,'kernel');xlim([0 inf]);
-        ylabel('Frequency');
-        xlabel('Distance to Cell Edge (\mum)');
-        title('Distribution of Junctions');
-        set(gcf, 'Name', fname, 'numbertitle', 'off');
-        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions_Analysis.fig']);        
-        close(h22);
-%Analysis 2
-
-%Analysis 3
+% % all_sorted_filament
+% % AllFragments
+% % ROI_Mask
+% % R
+% %Analysis 1
 %         warning off;
-%         close(figure(1));close(figure(2));
+% %         close(figure(1));close(figure(2));
+% %         load data\R.mat;
+% %         load data\AllFragments.mat;
+% %         load data\L.mat;
+% %         load data\all_sorted_filament.mat all_sorted_filament;
+% %         load data\AnalysisInfo.mat;
+% %         load data\ROI_Mask;
+%         % reconstruct network
+%         allpts_IncludeDup = [];
+%         Overlay_Map = zeros(size(L));
+%         h = waitbar(0,'Retrieve All Filaments');
+%         for i = 1:size(all_sorted_filament,3)
+%             waitbar(i/size(all_sorted_filament,3),h);
+%             temp1 = all_sorted_filament(:,:,i); % get all coordinates
+%             temp1(find(temp1(:,1)==0),:) = []; % remove zeros
+%             allpts_IncludeDup = [allpts_IncludeDup;temp1];
+%             % check points used more than once
+%             Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) = Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) + 1;
+%         end
+%         close(h);
 %         
-%         load data\all_sorted_filament.mat;
-%         load data\AnalysisInfo.mat;
-%         load data\L;
-%         load data\ROI_Mask;
-        % plot of information of all filaments
-        %PixelSize = str2num(get(handles.EditPixelSize,'String'));
-        h22 = figure;
-        h=rose(pi*AnalysisInfo(:,1)/180,30);axis off;
-        set(h,'linewidth',3)
-        axis square;
-        daspect([1 1 1]);
-        title('Histogram of Filaments Orientations');
-        set(gcf, 'Name', fname, 'numbertitle', 'off');
-        saveas(h22,[save_dir filesep fname '_' 'Histogram_of_Orientations.fig']);
-        close(h22);
-        
-%         mkdir result;
-%         saveas(figure(1),'result\Histogram_of_Orientations.fig');
-        
-        allc = AnalysisInfo(:,4:5);
-        disF=bwdist(bwmorph(ROI_Mask,'remove'));
-        mask = ROI_Mask;
-        mask = single(mask);
-        mask(mask==0)=-1;
-        disF = disF.*mask;
-        d = disF(sub2ind(size(L),ceil(allc(:,1)),ceil(allc(:,2))))*PixelSize;
-        
-        finalmap = zeros(181,ceil(max(d)));
-        
-        h = waitbar(0,'generating colormap ...');
-        for i = 1:length(d)
-            waitbar(i/size(all_sorted_filament,3),h);
-            if ceil(d(i))>0
-                finalmap(ceil(AnalysisInfo(i,1)+91), ceil(d(i))) = finalmap(ceil(AnalysisInfo(i,1)+91), ceil(d(i))) + 1;
-            end
-        end
-        close(h);
-        
-        h22 = figure(22);
-        imagesc(finalmap);colormap(jet);colorbar;
-        set(gca,'ytick',[]);
-        xlabel('Distance to Cell Edge (\mum)');ylabel('-90 degrees to 90 degrees');
-        title('Distribution of Filament Orientations');
-        set(gcf, 'Name', fname, 'numbertitle', 'off');
-        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Orientations.fig']);
-        close(h22);
-%Analysis 3
-
-% Analysis 4
+%         h22=figure(22);
+%         imshow(mat2gray(AllFragments((R+1):(size(AllFragments,1)-R), (R+1):(size(AllFragments,2)-R))));hold on;axis off;
+%         screen_size = get(0, 'ScreenSize'); 
+%         set(h22, 'Position', [0 0 screen_size(3) screen_size(4) ] );
+%         ColorList = rand(32,3);
+%         temp = 1:size(all_sorted_filament,3);
+%         for i = 1:32
+%             idx = find(mod(temp,32)==(i-1));
+%             temp1 = all_sorted_filament(:,1,idx);  temp1 = temp1(:);  temp1(find(temp1==0)) = [];
+%             temp2 = all_sorted_filament(:,2,idx);  temp2 = temp2(:);  temp2(find(temp2==0)) = [];
+%             plot(temp2-R,temp1-R,'.','color',ColorList(i,:),'MarkerSize',6);hold on;
+%         end
+%         %Overlap = get(handles.OverlapList,'Value');
+%         %if Overlap==2
+%         if Overlap~=1
+%             [x y] = find(Overlay_Map>1);
+%             plot(y-R,x-R,'r.','MarkerSize',6);hold on;
+%         end
+%         B = bwboundaries(ROI_Mask);
+%         for k=1:numel(B)
+%             B_k = B{k};
+%             plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
+%         end          
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+%         saveas(h22,[save_dir filesep fname '_' 'Extracted_Filaments.fig']);
+%         close(h22);
+% %Analysis 1
+% 
+% % all_sorted_filament
+% % PixelSize
+% % ROI_Mask
+% % R
+% %Analysis 2
 %         warning off;
-%         close(figure(1));close(figure(2));
-%         load data\all_sorted_filament;
-%         load data\ROI_Mask;
-%         load data\AllFragments;
-        curR = round(FanR/2); % round(str2num(get(handles.FanR,'String'))/2);
-        
-        disF=bwdist(bwmorph(ROI_Mask,'remove'));
-        mask = ROI_Mask;
-        mask = single(mask);
-        mask(mask==0)=-1;
-        disF = disF.*mask;
-        
-        allcur = [];
-        alldSDF = [];
-        M = zeros(size(AllFragments));
-        h = waitbar(0,'Calculating Curvatures ...');
-        all_filament_curs = [];
-        all_mean_cur = zeros(1,size(all_sorted_filament,3));
-        for i = 1:size(all_sorted_filament,3)
-            waitbar(i/size(all_sorted_filament,3),h);
-            F = all_sorted_filament(:,:,i);
-            F(find(F(:,1)==0),:) = [];
-            Dlist = 0;
-            for j = 2:size(F,1)
-                Dlist = [Dlist  Dlist(j-1)+pdist([F(j-1,:); F(j,:)])];
-            end
-            NoCurlist = unique([find(Dlist<=curR)  find(Dlist>=(Dlist(end)-curR))]);
-            if length(NoCurlist)~=size(F,1)
-                for j = 1:size(F,1)
-                    if isempty(find(NoCurlist==j))
-                        x2 = F(j,1);
-                        y2 = F(j,2);
-                        D = Dlist - Dlist(j);
-                        D1 = abs(D - curR);
-                        idx1 = find(D1==min(D1));
-                        D2 = abs(D - (-curR));
-                        idx2 = find(D2==min(D2));
-                        x1 = F(idx1,1);
-                        y1 = F(idx1,2);
-                        x3 = F(idx2,1);
-                        y3 = F(idx2,2);
-                        alldSDF = [alldSDF  disF(sub2ind(size(disF),x2,y2))*PixelSize];
-                        cur = 2*abs((x2-x1).*(y3-y1)-(x3-x1).*(y2-y1)) ./sqrt(((x2-x1).^2+(y2-y1).^2)*((x3-x1).^2+(y3-y1).^2)*((x3-x2).^2+(y3-y2).^2));
-                        allcur = [allcur  cur/PixelSize];
-                        M(F(j,1),F(j,2)) = cur;
-                        all_filament_curs(j,1,i) = x2;
-                        all_filament_curs(j,2,i) = y2;
-                        all_filament_curs(j,3,i) = cur/PixelSize;
-                        all_filament_curs(j,4,i) = 1;% flag for calculation done for this point
-                    end
-                end
-                k = find(all_filament_curs(:,4,i)==1);
-                all_mean_cur(i) = mean(all_filament_curs(k,3,i));
-            end
-        end
-        close(h);
-        M = M/PixelSize;
-        h22 = figure(22);
-        imagesc(M); colormap(jet);colorbar; title('Distribution of Curvatures');axis off;axis image;
-        set(gcf, 'Name', fname, 'numbertitle', 'off');
-        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures.fig']);
-        close(h22);
-          
-        All_Curs = [];
-        All_Curs_4plot = [];
-        disF=bwdist(bwmorph(ROI_Mask,'remove'));
-        mask = ROI_Mask;
-        mask = single(mask);
-        mask(mask==0)=-1;
-        disF = disF.*mask;
-        %
-        h = waitbar(0,'Calculating the Distribution of Curvatures ...');
-        for m = 1:size(all_filament_curs,3)
-            waitbar(m/size(all_filament_curs,3),h);
-            Cur = all_filament_curs(:,:,m);
-            F = all_sorted_filament;
-            F(find(F(:,1)==0),:) = [];
-            Cur(find(Cur(:,4)==0),:) = [];
-            if isempty(Cur)
-                All_Curs_4plot = [All_Curs_4plot;  disF(sub2ind(size(disF),round((F(1,1)+F(end,1))/2),round((F(end,2)+F(1,2))/2)))   0];
-                All_Curs = [All_Curs, 0];
-            else
-                All_Curs_4plot = [All_Curs_4plot;  disF(sub2ind(size(disF),Cur(:,1),Cur(:,2)))   Cur(:,3)];
-                All_Curs = [All_Curs, Cur(:,3)'];
-            end
-        end
-        close(h);
-        All_Curs_4plot(:,1) = round(All_Curs_4plot(:,1));
-        temp_mean_cur = [];
-        x1 = [];
-        y1 = [];
-        for i = min(All_Curs_4plot(:,1)): max(All_Curs_4plot(:,1))
-            k = find(All_Curs_4plot(:,1)==i);
-            temp_mean_cur = [temp_mean_cur  mean(All_Curs_4plot(k,2))];
-            if length(k)>5
-                x1 = [x1  i];
-                y1 = [y1  mean(All_Curs_4plot(k,2))];
-            end
-        end
-
-        h22 = figure(22);
-        subplot(1,2,1);
-        histfit(all_mean_cur,50,'kernel');xlim([0 inf]);
-        xlabel('Curvature (unit: \mum^-^1)');ylabel('Frequency');
-        title('Distribution of Means of Filament Curvatures');
-        %        
-        
-        subplot(1,2,2);
-        plot(x1*0.02, y1,  'r');hold on;axis([0 inf 0 inf]);
-        xlabel('Distance to Cell Edge (unit: \mum)');ylabel('Mean Curvature (unit: \mum^-^1)');
-        title('Distribution of Curvatures');
-        set(gcf, 'Name', fname, 'numbertitle', 'off');
-        saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures_Analysis.fig']);
-        close(h22);
-        %save data\all_filament_curs.mat all_filament_curs;
-        %mkdir result;
-        %saveas(figure(1),'result\Distribution_of_Curvatures.fig');
-        %saveas(figure(2),'result\Distribution_of_Curvatures_Analysis.fig');
-
-% Analysis 4
+% %         load data\R.mat;
+% %         load data\OriginImg.mat;
+% %         load data\L.mat;
+% %         load data\all_sorted_filament.mat all_sorted_filament;
+% %         load data\ROI_Mask;
+% 
+%         PixelSize = obj.microns_per_pixel; % str2num(get(handles.EditPixelSize,'String'));
+%                 
+%         Overlay_Map = zeros(size(L));
+%         h = waitbar(0,'Checking Junctions ...');
+%         for i = 1:size(all_sorted_filament,3)
+%             waitbar(i/size(all_sorted_filament,3),h);
+%             temp1 = all_sorted_filament(:,:,i);
+%             temp1(find(temp1(:,1)==0),:) = [];
+%             Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) = Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) + 1;
+%         end
+%         close(h);
+%         [x y] = find(Overlay_Map>1);
+%         
+%         CroMap = zeros(size(L));
+%         CroMap(sub2ind(size(L),x,y)) = 1;
+%         for i = 1:length(x)
+%             temp = CroMap((x(i)-1):(x(i)+1), (y(i)-1):(y(i)+1));
+%             if sum(temp(:))>1
+%                 CroMap(x(i),y(i)) = 0;
+%             end
+%         end
+%         [x y] = find(CroMap==1);
+%         NewCrPts = [x y];
+%         %save data\NewCrPts.mat NewCrPts;
+%         
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=0;
+%         disF = disF.*mask;
+%         disF = disF*PixelSize;
+%         
+%         h22=figure(22);
+%         imagesc(disF);colormap(jet);hold on;axis off;axis image;colorbar;
+%         [xx yy] = find(Overlay_Map~=0);
+%         plot(yy,xx,'k.');
+%         plot(y,x,'g.','MarkerSize',15);title('Distribution of Junctions');
+%         B = bwboundaries(ROI_Mask);
+%         for k=1:numel(B)
+%             B_k = B{k};
+%             plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
+%         end        
+%         
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=-1;
+%         disF = disF.*mask;
+%         d = disF(sub2ind(size(disF),x,y))*PixelSize;
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+%         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions.fig']);
+%         close(h22);
+% 
+%         if ~isempty(d)
+%             h22 = figure(22);
+%             %         histogram(d);%axis square;
+%             histfit(d,50,'kernel');xlim([0 inf]);
+%             ylabel('Frequency');
+%             xlabel('Distance to Cell Edge (\mum)');
+%             title('Distribution of Junctions');
+%             set(gcf, 'Name', fname, 'numbertitle', 'off');
+%             saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Junctions_Analysis.fig']);        
+%             close(h22);
+%         end
+% %Analysis 2
+% 
+% %AnalysisInfo
+% %ROI_Mask
+% %all_sorted_filament
+% %Analysis 3
+% %         warning off;
+% %         close(figure(1));close(figure(2));
+% %         
+% %         load data\all_sorted_filament.mat;
+% %         load data\AnalysisInfo.mat;
+% %         load data\L;
+% %         load data\ROI_Mask;
+%         % plot of information of all filaments
+%         %PixelSize = str2num(get(handles.EditPixelSize,'String'));
+%         h22 = figure;
+%         h=rose(pi*AnalysisInfo(:,1)/180,30);axis off;
+%         set(h,'linewidth',3)
+%         axis square;
+%         daspect([1 1 1]);
+%         title('Histogram of Filaments Orientations');
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+%         saveas(h22,[save_dir filesep fname '_' 'Histogram_of_Orientations.fig']);
+%         close(h22);
+%         
+% %         mkdir result;
+% %         saveas(figure(1),'result\Histogram_of_Orientations.fig');
+%         
+%         allc = AnalysisInfo(:,4:5);
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=-1;
+%         disF = disF.*mask;
+%         d = disF(sub2ind(size(L),ceil(allc(:,1)),ceil(allc(:,2))))*PixelSize;
+%         
+%         finalmap = zeros(181,ceil(max(d)));
+%         
+%         h = waitbar(0,'generating colormap ...');
+%         for i = 1:length(d)
+%             waitbar(i/size(all_sorted_filament,3),h);
+%             if ceil(d(i))>0
+%                 finalmap(ceil(AnalysisInfo(i,1)+91), ceil(d(i))) = finalmap(ceil(AnalysisInfo(i,1)+91), ceil(d(i))) + 1;
+%             end
+%         end
+%         close(h);
+%         
+%         h22 = figure(22);
+%         imagesc(finalmap);colormap(jet);colorbar;
+%         set(gca,'ytick',[]);
+%         xlabel('Distance to Cell Edge (\mum)');ylabel('-90 degrees to 90 degrees');
+%         title('Distribution of Filament Orientations');
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+%         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Orientations.fig']);
+%         close(h22);
+% %Analysis 3
+% 
+% %FanR
+% %AllFragments
+% %all_sorted_filament
+% %PixelSize
+% %ROI_Mask
+% % Analysis 4
+% %         warning off;
+% %         close(figure(1));close(figure(2));
+% %         load data\all_sorted_filament;
+% %         load data\ROI_Mask;
+% %         load data\AllFragments;
+%         curR = round(FanR/2); % round(str2num(get(handles.FanR,'String'))/2);
+%         
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=-1;
+%         disF = disF.*mask;
+%         
+%         allcur = [];
+%         alldSDF = [];
+%         M = zeros(size(AllFragments));
+%         h = waitbar(0,'Calculating Curvatures ...');
+%         all_filament_curs = [];
+%         all_mean_cur = zeros(1,size(all_sorted_filament,3));
+%         for i = 1:size(all_sorted_filament,3)
+%             waitbar(i/size(all_sorted_filament,3),h);
+%             F = all_sorted_filament(:,:,i);
+%             F(find(F(:,1)==0),:) = [];
+%             Dlist = 0;
+%             for j = 2:size(F,1)
+%                 Dlist = [Dlist  Dlist(j-1)+pdist([F(j-1,:); F(j,:)])];
+%             end
+%             NoCurlist = unique([find(Dlist<=curR)  find(Dlist>=(Dlist(end)-curR))]);
+%             if length(NoCurlist)~=size(F,1)
+%                 for j = 1:size(F,1)
+%                     if isempty(find(NoCurlist==j))
+%                         x2 = F(j,1);
+%                         y2 = F(j,2);
+%                         D = Dlist - Dlist(j);
+%                         D1 = abs(D - curR);
+%                         idx1 = find(D1==min(D1));
+%                         D2 = abs(D - (-curR));
+%                         idx2 = find(D2==min(D2));
+%                         x1 = F(idx1,1);
+%                         y1 = F(idx1,2);
+%                         x3 = F(idx2,1);
+%                         y3 = F(idx2,2);
+%                         alldSDF = [alldSDF  disF(sub2ind(size(disF),x2,y2))*PixelSize];
+%                         cur = 2*abs((x2-x1).*(y3-y1)-(x3-x1).*(y2-y1)) ./sqrt(((x2-x1).^2+(y2-y1).^2)*((x3-x1).^2+(y3-y1).^2)*((x3-x2).^2+(y3-y2).^2));
+%                         allcur = [allcur  cur/PixelSize];
+%                         M(F(j,1),F(j,2)) = cur;
+%                         all_filament_curs(j,1,i) = x2;
+%                         all_filament_curs(j,2,i) = y2;
+%                         all_filament_curs(j,3,i) = cur/PixelSize;
+%                         all_filament_curs(j,4,i) = 1;% flag for calculation done for this point
+%                     end
+%                 end
+%                 k = find(all_filament_curs(:,4,i)==1);
+%                 all_mean_cur(i) = mean(all_filament_curs(k,3,i));
+%             end
+%         end
+%         close(h);
+%         M = M/PixelSize;
+%         h22 = figure(22);
+%         imagesc(M); colormap(jet);colorbar; title('Distribution of Curvatures');axis off;axis image;
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+%         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures.fig']);
+%         close(h22);
+%           
+%         All_Curs = [];
+%         All_Curs_4plot = [];
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=-1;
+%         disF = disF.*mask;
+%         %
+%         h = waitbar(0,'Calculating the Distribution of Curvatures ...');
+%         for m = 1:size(all_filament_curs,3)
+%             waitbar(m/size(all_filament_curs,3),h);
+%             Cur = all_filament_curs(:,:,m);
+%             F = all_sorted_filament;
+%             F(find(F(:,1)==0),:) = [];
+%             Cur(find(Cur(:,4)==0),:) = [];
+%             if isempty(Cur)
+%                 All_Curs_4plot = [All_Curs_4plot;  disF(sub2ind(size(disF),round((F(1,1)+F(end,1))/2),round((F(end,2)+F(1,2))/2)))   0];
+%                 All_Curs = [All_Curs, 0];
+%             else
+%                 All_Curs_4plot = [All_Curs_4plot;  disF(sub2ind(size(disF),Cur(:,1),Cur(:,2)))   Cur(:,3)];
+%                 All_Curs = [All_Curs, Cur(:,3)'];
+%             end
+%         end
+%         close(h);
+%         All_Curs_4plot(:,1) = round(All_Curs_4plot(:,1));
+%         temp_mean_cur = [];
+%         x1 = [];
+%         y1 = [];
+%         for i = min(All_Curs_4plot(:,1)): max(All_Curs_4plot(:,1))
+%             k = find(All_Curs_4plot(:,1)==i);
+%             temp_mean_cur = [temp_mean_cur  mean(All_Curs_4plot(k,2))];
+%             if length(k)>5
+%                 x1 = [x1  i];
+%                 y1 = [y1  mean(All_Curs_4plot(k,2))];
+%             end
+%         end
+% 
+%         h22 = figure(22);
+%         subplot(1,2,1);
+%         histfit(all_mean_cur,50,'kernel');xlim([0 inf]);
+%         xlabel('Curvature (unit: \mum^-^1)');ylabel('Frequency');
+%         title('Distribution of Means of Filament Curvatures');
+%         %        
+%         
+%         subplot(1,2,2);
+%         plot(x1*0.02, y1,  'r');hold on;axis([0 inf 0 inf]);
+%         xlabel('Distance to Cell Edge (unit: \mum)');ylabel('Mean Curvature (unit: \mum^-^1)');
+%         title('Distribution of Curvatures');
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+%         saveas(h22,[save_dir filesep fname '_' 'Distribution_of_Curvatures_Analysis.fig']);
+%         close(h22);
+%         %save data\all_filament_curs.mat all_filament_curs;
+%         %mkdir result;
+%         %saveas(figure(1),'result\Distribution_of_Curvatures.fig');
+%         %saveas(figure(2),'result\Distribution_of_Curvatures_Analysis.fig');
+% 
+% % Analysis 4
 
 % Analysis 5 %xls saving...
 %         warning off;
@@ -954,11 +991,505 @@ disp('Analysis and Sorting Done !');
 % Analysis 5
 
 
+% all_sorted_filament
+% AllFragments
+% ROI_Mask
+% R
+% all_sorted_filament
+% PixelSize
+% ROI_Mask
+% R
+%AnalysisInfo
+%ROI_Mask
+%all_sorted_filament
+%FanR
+%AllFragments
+%all_sorted_filament
+%PixelSize
+% %ROI_Mask
+% 
+% RawImg = obj.imgdata;
+% 
+% save([save_dir filesep fname '_raw_analysis_data'],...
+% 'all_sorted_filament', ...
+% 'AllFragments', ...
+% 'ROI_Mask', ...
+% 'RawImg', ...
+% 'R', ...
+% 'PixelSize', ...
+% 'AnalysisInfo', ...
+% 'FanR');
+
 % Analyses
 
-
             % if ~isempty(hw), delete(hw), drawnow; end
-           
+            
+% COMMENTED - PREV. ANALYSES - ENDS
+                        
+% refactored analyses            
+RawImg = obj.imgdata;
+
+[H, W] = size(RawImg);
+ref_img = zeros(H+R+R,W+R+R);
+ref_img(R+1:H+R,R+1:W+R) = RawImg;
+
+%Overlap = strcmp(obj.SIFNE_Filament_Overlap,'None (For Intricate Network)'); %get(handles.OverlapList,'Value');
+Overlap = 1; % 'None (For Intricate Network)'
+%Overlap = 2; % 'Allowed'
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%% local orientational jitter
+
+        % reconstruct network
+        allpts_IncludeDup = [];
+        flab = zeros(size(L));
+        joints = zeros(size(L));
+        h = waitbar(0,'Scanning All Filaments');
+        for i = 1:size(all_sorted_filament,3)
+            waitbar(i/size(all_sorted_filament,3),h);
+            temp1 = all_sorted_filament(:,:,i); % get all coordinates
+            temp1(find(temp1(:,1)==0),:) = []; % remove zeros
+            % check points used more than once
+            flab(sub2ind(size(L),temp1(:,1),temp1(:,2))) = i;
+            joints(sub2ind(size(L),temp1(:,1),temp1(:,2))) = joints(sub2ind(size(L),temp1(:,1),temp1(:,2))) + 1;
+        end
+        close(h);
+        
+        joints = imdilate(joints>1,strel('disk',2));        
+        flab = flab.*(~joints);
+                
+        tic
+        %A = get_blobs_adjacency(flab,[],true);        
+        A = get_blobs_adjacency(flab,ROI_Mask,true);
+        %icy_imshow(A);
+        toc/60
+
+loj = zeros(size(A,1),1); %local orientational jitter
+labs = (1:size(A,1));
+parfor k=1:size(A,1)
+    tta_k = AnalysisInfo(k,1);
+    adj_k = A(k,:).*labs;
+    adj_k = adj_k(adj_k~=0);
+    num = 0;
+    denom = 0;
+    for m=1:numel(adj_k)
+        tta_m = AnalysisInfo(m,1);
+        l_m = AnalysisInfo(m,2); % use length as weight        
+        diff_angle = abs(tta_k - tta_m);
+        num = num + diff_angle*l_m;
+        denom = denom + l_m;        
+    end
+    loj(k) = num/denom;
+end
+
+%         figure;
+%         histogram(loj,'Normalization','probability');
+%         xlabel('local orientational jitter [deg]');
+%         ylabel('probability');
+%         grid(gca,'on');
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%% local orientational jitter
+
+% %Analysis 1
+        % reconstruct network
+        allpts_IncludeDup = [];
+        Overlay_Map = zeros(size(L));
+        h = waitbar(0,'Retrieve All Filaments');
+        arrlength = zeros(1,size(all_sorted_filament,3));
+        for i = 1:size(all_sorted_filament,3)
+            waitbar(i/size(all_sorted_filament,3),h);
+            temp1 = all_sorted_filament(:,:,i); % get all coordinates
+            temp1(find(temp1(:,1)==0),:) = []; % remove zeros
+            allpts_IncludeDup = [allpts_IncludeDup;temp1];
+            % check points used more than once
+            Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) = Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) + 1;
+            arrlength(i) = size(temp1,1);
+        end
+        close(h);
+        
+%         figure;
+%         histogram(arrlength*PixelSize,'Normalization','probability');
+%         xlabel('filament length [\mum]');
+%         ylabel('probability');
+%         axis([0 14 0 0.4]);
+%         grid(gca,'on');
+                
+        % intensity on original image (relative to average intensity of filaments)
+        % std of this intensity
+        %
+        sample = ref_img(0~=Overlay_Map);
+        mean_filament_intensity = mean(sample(:));
+        %
+        h = waitbar(0,'Scanning Filaments');
+        arr_mean_filament_intensity = zeros(1,size(all_sorted_filament,3));
+        arr_std_filament_intensity = zeros(1,size(all_sorted_filament,3));
+        for i = 1:size(all_sorted_filament,3)
+            waitbar(i/size(all_sorted_filament,3),h);
+            temp1 = all_sorted_filament(:,:,i); % get all coordinates
+            temp1(find(temp1(:,1)==0),:) = []; % remove zeros
+            sample = ref_img(sub2ind(size(L),temp1(:,1),temp1(:,2)));
+            arr_mean_filament_intensity(i) = mean(sample(:))/mean_filament_intensity;
+            arr_std_filament_intensity(i) = std(sample(:))/mean_filament_intensity;
+        end
+        close(h);
+        %
+%         figure;
+%         plot(arr_mean_filament_intensity,arr_std_filament_intensity,'k.','markersize',12);
+%         xlabel('relative filament intensity: mean');
+%         ylabel('relative filament intensity: std');
+%         axis([0 5 0 3.5]);
+%         grid(gca,'on');        
+                        
+%         h99=figure(99);
+%         imshow(mat2gray(AllFragments((R+1):(size(AllFragments,1)-R), (R+1):(size(AllFragments,2)-R))));hold on;axis off;
+%         screen_size = get(0, 'ScreenSize'); 
+%         set(h99, 'Position', [0 0 screen_size(3) screen_size(4) ] );
+%         ColorList = rand(32,3);
+%         temp = 1:size(all_sorted_filament,3);
+%         for i = 1:32
+%             idx = find(mod(temp,32)==(i-1));
+%             temp1 = all_sorted_filament(:,1,idx);  temp1 = temp1(:);  temp1(find(temp1==0)) = [];
+%             temp2 = all_sorted_filament(:,2,idx);  temp2 = temp2(:);  temp2(find(temp2==0)) = [];
+%             plot(temp2-R,temp1-R,'.','color',ColorList(i,:),'MarkerSize',6);hold on;
+%         end
+%         %
+%         if Overlap~=1
+%             [x y] = find(Overlay_Map>1);
+%             plot(y-R,x-R,'r.','MarkerSize',6);hold on;
+%         end
+%         B = bwboundaries(ROI_Mask);
+%         for k=1:numel(B)
+%             B_k = B{k};
+%             plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
+%         end          
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+% %Analysis 1
+% 
+% %Analysis 2
+                
+        Overlay_Map = zeros(size(L));
+        h = waitbar(0,'Checking Junctions ...');
+        for i = 1:size(all_sorted_filament,3)
+            waitbar(i/size(all_sorted_filament,3),h);
+            temp1 = all_sorted_filament(:,:,i);
+            temp1(find(temp1(:,1)==0),:) = [];
+            Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) = Overlay_Map(sub2ind(size(L),temp1(:,1),temp1(:,2))) + 1;
+        end
+        close(h);
+        [x y] = find(Overlay_Map>1);
+        
+        CroMap = zeros(size(L));
+        CroMap(sub2ind(size(L),x,y)) = 1;
+        for i = 1:length(x)
+            temp = CroMap((x(i)-1):(x(i)+1), (y(i)-1):(y(i)+1));
+            if sum(temp(:))>1
+                CroMap(x(i),y(i)) = 0;
+            end
+        end
+        [x y] = find(CroMap==1);
+        NewCrPts = [x y];
+        
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=0;
+%         disF = disF.*mask;
+%         disF = disF*PixelSize;
+%         
+%         h33=figure(33);
+%         imagesc(disF);colormap(jet);hold on;axis off;axis image;colorbar;
+%         [xx yy] = find(Overlay_Map~=0);
+%         plot(yy,xx,'k.');
+%         plot(y,x,'d','MarkerFaceColor','m','MarkerEdgeColor','k','MarkerSize',8);                
+%         title('Distribution of Junctions');
+%         B = bwboundaries(ROI_Mask);
+%         for k=1:numel(B)
+%             B_k = B{k};
+%             plot(B_k(:,2),B_k(:,1),'.','color',[1 1 1],'MarkerSize',6);hold on;
+%         end        
+%         
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=-1;
+%         disF = disF.*mask;
+%         d = disF(sub2ind(size(disF),x,y))*PixelSize;
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+% 
+%         if ~isempty(d)
+%             h44 = figure(44);
+%             %         histogram(d);%axis square;
+%             histfit(d,50,'kernel');xlim([0 inf]);
+%             ylabel('Frequency');
+%             xlabel('Distance to Cell Edge (\mum)');
+%             title('Distribution of Junctions');
+%             set(gcf, 'Name', fname, 'numbertitle', 'off');
+%         end
+% %Analysis 2
+% 
+% %Analysis 3
+%         h55 = figure;
+%         h=rose(pi*AnalysisInfo(:,1)/180,30);axis off;
+%         set(h,'linewidth',3)
+%         axis square;
+%         daspect([1 1 1]);
+%         title('Histogram of Filaments Orientations');
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+                
+%         allc = AnalysisInfo(:,4:5);
+%         disF=bwdist(bwmorph(ROI_Mask,'remove'));
+%         mask = ROI_Mask;
+%         mask = single(mask);
+%         mask(mask==0)=-1;
+%         disF = disF.*mask;
+%         d = disF(sub2ind(size(L),ceil(allc(:,1)),ceil(allc(:,2))))*PixelSize;
+%         
+%         finalmap = zeros(181,ceil(max(d)));
+%         
+%         h = waitbar(0,'generating colormap ...');
+%         for i = 1:length(d)
+%             waitbar(i/size(all_sorted_filament,3),h);
+%             if ceil(d(i))>0
+%                 finalmap(ceil(AnalysisInfo(i,1)+91), ceil(d(i))) = finalmap(ceil(AnalysisInfo(i,1)+91), ceil(d(i))) + 1;
+%             end
+%         end
+%         close(h);
+        
+%         h2 = figure(2);
+%         shape_factor = AnalysisInfo(:,2)./AnalysisInfo(:,3);
+%         histogram(shape_factor,'Normalization','probability');
+%         xlabel('tortuosity');
+%         ylabel('probability');
+%         axis([1 1.8 0 0.4]);
+%         grid(gca,'on');        
+%         
+%                         
+%         h66 = figure(66);
+%         imagesc(finalmap);colormap(jet);colorbar;
+%         set(gca,'ytick',[]);
+%         xlabel('Distance to Cell Edge (\mum)');ylabel('-90 degrees to 90 degrees');
+%         title('Distribution of Filament Orientations');
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');        
+% %Analysis 3
+% 
+% %Analysis 4
+        curR = round(FanR/2); % round(str2num(get(handles.FanR,'String'))/2);
+        
+        disF=bwdist(bwmorph(ROI_Mask,'remove'));
+        mask = ROI_Mask;
+        mask = single(mask);
+        mask(mask==0)=-1;
+        disF = disF.*mask;
+        
+        allcur = [];
+        alldSDF = [];
+        M = zeros(size(AllFragments));
+        h = waitbar(0,'Calculating Curvatures ...');
+        all_filament_curs = [];
+        all_mean_cur = zeros(1,size(all_sorted_filament,3));
+        for i = 1:size(all_sorted_filament,3)
+            waitbar(i/size(all_sorted_filament,3),h);
+            F = all_sorted_filament(:,:,i);
+            F(find(F(:,1)==0),:) = [];
+            Dlist = 0;
+            for j = 2:size(F,1)
+                Dlist = [Dlist  Dlist(j-1)+pdist([F(j-1,:); F(j,:)])];
+            end
+            NoCurlist = unique([find(Dlist<=curR)  find(Dlist>=(Dlist(end)-curR))]);
+            if length(NoCurlist)~=size(F,1)
+                for j = 1:size(F,1)
+                    if isempty(find(NoCurlist==j))
+                        x2 = F(j,1);
+                        y2 = F(j,2);
+                        D = Dlist - Dlist(j);
+                        D1 = abs(D - curR);
+                        idx1 = find(D1==min(D1));
+                        D2 = abs(D - (-curR));
+                        idx2 = find(D2==min(D2));
+                        x1 = F(idx1,1);
+                        y1 = F(idx1,2);
+                        x3 = F(idx2,1);
+                        y3 = F(idx2,2);
+                        alldSDF = [alldSDF  disF(sub2ind(size(disF),x2,y2))*PixelSize];
+                        cur = 2*abs((x2-x1).*(y3-y1)-(x3-x1).*(y2-y1)) ./sqrt(((x2-x1).^2+(y2-y1).^2)*((x3-x1).^2+(y3-y1).^2)*((x3-x2).^2+(y3-y2).^2));
+                        allcur = [allcur  cur/PixelSize];
+                        M(F(j,1),F(j,2)) = cur;
+                        all_filament_curs(j,1,i) = x2;
+                        all_filament_curs(j,2,i) = y2;
+                        all_filament_curs(j,3,i) = cur/PixelSize;
+                        all_filament_curs(j,4,i) = 1;% flag for calculation done for this point
+                    end
+                end
+                k = find(all_filament_curs(:,4,i)==1);
+                all_mean_cur(i) = mean(all_filament_curs(k,3,i));
+            end
+        end
+        close(h);
+%         M = M/PixelSize;
+%         h88 = figure(88);
+%         imagesc(M); colormap(jet);colorbar; title('Distribution of Curvatures');axis off;axis image;
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+         
+        All_Curs = [];
+        All_Curs_4plot = [];
+        disF=bwdist(bwmorph(ROI_Mask,'remove'));
+        mask = ROI_Mask;
+        mask = single(mask);
+        mask(mask==0)=-1;
+        disF = disF.*mask;
+        %
+        h = waitbar(0,'Calculating the Distribution of Curvatures ...');
+        for m = 1:size(all_filament_curs,3)
+            waitbar(m/size(all_filament_curs,3),h);
+            Cur = all_filament_curs(:,:,m);
+            F = all_sorted_filament;
+            F(find(F(:,1)==0),:) = [];
+            Cur(find(Cur(:,4)==0),:) = [];
+            if isempty(Cur)
+                All_Curs_4plot = [All_Curs_4plot;  disF(sub2ind(size(disF),round((F(1,1)+F(end,1))/2),round((F(end,2)+F(1,2))/2)))   0];
+                All_Curs = [All_Curs, 0];
+            else
+                All_Curs_4plot = [All_Curs_4plot;  disF(sub2ind(size(disF),Cur(:,1),Cur(:,2)))   Cur(:,3)];
+                All_Curs = [All_Curs, Cur(:,3)'];
+            end
+        end
+        close(h);
+        All_Curs_4plot(:,1) = round(All_Curs_4plot(:,1));
+        temp_mean_cur = [];
+        x1 = [];
+        y1 = [];
+        for i = min(All_Curs_4plot(:,1)): max(All_Curs_4plot(:,1))
+            k = find(All_Curs_4plot(:,1)==i);
+            temp_mean_cur = [temp_mean_cur  mean(All_Curs_4plot(k,2))];
+            if length(k)>5
+                x1 = [x1  i];
+                y1 = [y1  mean(All_Curs_4plot(k,2))];
+            end
+        end
+
+%         h77 = figure(77);
+%         subplot(1,2,1);
+%         histfit(all_mean_cur,50,'kernel');xlim([0 inf]);
+%         xlabel('Curvature (unit: \mum^-^1)');ylabel('Frequency');
+%         title('Distribution of Means of Filament Curvatures');
+%         %             
+%         subplot(1,2,2);
+%         plot(x1*0.02, y1,  'r');hold on;axis([0 inf 0 inf]);
+%         xlabel('Distance to Cell Edge (unit: \mum)');ylabel('Mean Curvature (unit: \mum^-^1)');
+%         title('Distribution of Curvatures');
+%         set(gcf, 'Name', fname, 'numbertitle', 'off');
+        
+% %Analysis 4
+
+% THIS STRUCTURE IS TO BE EXTENDED..        
+% orient = regionprops(maskI,'Orientation');
+% ctrs = regionprops(maskI,'Centroid');
+% ctrs = ctrs(1).Centroid;
+% orient = orient(1).Orientation;
+% TotalLength = d;
+% EndToEndDist = pdist([tips(1,1),tips(1,2);tips(2,1),tips(2,2)]);
+% 
+% AnalysisInfo = [orient  TotalLength  EndToEndDist  ctrs(2)  ctrs(1)];        
+% size(A)
+% size(AnalysisInfo)
+       
+% tortuosity, 
+% intensity_mean, 
+% intensity_std, 
+% local orientational jitter
+% PATCH #
+
+% PATCH #
+patches_labels = bwlabel(ROI_Mask);
+patches_inds = zeros(size(AnalysisInfo,1),1);
+for k=1:size(AnalysisInfo,1)
+     xc = round(AnalysisInfo(k,4));
+     yc = round(AnalysisInfo(k,5));          
+     % caution - rounding
+     vic = patches_labels(xc-1:xc+1,yc-1:yc+1);
+     ind = max(vic(:));     
+     if 0==ind % should not happen
+         ind=1;
+     end
+     patches_inds(k)=ind;
+end
+
+tortuosity = AnalysisInfo(:,2)./AnalysisInfo(:,3);
+
+% filaments_data = zeros(size(AnalysisInfo,1),10);
+% filaments_data(:,1:3)=AnalysisInfo(:,1:3);
+% filaments_data(:,4)=AnalysisInfo(:,4)-R; % one needs original not padded image coordinates
+% filaments_data(:,5)=AnalysisInfo(:,5)-R;
+% filaments_data(:,6)=tortuosity;
+% filaments_data(:,7)=arr_mean_filament_intensity;
+% filaments_data(:,8)=arr_std_filament_intensity;
+% filaments_data(:,9)=loj;
+% filaments_data(:,10)=patches_inds;
+
+xls_filaments_data = [];
+for k=1:size(AnalysisInfo,1)
+    rec = {fname, ...
+            patches_inds(k), ...
+            AnalysisInfo(k,4)-R, ... % xc
+            AnalysisInfo(k,5)-R, ... % yc
+            all_mean_cur(k), ... % curvature
+            AnalysisInfo(k,2)*PixelSize, ... % length           
+            AnalysisInfo(k,3)*PixelSize, ... % ends distance
+            tortuosity(k), ...
+            arr_mean_filament_intensity(k), ...
+            arr_std_filament_intensity(k), ...
+            loj(k)};% local orientational jitter
+            xls_filaments_data = [xls_filaments_data; rec];      
+end
+caption = {'filename','patch','xc [pix]','yc [pix]','curvature','length [um]','ends_dist [um]','tortuosity', ...
+            'intensity mean','intensity std','local orientational jitter'};
+xls_filaments_data = [caption; xls_filaments_data];
+xlswrite([save_dir filesep fname '_filaments_data'],xls_filaments_data);
+
+%%%%%%%%%%%%%%% junctions
+% junctions analysis
+% NewCrPts
+
+junctions = cell(max(patches_labels(:)),1);
+for k=1:size(NewCrPts,1)
+    xc=NewCrPts(k,1);
+    yc=NewCrPts(k,2);
+    lab = patches_labels(xc,yc);
+    junctions{lab} = [junctions{lab}; [xc yc]];
+end
+%
+max_length_pixels = 5/PixelSize; % 5 microns max distance between neighboring junctions  
+junctions_quantification = cell(max(patches_labels(:)),1);
+for k=1:max(patches_labels(:))         
+    junctions_quantification{k} = quantify_points_neighbours_and_density(junctions{k},max_length_pixels);
+end
+%
+xls_junctions_data = [];
+for k=1:max(patches_labels(:))
+    d_k = junctions_quantification{k};
+    for m=1:size(d_k,1)
+        rec = {fname k d_k(m,1) d_k(m,2)/PixelSize^2};
+        xls_junctions_data = [xls_junctions_data; rec];
+    end
+end
+%
+caption = {'filename','patch','nnghb','density [um^-2]'};
+xls_junctions_data = [caption; xls_junctions_data];
+xlswrite([save_dir filesep fname '_junctions_data'],xls_junctions_data);
+
+%
+fig = zeros(size(ROI_Mask,1),size(ROI_Mask,2),2,1,1);
+z = patches_labels;
+z(AllFragments>0) = 50;
+z(flab>0) = z(flab>0) + 50;
+x=NewCrPts(:,1);
+y=NewCrPts(:,2);
+z(sub2ind(size(L),x,y)) = 200;
+fig(:,:,1,1,1) = ref_img;
+fig(:,:,2,1,1) = z;
+bfsave(uint16(fig),[save_dir filesep fname '_image.ome.tif'],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
+
+% refactored analyses
+                       
      datas = [];
      captions = [];
      table_names = 'default';

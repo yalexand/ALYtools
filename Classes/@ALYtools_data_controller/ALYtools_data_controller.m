@@ -342,6 +342,7 @@ classdef ALYtools_data_controller < handle
             %
             SIFNE_vulgar_ROI_sgm_scale = 50;
             SIFNE_vulgar_ROI_sgm_threshold = .1;
+            SIFNE_vulgar_ROI_sgm_min_patch_size = 110; % um^2 !
                     
     end    
         
@@ -2427,6 +2428,7 @@ classdef ALYtools_data_controller < handle
             settings.SIFNE_Sorting_Minimum_Filament_Size  = obj.SIFNE_Sorting_Minimum_Filament_Size;
             settings.SIFNE_vulgar_ROI_sgm_scale = obj.SIFNE_vulgar_ROI_sgm_scale;
             settings.SIFNE_vulgar_ROI_sgm_threshold = obj.SIFNE_vulgar_ROI_sgm_threshold;
+            settings.SIFNE_vulgar_ROI_sgm_min_patch_size = obj.SIFNE_vulgar_ROI_sgm_min_patch_size;
                                     
             xml_write(fname,settings);
         end
@@ -2667,7 +2669,8 @@ classdef ALYtools_data_controller < handle
                     obj.SIFNE_Filament_Overlap = settings.SIFNE_Filament_Overlap;
                     obj.SIFNE_Sorting_Minimum_Filament_Size  = settings.SIFNE_Sorting_Minimum_Filament_Size;
                     obj.SIFNE_vulgar_ROI_sgm_scale = settings.SIFNE_vulgar_ROI_sgm_scale;
-                    obj.SIFNE_vulgar_ROI_sgm_threshold = settings.SIFNE_vulgar_ROI_sgm_threshold;                   
+                    obj.SIFNE_vulgar_ROI_sgm_threshold = settings.SIFNE_vulgar_ROI_sgm_threshold;
+                    obj.SIFNE_vulgar_ROI_sgm_min_patch_size = settings.SIFNE_vulgar_ROI_sgm_min_patch_size;                    
                 catch
                 end
                 
