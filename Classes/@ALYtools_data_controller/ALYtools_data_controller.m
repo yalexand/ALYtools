@@ -991,7 +991,8 @@ classdef ALYtools_data_controller < handle
                 mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
             end                   
                     %  
-                    if strcmp(obj.problem,'Fungus Dependent Granule Release') % several tables
+                    if strcmp(obj.problem,'Fungus Dependent Granule Release') || ...
+                       strcmp(obj.problem,'SIFNE') % several tables
                         if obj.save_analysis_output_as_xls && ~isempty(datas)
                             xlsname = [dirname filesep obj.current_filename '_analysis_data.xls']; 
                             for k=1:numel(datas)
@@ -1192,52 +1193,63 @@ classdef ALYtools_data_controller < handle
                         %                  
                         if success
                             if obj.save_analysis_output_as_xls && ~isempty(data) && ~isempty(caption) && ~isempty(table_name)
-                                xlsname = [dirname filesep obj.current_filename '_analysis_data.xls']; 
-                                if ispc
-                                    try
-                                        xlswrite( xlsname,[caption; data],char(table_name) );
-                                    catch
-                                        disp('can not write output as xls, save as mat file instead');                                    
-                                        fname = xlsname(1:length(xlsname)-4);
-                                        save([fname '.mat'],'caption','data');
-                                        %
-                                        cap = [];
-                                        for ci=1:numel(caption)
-                                            elem = ['"' char(caption(ci)) '"'];
-                                            if ci<numel(caption)
-                                                elem = [elem ','];
+                                xlsname = [dirname filesep obj.current_filename '_analysis_data.xls'];                                
+                                %
+                                if strcmp(obj.problem,'SIFNE')                                    
+                                      for kk=1:numel(data)
+                                            if ispc
+                                                xlswrite( xlsname,[caption{kk}; data{kk}],char(table_name{kk}) );
+                                            else
+                                                xlwrite( xlsname,[caption{kk}; data{kk}],char(table_name{kk}) );
                                             end
-                                            cap = [cap elem];
-                                        end
-                                        fid = fopen( [fname '.csv'], 'w' );
-                                        fprintf( fid, '%s\n', cap);
-                                        fclose(fid);
-                                        dlmwrite([fname '.csv'],cell2mat(data),'-append');
-                                        %                                          
-                                    end
-                                else
-                                    try
-                                        xlwrite( xlsname,[caption; data],char(table_name) );
-                                    catch
-                                        disp('can not write output as xls, save as mat file instead');
-                                        fname = xlsname(1:length(xlsname)-4);
-                                        save([fname '.mat'],'caption','data');
-                                        %
-                                        cap = [];
-                                        for ci=1:numel(caption)
-                                            elem = ['"' char(caption(ci)) '"'];
-                                            if ci<numel(caption)
-                                                elem = [elem ','];
+                                      end                                                                                    
+                                else                                    
+                                    if ispc
+                                        try
+                                            xlswrite( xlsname,[caption; data],char(table_name) );
+                                        catch
+                                            disp('can not write output as xls, save as mat file instead');                                    
+                                            fname = xlsname(1:length(xlsname)-4);
+                                            save([fname '.mat'],'caption','data');
+                                            %
+                                            cap = [];
+                                            for ci=1:numel(caption)
+                                                elem = ['"' char(caption(ci)) '"'];
+                                                if ci<numel(caption)
+                                                    elem = [elem ','];
+                                                end
+                                                cap = [cap elem];
                                             end
-                                            cap = [cap elem];
+                                            fid = fopen( [fname '.csv'], 'w' );
+                                            fprintf( fid, '%s\n', cap);
+                                            fclose(fid);
+                                            dlmwrite([fname '.csv'],cell2mat(data),'-append');
+                                            %                                          
                                         end
-                                        fid = fopen( [fname '.csv'], 'w' );
-                                        fprintf( fid, '%s\n', cap);
-                                        fclose(fid);
-                                        dlmwrite([fname '.csv'],cell2mat(data),'-append');
-                                        %                                      
-                                    end
-                                end
+                                    else
+                                        try
+                                            xlwrite( xlsname,[caption; data],char(table_name) );
+                                        catch
+                                            disp('can not write output as xls, save as mat file instead');
+                                            fname = xlsname(1:length(xlsname)-4);
+                                            save([fname '.mat'],'caption','data');
+                                            %
+                                            cap = [];
+                                            for ci=1:numel(caption)
+                                                elem = ['"' char(caption(ci)) '"'];
+                                                if ci<numel(caption)
+                                                    elem = [elem ','];
+                                                end
+                                                cap = [cap elem];
+                                            end
+                                            fid = fopen( [fname '.csv'], 'w' );
+                                            fprintf( fid, '%s\n', cap);
+                                            fclose(fid);
+                                            dlmwrite([fname '.csv'],cell2mat(data),'-append');
+                                            %                                      
+                                        end
+                                    end % pc or not pc
+                                end % not SIFNE
                             end
                             %
                             if obj.save_analysis_output_as_xls && ~isempty(data) && ~isempty(caption) && ~isempty(table_name)
@@ -1299,8 +1311,7 @@ classdef ALYtools_data_controller < handle
                             end                        
                         end
                         %                                                                                                
-                        if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end 
-                        
+                        if ~isempty(hw), waitbar(k/numel(filenames),hw); drawnow, end                         
                     end     
                     
                     if obj.save_analysis_output_as_xls && ~isempty(CMN) && ~isempty(caption) && ~isempty(table_name) && ... % common excel data file
@@ -1314,8 +1325,7 @@ classdef ALYtools_data_controller < handle
                     end
                     
                     if ~isempty(hw), delete(hw), drawnow; end
-                    
-                
+                                    
                 case 'Fungus Dependent Granule Release'
                                       
                     dirname = [];           

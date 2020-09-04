@@ -1440,10 +1440,11 @@ for k=1:size(AnalysisInfo,1)
             loj(k)};% local orientational jitter
             xls_filaments_data = [xls_filaments_data; rec];      
 end
-caption = {'filename','patch','xc [pix]','yc [pix]','curvature','length [um]','ends_dist [um]','tortuosity', ...
+filaments_caption = {'filename','patch','xc [pix]','yc [pix]','curvature','length [um]','ends_dist [um]','tortuosity', ...
             'intensity mean','intensity std','local orientational jitter'};
-xls_filaments_data = [caption; xls_filaments_data];
-xlswrite([save_dir filesep fname '_filaments_data'],xls_filaments_data);
+xls_filaments_data = [filaments_caption; xls_filaments_data];
+%xlswrite([save_dir filesep fname '_filaments_data'],xls_filaments_data);
+xlwrite([save_dir filesep fname '_filaments_data.xls'],xls_filaments_data);
 
 %%%%%%%%%%%%%%% junctions
 % junctions analysis
@@ -1472,9 +1473,10 @@ for k=1:max(patches_labels(:))
     end
 end
 %
-caption = {'filename','patch','nnghb','density [um^-2]'};
-xls_junctions_data = [caption; xls_junctions_data];
-xlswrite([save_dir filesep fname '_junctions_data'],xls_junctions_data);
+junctions_caption = {'filename','patch','nnghb','density [um^-2]'};
+xls_junctions_data = [junctions_caption; xls_junctions_data];
+%xlswrite([save_dir filesep fname '_junctions_data'],xls_junctions_data);
+xlwrite([save_dir filesep fname '_junctions_data.xls'],xls_junctions_data);
 
 %
 fig = zeros(size(ROI_Mask,1),size(ROI_Mask,2),2,1,1);
@@ -1490,10 +1492,9 @@ bfsave(uint16(fig),[save_dir filesep fname '_image.ome.tif'],'Compression','LZW'
 
 % refactored analyses
                        
-     datas = [];
-     captions = [];
-     table_names = 'default';
-     fig = [];
-             
+           datas = {xls_filaments_data xls_junctions_data};
+           captions = {filaments_caption junctions_caption};
+           table_names = {'filaments' 'junctions'};
+
 disp('analyze_SIFNE');          
 end
