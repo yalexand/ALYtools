@@ -1264,8 +1264,14 @@ dt = handles.dt*60; % interval between frames in minutes
 big_smoothing_window  = round(handles.MI_large_smoothing_window/dt);
 small_smoothing_window  = round(handles.MI_small_smoothing_window/dt);
 
-hw = waitbar(0,'finding mitotic intervals.. please wait');
+verbose = get(handles.show_per_frame_mean_std,'enable');
+
+if strcmp('on',verbose)
+    hw = waitbar(0,'finding mitotic intervals.. please wait');
+end
+warning('off');
 for k=1:numel(tracks)
+if strcmp('on',verbose) && ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, end    
     track = tracks{k};
     %FRET_ratio = 1./squeeze(track(:,4)); % use if only D,A swapped :) 
     FRET_ratio = squeeze(track(:,4)); % the correct one
@@ -1418,9 +1424,9 @@ for k=1:numel(tracks)
 %         %legend({'FRET ratio','nuc. size','-d/dt(FRET ratio)','-d/dt(nuc. size)','FRET derivative peak','nuc. size derivative peak','interval'},'fontsize',14);
 %      end
 
-if ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, end
 end
-if ~isempty(hw), delete(hw), drawnow; end
+if strcmp('on',verbose) && ~isempty(hw), delete(hw), drawnow; end
+warning('on');
 
 function single_FOVs_options(handles,flag)  % 'off' or 'on'
     set(handles.show_per_frame_mean_std,'Enable',flag);
@@ -1451,7 +1457,14 @@ handles.filenames = filenames;
 
 handles.ST_raw_data = cell(0); % "storage"
 
+%hw = waitbar(0,'finding mitotic intervals.. please wait');
+%warning('off');
+%for k=1:numel(tracks)
+%if ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, end    
+
+hw = waitbar(0,'loading multiple FOVs data.. please wait');
 for k=1:numel(filenames)
+    if ~isempty(hw), waitbar(k/numel(filenames),hw,['loading multiple FOVs data.. please wait : ' num2str(k) ' , ' num2str(numel(filenames))]); drawnow, end        
     load([pathname filesep filenames{k}]);
     handles.ST_raw_data = [handles.ST_raw_data; tracks];
     
@@ -1470,6 +1483,7 @@ for k=1:numel(filenames)
         handles.MI_peak_shift = [handles.MI_peak_shift; MI_peak_shift];
     end
 end
+if ~isempty(hw), delete(hw), drawnow; end
 
 handles.dt = dt;
 handles.pixelsize = microns_per_pixel;
