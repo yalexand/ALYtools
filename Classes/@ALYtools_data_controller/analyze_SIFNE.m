@@ -1450,6 +1450,8 @@ xlwrite([save_dir filesep fname '_filaments_data.xls'],xls_filaments_data);
 % junctions analysis
 % NewCrPts
 
+if size(NewCrPts,1) >= 2
+
 junctions = cell(max(patches_labels(:)),1);
 for k=1:size(NewCrPts,1)
     xc=NewCrPts(k,1);
@@ -1461,40 +1463,59 @@ end
 max_length_pixels = 5/PixelSize; % 5 microns max distance between neighboring junctions  
 junctions_quantification = cell(max(patches_labels(:)),1);
 for k=1:max(patches_labels(:))         
-    junctions_quantification{k} = quantify_points_neighbours_and_density(junctions{k},max_length_pixels);
+    try
+        junctions_quantification{k} = quantify_points_neighbours_and_density(junctions{k},max_length_pixels);
+    catch
+        disp(['no junctions in the patch ' num2str(k)]);
+    end
 end
 %
 xls_junctions_data = [];
 for k=1:max(patches_labels(:))
+    try
     d_k = junctions_quantification{k};
     for m=1:size(d_k,1)
         rec = {fname k d_k(m,1) d_k(m,2)/PixelSize^2};
         xls_junctions_data = [xls_junctions_data; rec];
     end
+    catch
+    end
 end
 %
-junctions_caption = {'filename','patch','nnghb','density [um^-2]'};
-xls_junctions_data = [junctions_caption; xls_junctions_data];
-%xlswrite([save_dir filesep fname '_junctions_data'],xls_junctions_data);
-xlwrite([save_dir filesep fname '_junctions_data.xls'],xls_junctions_data);
+if ~isempty(xls_junctions_data) 
+    junctions_caption = {'filename','patch','nnghb','density [um^-2]'};
+    xls_junctions_data = [junctions_caption; xls_junctions_data];
+    %xlswrite([save_dir filesep fname '_junctions_data'],xls_junctions_data);
+    xlwrite([save_dir filesep fname '_junctions_data.xls'],xls_junctions_data);
+end
+end
 
 %
 fig = zeros(size(ROI_Mask,1),size(ROI_Mask,2),2,1,1);
 z = patches_labels;
 z(AllFragments>0) = 50;
 z(flab>0) = z(flab>0) + 50;
-x=NewCrPts(:,1);
-y=NewCrPts(:,2);
-z(sub2ind(size(L),x,y)) = 200;
+if size(NewCrPts,1) ~= 0 
+    x=NewCrPts(:,1);
+    y=NewCrPts(:,2);
+    z(sub2ind(size(L),x,y)) = 200;
+end
 fig(:,:,1,1,1) = ref_img;
 fig(:,:,2,1,1) = z;
+fig = fig(R+1:H+R,R+1:W+R,:); % to keep same-size input and output images
 bfsave(uint16(fig),[save_dir filesep fname '_image.ome.tif'],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
 
 % refactored analyses
                        
+if exist('xls_junctions_data','var') && ~isempty(xls_junctions_data)
            datas = {xls_filaments_data xls_junctions_data};
            captions = {filaments_caption junctions_caption};
            table_names = {'filaments' 'junctions'};
+else
+           datas = {xls_filaments_data};
+           captions = {filaments_caption};
+           table_names = {'filaments'};    
+end    
 
 disp('analyze_SIFNE');          
 end
