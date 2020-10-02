@@ -1058,7 +1058,7 @@ Overlap = 1; % 'None (For Intricate Network)'
         flab = flab.*(~joints);
                 
         tic
-        %A = get_blobs_adjacency(flab,[],true);        
+        %A = get_blobs_adjacency(flab,[],true); % never       
         A = get_blobs_adjacency(flab,ROI_Mask,true);
         %icy_imshow(A);
         toc/60
@@ -1400,7 +1400,14 @@ end
 
 % PATCH #
 patches_labels = bwlabel(ROI_Mask);
+
+patches_area = zeros(1,max(patches_labels(:)));
+for k=1:length(patches_area)
+    patches_area(k) = sum(patches_labels==k,'all');
+end
+
 patches_inds = zeros(size(AnalysisInfo,1),1);
+patches_areas = zeros(size(AnalysisInfo,1),1);
 for k=1:size(AnalysisInfo,1)
      xc = round(AnalysisInfo(k,4));
      yc = round(AnalysisInfo(k,5));          
@@ -1411,6 +1418,7 @@ for k=1:size(AnalysisInfo,1)
          ind=1;
      end
      patches_inds(k)=ind;
+     patches_areas(k) = patches_area(ind); % pix
 end
 
 tortuosity = AnalysisInfo(:,2)./AnalysisInfo(:,3);
@@ -1424,6 +1432,7 @@ tortuosity = AnalysisInfo(:,2)./AnalysisInfo(:,3);
 % filaments_data(:,8)=arr_std_filament_intensity;
 % filaments_data(:,9)=loj;
 % filaments_data(:,10)=patches_inds;
+% filaments_data(:,11)=patches_areas;
 
 xls_filaments_data = [];
 for k=1:size(AnalysisInfo,1)
@@ -1437,11 +1446,12 @@ for k=1:size(AnalysisInfo,1)
             tortuosity(k), ...
             arr_mean_filament_intensity(k), ...
             arr_std_filament_intensity(k), ...
-            loj(k)};% local orientational jitter
+            loj(k), ... % local orientational jitter
+            patches_areas(k)}; % patch area 
             xls_filaments_data = [xls_filaments_data; rec];      
 end
 filaments_caption = {'filename','patch','xc [pix]','yc [pix]','curvature','length [um]','ends_dist [um]','tortuosity', ...
-            'intensity mean','intensity std','local orientational jitter'};
+            'intensity mean','intensity std','local orientational jitter','patch area'};
 xls_filaments_data = [filaments_caption; xls_filaments_data];
 %xlswrite([save_dir filesep fname '_filaments_data'],xls_filaments_data);
 xlwrite([save_dir filesep fname '_filaments_data.xls'],xls_filaments_data);
@@ -1489,6 +1499,7 @@ if ~isempty(xls_junctions_data)
     xlwrite([save_dir filesep fname '_junctions_data.xls'],xls_junctions_data);
 end
 end
+%%%%%%%%%%%%%%% junctions
 
 %
 fig = zeros(size(ROI_Mask,1),size(ROI_Mask,2),2,1,1);
