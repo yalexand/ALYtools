@@ -10,8 +10,16 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             R                   = obj.SIFNE_LFT_OFT_Radius_of_Filter;
             NofOrientations_FT  = obj.SIFNE_LFT_OFT_Number_of_Filter_Orinetations;
             
-            OriginImg = im2uint8(imadjust(obj.imgdata));
-            % OriginImg = imadjust(im2uint8(obj.imgdata)); % ehm that was wrong
+            
+            u = obj.imgdata;
+            s = u(u~=0);
+            t = quantile(s(:),0.995);
+            u(u>t)=t;
+            OriginImg = uint8(map(u,0,255));
+                                    
+%             OriginImg = im2uint8(imadjust(obj.imgdata));
+%             % OriginImg = imadjust(im2uint8(obj.imgdata)); % ehm that was wrong
+                                    
             [H, W] = size(OriginImg);
             OriginImg_Margin = uint8(zeros(H+R+R,W+R+R));
             OriginImg_Margin(R+1:H+R,R+1:W+R) = OriginImg;
@@ -41,28 +49,13 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             sigma = obj.SIFNE_SGM_Junction_Size;
             OFT_Img = gsderiv(OFT_Img,sigma,0); % smoother !!
 
-            %            
-            s = OFT_Img(OFT_Img>0);
-            %
-            [thresh1,m1] = multithresh(s(:),1);
-            [thresh2,m2] = multithresh(s(:),2);
-            [thresh3,m3] = multithresh(s(:),3);
-            info = [];
-            t = [];
-            if     m1 == max([m1 m2 m3])
-                t = thresh1;
-                info = '1 @ ';
-            elseif m2 == max([m1 m2 m3])
-                t = thresh2(2);
-                info = '2 @ ';                
-            else
-                t = thresh3(3); % mean(thresh3(2:3));
-                info = '3 @ ';                
-            end                
-            %icy_imshow(OFT_Img,[info num2str(t)]);
-            %                       
-            t = t*obj.SIFNE_SGM_Filaments_Threshold;
-            BW = OFT_Img>t;
+% s = OFT_Img(OFT_Img>0);
+% t = quantile(s(:),0.05);
+% icy_imshow(OFT_Img/t,num2str(t));
+                        
+            OFT_Img = map(OFT_Img,0,1);
+            %                              
+            BW = OFT_Img>obj.SIFNE_SGM_Filaments_Threshold;
             
             BW = imclose(BW,strel('disk',1)); % :) smoother!!
             
@@ -70,10 +63,10 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             
                     if send_to_Icy
                         [sx,sy]=size(ROI_Mask);
-                        iv = zeros(sx,sy,3,1,1,'uint8');                        
-                      iv(:,:,1,1,1)=uint8(imadjust(OriginImg_Margin)); %uint8(map(OriginImg_Margin,0,255));
-                      iv(:,:,2,1,1)=uint8(ROI_Mask*100);
-                      iv(:,:,3,1,1)=uint8(RawSke*200);                      
+                        iv = zeros(H,W,3,1,1,'uint8');                        
+                      iv(:,:,1,1,1)=OriginImg; %uint8(map(OriginImg_Margin,0,255));
+                      iv(:,:,2,1,1)=uint8(ROI_Mask(R+1:H+R,R+1:W+R)*100);
+                      iv(:,:,3,1,1)=uint8(RawSke(R+1:H+R,R+1:W+R)*200);                      
                       try                          
                         icy_imshow(iv);
                       catch
