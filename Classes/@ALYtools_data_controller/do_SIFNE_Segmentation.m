@@ -45,7 +45,7 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             RawSke = bwmorph(BW,'thin',Inf);
                                                     
 %try to improve patches segmentation basing on what is known about filaments
-            r = round(450/(obj.microns_per_pixel*1000)); % half-distance between filaments
+            r = round(350/(obj.microns_per_pixel*1000)); % half-distance between filaments
             ROI_Mask = imdilate(RawSke,strel('disk',r,0));
           
             % remove small patches

@@ -1036,8 +1036,8 @@ all_connects(:,:,RemoveIdx) = [];
 % refactored analyses            
 RawImg = obj.imgdata;
 [H,W] = size(RawImg);
-%ref_img = zeros(H+R+R,W+R+R);
-%ref_img(R+1:H+R,R+1:W+R) = RawImg;
+intensity_img = zeros(H+R+R,W+R+R);
+intensity_img(R+1:H+R,R+1:W+R) = RawImg;
 
 %Overlap = strcmp(obj.SIFNE_Filament_Overlap,'None (For Intricate Network)'); %get(handles.OverlapList,'Value');
 Overlap = 1; % 'None (For Intricate Network)'
@@ -1517,7 +1517,7 @@ if size(NewCrPts,1) ~= 0
     y=NewCrPts(:,2);
     z(sub2ind(size(L),x,y)) = 200;
 end
-fig(:,:,1,1,1) = ref_img;
+fig(:,:,1,1,1) = intensity_img;
 fig(:,:,2,1,1) = z;
 fig = fig(R+1:H+R,R+1:W+R,:); % to keep same-size input and output images
 bfsave(uint16(fig),[save_dir filesep fname '_image.ome.tif'],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
