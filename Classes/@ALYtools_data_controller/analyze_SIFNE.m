@@ -1081,6 +1081,9 @@ parfor k=1:size(A,1)
         tta_m = AnalysisInfo(m,1);
         l_m = AnalysisInfo(m,2); % use length as weight        
         diff_angle = abs(tta_k - tta_m);
+        if diff_angle > 90 
+            diff_angle = 180 - diff_angle;
+        end
         num = num + diff_angle*l_m;
         denom = denom + l_m;        
     end
