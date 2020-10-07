@@ -30,11 +30,6 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             u = map(u,0,1);
             ROI_Mask(R+1:H+R,R+1:W+R) = u>t; 
             %
-            % remove small patches
-            min_patch_size = round(obj.SIFNE_vulgar_ROI_sgm_min_patch_size/((obj.microns_per_pixel).^2)); %remove objects smaller than XX square microns
-            ROI_Mask = bwareaopen(ROI_Mask,min_patch_size);
-            % should be OK ...
-            ROI_Mask = fill_small_holes(ROI_Mask,round(min_patch_size/4));
             % vulgar segmentation - ends
 
             [OFT_Img, LFT_Img, LFT_Orientations] = LFT_OFT_mex(double(OriginImg_Margin),double(R),double(NofOrientations_FT),double(ROI_Mask));
@@ -48,15 +43,21 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
             BW = imclose(BW,strel('disk',1)); % :) smoother!!
             
             RawSke = bwmorph(BW,'thin',Inf);
-            
-            % remove empty patches
-            L = bwlabel(ROI_Mask);
-            for k=1:max(L(:))
-                if 0==sum(RawSke.*(L==k),'All')
-                    ROI_Mask = ROI_Mask &~ (L==k); 
-                end
-            end
-                        
+                                                    
+%try to improve patches segmentation basing on what is known about filaments
+            r = round(450/(obj.microns_per_pixel*1000)); % half-distance between filaments
+            ROI_Mask = imdilate(RawSke,strel('disk',r,0));
+          
+            % remove small patches
+            min_patch_size = round(obj.SIFNE_vulgar_ROI_sgm_min_patch_size/((obj.microns_per_pixel).^2)); %remove objects smaller than XX square microns
+            ROI_Mask = bwareaopen(ROI_Mask,min_patch_size);
+            % should be OK ...
+            ROI_Mask = fill_small_holes(ROI_Mask,round(min_patch_size/4));
+                                    
+            RawSke = RawSke & ROI_Mask;
+            RawSke = bwmorph(RawSke,'clean');
+%try to improve patches segmentation basing on what is known about filaments
+                                                            
                     if send_to_Icy
                         [sx,sy]=size(ROI_Mask);
                         iv = zeros(H,W,3,1,1,'uint8');                        
@@ -71,9 +72,10 @@ function sgm = do_SIFNE_Segmentation(obj,send_to_Icy,~)
                       return;
                     end            
                                                                             
-            sgm = zeros(size(RawSke,1),size(RawSke,2),2,1,1);
+            sgm = zeros(size(RawSke,1),size(RawSke,2),3,1,1);
             sgm(:,:,1,1,1) = RawSke;
             sgm(:,:,2,1,1) = ROI_Mask;
+            sgm(:,:,3,1,1) = OFT_Img.*ROI_Mask/(2*R);
                         
         toc
         

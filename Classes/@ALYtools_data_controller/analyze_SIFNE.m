@@ -2,8 +2,15 @@ function [datas, captions, table_names, fig] = analyze_SIFNE(obj,~,~)
 
     sgm = obj.do_SIFNE_Segmentation(false);
     AllFragments = squeeze(sgm(:,:,1,1,1)); 
-    ROI_Mask = squeeze(sgm(:,:,2,1,1)); 
+    ROI_Mask = squeeze(sgm(:,:,2,1,1));
+    ref_img = squeeze(sgm(:,:,3,1,1));
     clear('sgm');
+    
+    datas = [];
+    captions = []; 
+    table_names = [];
+    fig = [];
+    if 0 == sum(AllFragments,'All'), return, end
     
     save_dir = obj.DefaultDirectory;
     
@@ -1028,10 +1035,9 @@ all_connects(:,:,RemoveIdx) = [];
                         
 % refactored analyses            
 RawImg = obj.imgdata;
-
-[H, W] = size(RawImg);
-ref_img = zeros(H+R+R,W+R+R);
-ref_img(R+1:H+R,R+1:W+R) = RawImg;
+[H,W] = size(RawImg);
+%ref_img = zeros(H+R+R,W+R+R);
+%ref_img(R+1:H+R,R+1:W+R) = RawImg;
 
 %Overlap = strcmp(obj.SIFNE_Filament_Overlap,'None (For Intricate Network)'); %get(handles.OverlapList,'Value');
 Overlap = 1; % 'None (For Intricate Network)'
@@ -1127,8 +1133,8 @@ end
             temp1 = all_sorted_filament(:,:,i); % get all coordinates
             temp1(find(temp1(:,1)==0),:) = []; % remove zeros
             sample = ref_img(sub2ind(size(L),temp1(:,1),temp1(:,2)));
-            arr_mean_filament_intensity(i) = mean(sample(:))/mean_filament_intensity;
-            arr_std_filament_intensity(i) = std(sample(:))/mean_filament_intensity;
+            arr_mean_filament_intensity(i) = mean(sample(:)); %/mean_filament_intensity;
+            arr_std_filament_intensity(i) = std(sample(:)); % /mean_filament_intensity;
         end
         close(h);
         %
