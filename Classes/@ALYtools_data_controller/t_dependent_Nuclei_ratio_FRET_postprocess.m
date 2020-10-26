@@ -389,8 +389,12 @@ end
 t = (0:numel(NUCDATA)-1)*obj.t_dependent_Nuclei_ratio_FRET_TIMESTEP;
 
 % save N(t) curve
-xlswrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_nums']);
-
+if ispc
+    xlswrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_nums']);
+else
+    xlwrite([output_directory filesep fname ' cell numbers curve.xls'],[t' cell_nums']);
+end
+        
 % TRACKING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
           
      track_mate_input = track_mate_input*10000;

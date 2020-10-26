@@ -633,6 +633,8 @@ for k=1:numel(D)
     track_data(k,5+2) = mean_cell_density/(handles.pixelsize)^2;        
     %
     % autocorr. time
+    critlag = 0;
+    try
     [ac,lags,bounds] = autocorr(s);
     t=max(bounds);  
         for mm=1:length(lags)
@@ -644,6 +646,9 @@ for k=1:numel(D)
     critlag=critlag*dt;
     if critlag < 1, critlag = 1; end
     if critlag > 120, critlag = 120; end
+    catch
+        disp('autocorr time - failed to calculate');
+    end
     %
     track_data(k,13+2) = critlag; % autocorr. time
     track_data(k,14+2) = mean_beta_FRET;
