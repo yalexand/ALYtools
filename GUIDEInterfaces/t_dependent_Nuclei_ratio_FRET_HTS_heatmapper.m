@@ -409,7 +409,7 @@ function [selected_wells,D] = create_heatmap_data(handles)
         end
     end
  
-% not sure about this, but having "sample" objec, one can try more options
+% not sure about this, but having "sample" object, one can try more options
 
 % https://stackoverflow.com/questions/7187945/adjust-p-values-for-multiple-comparisons-in-matlab
 
