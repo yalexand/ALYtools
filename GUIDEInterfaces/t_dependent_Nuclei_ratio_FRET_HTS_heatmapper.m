@@ -385,6 +385,7 @@ function [selected_wells,D] = create_heatmap_data(handles)
                
     D = nan(N);
     
+    hw = waitbar(0,'gathering statistics, please wait..','WindowStyle','modal');
     for k=1:numel(sample)
         for m=1:numel(sample)
             if ~isempty(sample{k}) && ~isempty(sample{m}) && k<m
@@ -404,10 +405,11 @@ function [selected_wells,D] = create_heatmap_data(handles)
                         P = abs( mean(x1) - mean(x2) )/s;
                 end
                 D(k,m) = P; 
-            end
-            
+            end            
         end
+        if ~isempty(hw), waitbar(k/numel(sample),hw); drawnow, end   
     end
+    if ~isempty(hw), delete(hw), drawnow; end
  
 % not sure about this, but having "sample" object, one can try more options
 
