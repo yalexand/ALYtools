@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_HTS_heatmapper(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_HTS_heatmapper
 
-% Last Modified by GUIDE v2.5 30-Oct-2020 14:03:23
+% Last Modified by GUIDE v2.5 01-Nov-2020 18:25:06
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_HTS_heatmapper_OpeningFcn, ...
@@ -64,11 +64,12 @@ handles.letters = {'A','B','C','D','E','F','G','H'};
 handles.numbers = {'1','2','3','4','5','6','7','8','9','10','11','12'};
 
 set(handles.evaluation_time,'String','1');
-set(handles.statistic,'String',{'p-value: KS','p-value: t-test','p-value: Wilcoxon','Cohen"s d'});
+set(handles.statistic,'String',{'p-value: KS','p-value: t-test','p-value: Wilcoxon','Cohen"s d','|median diff|'});
 set(handles.letter_start,'String',handles.letters);
 set(handles.letter_end,'String',handles.letters);
 set(handles.number_start,'String',handles.numbers);
 set(handles.number_end,'String',handles.numbers);
+set(handles.remove_outliers,'Value',0);
 
 set(handles.parameter,'Value',6); % FRET ratio
 set(handles.number_start,'Value',1);
@@ -363,7 +364,6 @@ function [selected_wells,D] = create_heatmap_data(handles)
                         % Y = squeeze(handles.nuc_cell_area_ratio_t{k});                                                
                         param_index = 4;                        
                 end                                        
-
     %
     selected_wells = select_wells(handles);
     N = numel(selected_wells);
@@ -371,38 +371,44 @@ function [selected_wells,D] = create_heatmap_data(handles)
     sample = cell(N,1); % statistical samples
 
     % run over all tracks at frame f    
-    for k = 1:numel(handles.raw_data)
+    ndata = numel(handles.raw_data);
+    for k = 1:ndata
         index = find(ismember(selected_wells,handles.raw_data_tokens{k}));
         try
             track_k = handles.raw_data{k};
             value = track_k(f,param_index);
             sample{index} = [sample{index} value];
         catch
-            disp(['faield to define value at frame ' num2str(f)]);
+            % disp(['faield to define value at frame ' num2str(f)]);
         end
-        k
     end
                
     D = nan(N);
     
-    hw = waitbar(0,'gathering statistics, please wait..','WindowStyle','modal');
+    hw = waitbar(0,'calculating statistics..','WindowStyle','modal');
     for k=1:numel(sample)
         for m=1:numel(sample)
-            if ~isempty(sample{k}) && ~isempty(sample{m}) && k<m
-                switch(get(handles.statistic,'Value'))
-                    case 1
-                        [~,P] = kstest2(sample{k},sample{m});
-                    case 2
-                        [~,P] = ttest2(sample{k},sample{m},'vartype','unequal'); % not sure                        
-                    case 3  
-                        [P,~] = ranksum(sample{k},sample{m});
-                    case 4 % Cohen's d
                         x1 = sample{k};
                         x2 = sample{m};
+                        if get(handles.remove_outliers,'Value')
+                            x1=rmoutliers(x1,'median');
+                            x2=rmoutliers(x2,'median');                            
+                        end
+            if ~isempty(x1) && ~isempty(x2) && k<m
+                switch(get(handles.statistic,'Value'))
+                    case 1
+                        [~,P] = kstest2(x1,x2);
+                    case 2
+                        [~,P] = ttest2(x1,x2,'vartype','unequal'); % not sure                        
+                    case 3  
+                        [P,~] = ranksum(x1,x2);
+                    case 4 % Cohen's d
                         N1 = numel(x1);
                         N2 = numel(x2);
                         s = sqrt( 1/(N1+N2)*( (N1-1)*var(x1) + (N2-1)*var(x2) ) );
                         P = abs( mean(x1) - mean(x2) )/s;
+                    case 5
+                        P = abs(median(x1)-median(x2));
                 end
                 D(k,m) = P; 
             end            
@@ -420,3 +426,12 @@ function [selected_wells,D] = create_heatmap_data(handles)
 % title('Sepal Length'), xlabel('Groups'), ylabel('Value')
 % 
 % [c,m] = multcompare(stats, 'ctype','bonferroni', 'display','on');
+
+
+% --- Executes on button press in remove_outliers.
+function remove_outliers_Callback(hObject, eventdata, handles)
+% hObject    handle to remove_outliers (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of remove_outliers
