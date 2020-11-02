@@ -329,7 +329,6 @@ end
 
 function [selected_wells,D] = create_heatmap_data(handles) 
     %    
-    f = handles.cur_frame; % to make it shorter
     feature_index = get(handles.parameter,'Value');
     
                 switch feature_index                    
@@ -374,13 +373,16 @@ function [selected_wells,D] = create_heatmap_data(handles)
     ndata = numel(handles.raw_data);
     for k = 1:ndata
         index = find(ismember(selected_wells,handles.raw_data_tokens{k}));
-        try
+%        try
             track_k = handles.raw_data{k};
-            value = track_k(f,param_index);
-            sample{index} = [sample{index} value];
-        catch
-            % disp(['faield to define value at frame ' num2str(f)]);
-        end
+            frame_index = find(track_k(:,1)==handles.cur_frame);
+            if ~isempty(frame_index)
+                value = track_k(frame_index,param_index);
+                sample{index} = [sample{index} value];
+            end
+%         catch
+%             % disp(['faield to define value at frame ' num2str(f)]);
+%         end
     end
                
     D = nan(N);
