@@ -1012,6 +1012,9 @@ function update_visuals_axis(hObject,handles)
                             set_minutes_time_axis_for_imagesc(ax1,taxis,b1,step,step_val);
                             set_minutes_time_axis_for_imagesc(ax2,taxis,b1,step,step_val);
                             set_minutes_time_axis_for_imagesc(ax3,taxis,b1,step,step_val);
+                            caxis(ax1,[handles.minmax_raw_FRET_vals(1),handles.minmax_raw_FRET_vals(2)]);
+                            caxis(ax2,[handles.minmax_raw_FRET_vals(1),handles.minmax_raw_FRET_vals(2)]);
+                            caxis(ax3,[handles.minmax_raw_FRET_vals(1),handles.minmax_raw_FRET_vals(2)]);
                     case 2 % tot 
                         ax1 = subplot(1,1,1,'Parent',handles.vis_panel);
                         imagesc(ax1,profiles);        
@@ -1019,6 +1022,7 @@ function update_visuals_axis(hObject,handles)
                         title(ax1,Ltot);                        
                         %
                         set_minutes_time_axis_for_imagesc(ax1,taxis,b1,step,step_val);
+                        caxis(ax1,[handles.minmax_raw_FRET_vals(1),handles.minmax_raw_FRET_vals(2)]);                        
                         colorbar(ax1,'EastOutside');
                     case 3 % types       
                         ax2 = subplot(1,2,1,'Parent',handles.vis_panel);
@@ -1029,6 +1033,8 @@ function update_visuals_axis(hObject,handles)
                         xticks(ax3,[]);yticks(ax3,[]);
                         title(ax2,L1,'color',handles.color1);
                         title(ax3,L2,'color',handles.color2);
+                        caxis(ax2,[handles.minmax_raw_FRET_vals(1),handles.minmax_raw_FRET_vals(2)]);
+                        caxis(ax3,[handles.minmax_raw_FRET_vals(1),handles.minmax_raw_FRET_vals(2)]);
                         set_minutes_time_axis_for_imagesc(ax2,taxis,b1,step,step_val);
                         set_minutes_time_axis_for_imagesc(ax3,taxis,b1,step,step_val);
 
@@ -1036,12 +1042,15 @@ function update_visuals_axis(hObject,handles)
                                                                             
     end
     
-    function set_minutes_time_axis_for_imagesc(ax1,taxis,b1,step,step_val)        
+function set_minutes_time_axis_for_imagesc(ax1,taxis,b1,step,step_val)
                             xticks(ax1,0:step:(length(taxis)));
                             xticklabels(ax1,b1+step_val*(0:4));                            
                             xlabel(ax1,'time [min]');
                             grid(ax1,'on');         
 
+    
+
+                            
 % --- Executes on selection change in show_curves.
 function show_curves_Callback(hObject, eventdata, handles)
 %
