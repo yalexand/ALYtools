@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 30-Oct-2020 13:45:07
+% Last Modified by GUIDE v2.5 03-Nov-2020 09:24:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -1474,7 +1474,10 @@ for k=1:numel(filenames)
     load([pathname filesep filenames{k}]);
     handles.ST_raw_data = [handles.ST_raw_data; tracks];    
     handles.ST_raw_data_filenames = [handles.ST_raw_data_filenames; repmat(filenames(k),numel(tracks),1) ];
-        
+
+    handles.dt = dt;
+    handles.pixelsize = microns_per_pixel;    
+    
     [MI_tracks, ... 
     MI_track_indices, ...
     MI_norm_FRET_ratio, ...
@@ -1492,10 +1495,10 @@ for k=1:numel(filenames)
 end
 if ~isempty(hw), delete(hw), drawnow; end
 
-handles.dt = dt;
-handles.pixelsize = microns_per_pixel;
 set(handles.pixel_size_edit,'String',handles.pixelsize);
 set(handles.delta_t_edit,'String',handles.dt); 
+
+guidata(hObject, handles);
 
 tracks_to_show_Callback(hObject, eventdata, handles);
 % sic!
@@ -1597,3 +1600,8 @@ function HTS_heatmapper_Callback(hObject, eventdata, handles)
 
 
 
+% --------------------------------------------------------------------
+function MI_HTS_mapper_Callback(hObject, eventdata, handles)
+    %
+    t_dependent_Nuclei_ratio_FRET_HTS_MI_heatmapper(handles);
+    
