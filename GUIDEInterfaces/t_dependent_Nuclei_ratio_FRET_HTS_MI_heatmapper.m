@@ -318,7 +318,6 @@ function IDX = do_clustering(handles,verbose)
     avr_Pearson = median(Pearson,2);
     avr_nneighbours = median(nneighbours,2);
     avr_cell_density = median(cell_density,2);
-
     
     MI_norm_FRET_ratio = MI_norm_FRET_ratio(:,handles.DF+1:size(MI_norm_FRET_ratio,2));
     
@@ -501,14 +500,8 @@ end
 
 % --- Executes on selection change in plate_map_display.
 function plate_map_display_Callback(hObject, eventdata, handles)
-% hObject    handle to plate_map_display (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns plate_map_display contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from plate_map_display
-guidata(hObject, handles);
-visualize_platemap(hObject,handles);
+    guidata(hObject, handles);
+    visualize_platemap(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function plate_map_display_CreateFcn(hObject, eventdata, handles)
@@ -523,13 +516,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in show_discrimination_heatmap.
-function show_discrimination_heatmap_Callback(hObject, eventdata, handles)
-% hObject    handle to show_discrimination_heatmap (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --- Executes on button press in open_as_separate_figure.
 function open_as_separate_figure_Callback(hObject, eventdata, handles)
 % hObject    handle to open_as_separate_figure (see GCBO)
@@ -539,13 +525,7 @@ function open_as_separate_figure_Callback(hObject, eventdata, handles)
 
 % --- Executes on selection change in plot_type.
 function plot_type_Callback(hObject, eventdata, handles)
-% hObject    handle to plot_type (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns plot_type contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from plot_type
-update_visuals_axis(hObject,handles);
+    update_visuals_axis(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function plot_type_CreateFcn(hObject, eventdata, handles)
@@ -562,13 +542,8 @@ end
 
 % --- Executes on button press in highlight_selection.
 function highlight_selection_Callback(hObject, eventdata, handles)
-% hObject    handle to highlight_selection (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of highlight_selection
-visualize_platemap(hObject,handles);
-update_visuals_axis(hObject,handles);
+    visualize_platemap(hObject,handles);
+    update_visuals_axis(hObject,handles);
 
 function visualize_platemap(hObject,handles)   
 [~,indices] = select_wells(handles);
@@ -599,8 +574,8 @@ function [letter_ind,number_ind] = get_letter_number_indices(handles,well_token)
     number_ind = find(ismember(handles.numbers,s{2}));
 
 function D = create_platemap_values(handles)
-    %D = NaN(8,12)
-    D = rand(8,12);    
+    D = NaN(8,12);
+    %D = rand(8,12);    
 
     tracks = handles.TrackPlotter_handles.MI_tracks;
     wells = handles.raw_data_tokens;
@@ -1048,9 +1023,7 @@ function set_minutes_time_axis_for_imagesc(ax1,taxis,b1,step,step_val)
                             xlabel(ax1,'time [min]');
                             grid(ax1,'on');         
 
-    
-
-                            
+                               
 % --- Executes on selection change in show_curves.
 function show_curves_Callback(hObject, eventdata, handles)
 %
