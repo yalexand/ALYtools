@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_HTS_MI_heatmapper(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_HTS_MI_heatmapper
 
-% Last Modified by GUIDE v2.5 05-Nov-2020 19:24:23
+% Last Modified by GUIDE v2.5 06-Nov-2020 16:56:26
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_HTS_MI_heatmapper_OpeningFcn, ...
@@ -118,6 +118,20 @@ set(handles.plot_type,'String',{ ...
 set(handles.show_curves,'String',{'all','total only','type1,type2 only'});
 set(handles.show_curves,'Value',1);
 
+set(handles.platemap_visualization_mode,'String',{'platemap','chart'});
+set(handles.platemap_visualization_mode,'Value',1);
+
+set(handles.statistic,'String',{'p-value: KS','p-value: t-test','p-value: Wilcoxon','Cohen"s d','|median diff|'});
+set(handles.statistic,'visible','off');
+
+% discrimination chart
+handles.chart_panel = uipanel(handles.figure1,'visible','off');
+handles.chart_panel.Position = [0.08 0.02 .3*1.15 .5*1.15];     
+
+% platemap 
+handles.platemap_panel = uipanel(handles.figure1,'visible','off');
+handles.platemap_panel.Position = [0.02 0.2 .45 .4];
+
     raw_filenames = handles.TrackPlotter_handles.MI_fnames;
     %
     all_tokens_10_12 = [];
@@ -151,6 +165,7 @@ set(handles.show_curves,'Value',1);
     handles.raw_data_tokens = raw_data_tokens;
 
 handles.h = [];
+handles.h_chart = [];
 % D = rand(8,12);
 % update_platemap(hObject,handles,D);
 
@@ -655,23 +670,59 @@ function D = create_platemap_values(handles)
 
 function update_platemap(hObject,handles,D)
 
-    p = uipanel(handles.figure1);
-    p.Position = [0.02 0.2 .45 .4];        
-    
-    handles.h = heatmap(p,handles.numbers,handles.letters,D);
-    handles.h.Colormap = jet;
-    
-%     s = get(handles.parameter,'String');
-%     param_name = s{get(handles.parameter,'Value')};
-%     s = get(handles.statistic,'String');
-%     statistic_name = s{get(handles.statistic,'Value')};
-%     
-%     handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
-%                        'h , ' param_name,' , ',statistic_name];
-    
     bckg_color = get(handles.figure1,'Color');
-    handles.h.MissingDataColor = bckg_color;    
-    handles.h.GridVisible = 'off';
+
+    switch get(handles.platemap_visualization_mode,'Value')
+        
+        case 1
+            set(handles.statistic,'visible','off');
+            set(handles.platemap_panel,'visible','on');
+            set(handles.chart_panel,'visible','off');
+            
+            handles.h = heatmap(handles.platemap_panel,handles.numbers,handles.letters,D);
+            handles.h.Colormap = jet;
+
+        %     s = get(handles.parameter,'String');
+        %     param_name = s{get(handles.parameter,'Value')};
+        %     s = get(handles.statistic,'String');
+        %     statistic_name = s{get(handles.statistic,'Value')};
+        %     
+        %     handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
+        %                        'h , ' param_name,' , ',statistic_name];
+
+            handles.h.MissingDataColor = bckg_color;    
+            handles.h.GridVisible = 'off';
+            
+        case 2
+
+            s = get(handles.plate_map_display,'String');
+            param = get(handles.plate_map_display,'Value');
+            if ismember(param,[1 3]), return, end            
+            
+            param_name = s{get(handles.plate_map_display,'Value')};            
+            
+            set(handles.statistic,'visible','on');
+            set(handles.platemap_panel,'visible','off');
+            set(handles.chart_panel,'visible','on');
+                
+            [selected_wells,D] = create_discrimination_chart_data(handles);
+            if 96*96 ~= sum(isnan(D),'all')
+                handles.h_chart = heatmap(handles.chart_panel,selected_wells,selected_wells,D);
+                handles.h_chart.Colormap = jet;
+
+                s = get(handles.statistic,'String');
+                statistic_name = s{get(handles.statistic,'Value')};        
+                handles.h_chart.Title = [param_name,' , ',statistic_name];
+
+                handles.h_chart.FontSize = 8;
+                handles.h_chart.MissingDataColor = bckg_color;    
+                handles.h_chart.GridVisible = 'off';
+                
+                if ismember(get(handles.statistic,'Value'),[1 2 3])
+                    caxis(gca,[0 1]);
+                end
+            end
+    end
     
     guidata(hObject, handles);
 
@@ -1048,3 +1099,112 @@ function clustering_details_Callback(hObject, ~, handles)
     guidata(hObject, handles);
     visualize_platemap(hObject,handles);
     update_visuals_axis(hObject,handles);
+
+    
+function [selected_wells,D] = create_discrimination_chart_data(handles)
+ 
+    [selected_wells,~] = select_wells(handles);
+    N = numel(selected_wells);
+    
+    sample = cell(N,1); % statistical samples
+    
+    tracks = handles.TrackPlotter_handles.MI_tracks; 
+        
+    dt = handles.TrackPlotter_handles.dt;
+    
+    for k = 1:numel(tracks)
+        track_k = tracks{k};  
+        index = find(ismember(selected_wells,handles.raw_data_tokens{k}));
+        if isempty(index), continue, end
+        v = nan;
+        switch get(handles.plate_map_display,'Value')
+            case 2
+                v = (track_k(1,1)+handles.DF-1)*dt; % mitosis_time 
+            case 4
+                FRET_values = track_k(handles.DF:size(track_k,1),4);
+                v = median(FRET_values);
+            case 5                
+                FRET_values = track_k(handles.DF+2:size(track_k,1),4); % to ensure it is well down
+                v = max(FRET_values)-min(FRET_values);                
+        end
+        if ~isnan(v)
+            sample{index} = [sample{index} v];
+        end
+    end
+
+    D = nan(N);
+    
+    hw = waitbar(0,'calculating statistics..','WindowStyle','modal');
+    for k=1:numel(sample)
+        for m=1:numel(sample)
+                        x1 = sample{k};
+                        x2 = sample{m};
+                        
+            mode = get(handles.statistic,'Value');
+                        
+            if ~isempty(x1) && ~isempty(x2) && k<m
+                switch mode
+                    case 1
+                        [~,P] = kstest2(x1,x2);
+                    case 2
+                        [~,P] = ttest2(x1,x2,'vartype','unequal'); % not sure                        
+                    case 3  
+                        [P,~] = ranksum(x1,x2);
+                    case 4 % Cohen's d
+                        N1 = numel(x1);
+                        N2 = numel(x2);
+                        s = sqrt( 1/(N1+N2)*( (N1-1)*var(x1) + (N2-1)*var(x2) ) );
+                        P = abs( mean(x1) - mean(x2) )/s;
+                    case 5
+                        P = abs(median(x1)-median(x2));
+                end
+                D(k,m) = P; 
+            end            
+        end
+        if ~isempty(hw), waitbar(k/numel(sample),hw); drawnow, end   
+    end
+    if ~isempty(hw), delete(hw), drawnow; end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+% --- Executes on selection change in statistic.
+function statistic_Callback(hObject, eventdata, handles)
+visualize_platemap(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function statistic_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to statistic (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in platemap_visualization_mode.
+function platemap_visualization_mode_Callback(hObject, eventdata, handles)
+visualize_platemap(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function platemap_visualization_mode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to platemap_visualization_mode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
