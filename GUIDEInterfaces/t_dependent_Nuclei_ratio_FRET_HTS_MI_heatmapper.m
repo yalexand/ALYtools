@@ -160,7 +160,7 @@ set(handles.clustering_method,'Value',1);
 handles.IDX = do_clustering(handles,false);
 
 handles.vis_panel = uipanel(handles.figure1,'visible','off');
-handles.vis_panel.Position = [0.5 0.01 .47 .92];        
+handles.vis_panel.Position = [0.5 0.01 .49 .92];        
 
 % Update handles structure
 guidata(hObject, handles);
