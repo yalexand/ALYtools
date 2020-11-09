@@ -533,10 +533,21 @@ end
 
 % --- Executes on button press in open_as_separate_figure.
 function open_as_separate_figure_Callback(hObject, eventdata, handles)
-% hObject    handle to open_as_separate_figure (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
+    % turns out to be .. too cumbersome to implement
+    plot_ind = get(handles.plot_type,'Value');
+    s = get(handles.plot_type,'String');
+    plot_name = s{plot_ind};
+       
+    if strcmp('on',get(handles.vis_panel,'visible'))
+        % ??
+    elseif strcmp('on',get(handles.visuals_axis,'visible'))
+        axes(handles.visuals_axis);
+        src_ax = gca;        
+        h = figure('Name',plot_name);
+        dst_ax = gca;
+        copyobj(src_ax.Children,dst_ax);
+        grid(dst_ax,'on');          
+    end
 
 % --- Executes on selection change in plot_type.
 function plot_type_Callback(hObject, eventdata, handles)
@@ -692,6 +703,12 @@ function update_platemap(hObject,handles,D)
 
             handles.h.MissingDataColor = bckg_color;    
             handles.h.GridVisible = 'off';
+            
+                switch get(handles.plate_map_display,'Value')
+                    case 1 % ?
+                    case 3
+                    caxis(gca,[0 1]);                    
+                end            
             
         case 2
 
