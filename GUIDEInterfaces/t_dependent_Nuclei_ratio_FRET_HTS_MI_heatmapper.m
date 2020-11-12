@@ -657,7 +657,7 @@ function D = create_platemap_values(handles)
           for k=1:8
               for m=1:12
                   if~isempty(C{k,m})
-                    D(k,m) = mean(C{k,m},'All');
+                    D(k,m) = mean(C{k,m});
                   end
               end
           end            
@@ -673,7 +673,7 @@ function D = create_platemap_values(handles)
           for k=1:8
               for m=1:12
                   if~isempty(C{k,m})
-                    D(k,m) = mean(C{k,m},'All');
+                    D(k,m) = mean(C{k,m});
                   end
               end
           end                                                     
