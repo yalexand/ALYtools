@@ -1308,7 +1308,7 @@ if strcmp('on',verbose) && ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, e
     L = fix(6/handles.dt);
     if length(s1)<=L, continue, end
     % one minute/step upsampling
-    f = fix(handles.dt/(1/60));
+    f = round(handles.dt/(1/60));
     s1 = interp(s1,f);
     s2 = interp(s2,f);
     s3 = interp(s3,f);
