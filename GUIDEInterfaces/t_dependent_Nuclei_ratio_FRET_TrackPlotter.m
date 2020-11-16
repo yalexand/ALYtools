@@ -159,8 +159,8 @@ elseif 2 == nargin-3
                 
         handles.dt = dt;
         handles.pixelsize = microns_per_pixel;
-            set(handles.pixel_size_edit,'String',handles.pixelsize);
-            set(handles.delta_t_edit,'String',handles.dt);    
+            set(handles.pixel_size_edit,'String',num2str(handles.pixelsize));
+            set(handles.delta_t_edit,'String',num2str(handles.dt));    
             
         handles.raw_data = tracks;
 
@@ -195,8 +195,8 @@ set(handles.time_plot_colour_feature,'String',handles.features);
 set(handles.histo2_Y_feature,'String',handles.features);
 set(handles.histo2_X_feature,'String',handles.features);
 
-set(handles.pixel_size_edit,'String',handles.pixelsize);
-set(handles.delta_t_edit,'String',handles.dt);
+set(handles.pixel_size_edit,'String',num2str(handles.pixelsize));
+set(handles.delta_t_edit,'String',num2str(handles.dt));
 
 str = [{'time'} handles.features];
 minmaxlimits = zeros(numel(str),2);
@@ -490,8 +490,8 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
                 
     handles.dt = dt;
     handles.pixelsize = microns_per_pixel;
-        set(handles.pixel_size_edit,'String',handles.pixelsize);
-        set(handles.delta_t_edit,'String',handles.dt);    
+        set(handles.pixel_size_edit,'String',num2str(handles.pixelsize));
+        set(handles.delta_t_edit,'String',num2str(handles.dt));
     %
     
     handles.ST_raw_data = tracks;
@@ -1495,8 +1495,8 @@ for k=1:numel(filenames)
 end
 if ~isempty(hw), delete(hw), drawnow; end
 
-set(handles.pixel_size_edit,'String',handles.pixelsize);
-set(handles.delta_t_edit,'String',handles.dt); 
+set(handles.pixel_size_edit,'String',num2str(handles.pixelsize));
+set(handles.delta_t_edit,'String',num2str(handles.dt)); 
 
 guidata(hObject, handles);
 
