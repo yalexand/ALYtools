@@ -460,7 +460,8 @@ n_clusters = get(handles.n_clusters,'Value') + 1; % :)
     % data = MI_norm_FRET_ratio;
     % data = [data MI_peak_shift avr_FRET avr_nucleus_size avr_Pearson avr_nneighbours avr_cell_density];
     % data = [data avr_FRET avr_Pearson avr_nneighbours avr_cell_density];
-    data = [MI_norm_FRET_ratio avr_FRET avr_Pearson avr_nneighbours avr_cell_density MI_peak_shift];
+    % data = [MI_norm_FRET_ratio avr_FRET avr_Pearson avr_nneighbours avr_cell_density MI_peak_shift];
+    data = [MI_norm_FRET_ratio avr_FRET avr_Pearson avr_nneighbours avr_cell_density];
 
     % dimensionality reduction
     truncation = 2;
@@ -522,7 +523,7 @@ n_clusters = get(handles.n_clusters,'Value') + 1; % :)
     h_curves = subplot(nrows,ncols,2);
     maxy=-inf;
     miny=inf;
-    t = dt*(0:(size(MI_norm_FRET_ratio,2)-1));
+    t = (0:(size(MI_norm_FRET_ratio,2)-1))*handles.TrackPlotter_handles.dt*60;
 
     LEGEND = [];
     for k=1:n_clusters

@@ -339,7 +339,7 @@ function IDX = do_clustering(handles,verbose)
     % data = MI_norm_FRET_ratio;
     % data = [data MI_peak_shift avr_FRET avr_nucleus_size avr_Pearson avr_nneighbours avr_cell_density];
     % data = [data avr_FRET avr_Pearson avr_nneighbours avr_cell_density];
-    data = [MI_norm_FRET_ratio avr_FRET avr_Pearson avr_nneighbours avr_cell_density MI_peak_shift];
+    data = [MI_norm_FRET_ratio avr_FRET avr_Pearson avr_nneighbours avr_cell_density];
 
     % dimensionality reduction
     truncation = 2;
@@ -412,7 +412,7 @@ function IDX = do_clustering(handles,verbose)
         h_curves = subplot(nrows,ncols,2);
         maxy=-inf;
         miny=inf;
-        t = dt*(0:(size(MI_norm_FRET_ratio,2)-1));
+        t = 60*dt*(0:(size(MI_norm_FRET_ratio,2)-1));
 
         LEGEND = [];
         for k=1:n_clusters
