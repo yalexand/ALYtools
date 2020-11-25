@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 03-Nov-2020 09:24:51
+% Last Modified by GUIDE v2.5 25-Nov-2020 17:13:01
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -113,11 +113,17 @@ set(handles.tracks_to_show,'String',{'tracks','mitotic intervals'});
 
 handles.MI_LLeft = 120;
 handles.MI_LRight = 140;
-handles.MI_peak_proximity_tol = 15;
-handles.MI_large_smoothing_window = 280;
-handles.MI_small_smoothing_window = 35; % minutes
-handles.MI_FRET_peak_tol = 0.32;
-handles.MI_nucsize_peak_tol = 0.32;      
+     
+handles.MED_t_nucsize_drv_uncond     = 0.4;     % threshold for unconditional acceptance (derivative strength)
+handles.MED_t_nucsize_drv_cond       = 0.25;    % threshold for conditional acceptance (derivative strength)
+handles.MED_dt_twin_max              = 76;      % [min] beyond this value, can consider as next mitotic      
+handles.MED_T_min                    = 5;       % don't consider signals shorter than T_min     
+handles.MED_big_smoothing_window     = 280;     % [min]
+handles.MED_small_smoothing_window   = 35;      % [min]
+handles.MED_t_nucsize_ratio          = 1.75;    % dimensionless
+handles.MED_DT                       = 10;      % [min] time interval either to the past or future to calculate average nuc_size there
+handles.ME                           = [];      % mitotic events storage
+
 guidata(hObject, handles);
 
 if 1 == nargin-3
@@ -502,12 +508,14 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     handles.MI_norm_FRET_ratio = [];
     handles.MI_norm_nuc_size = [];
     handles.MI_peak_shift = [];
-
+    
+    handles.ME = detect_mitotic_events(handles,'on'); % verbose  
+    %
     [MI_tracks, ... 
     MI_track_indices, ...
     MI_norm_FRET_ratio, ...
     MI_norm_nuc_size, ...
-    MI_peak_shift] = get_mitotic_intervals(handles,tracks);
+    MI_peak_shift] = get_mitotic_intervals_by_using_mitotic_events(handles,'on');
     %
     if ~isempty(MI_tracks)
         handles.MI_tracks = MI_tracks;
@@ -517,7 +525,7 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
         handles.MI_track_indices = MI_track_indices;
         handles.MI_peak_shift = MI_peak_shift;
     end
-    
+                                        
     tracks_to_show_Callback(hObject, [], handles);
 
 % --------------------------------------------------------------------
@@ -1111,8 +1119,9 @@ h=figure;
 plot(t,handles.cell_nums,'k.-');
 axis([t(1) t(numel(handles.cell_nums)) min(handles.cell_nums) max(handles.cell_nums)]);
     xlabel('time [h]');
-    ylabel('#cells');
-grid on;    
+    ylabel('#cells');    
+grid on;
+legend(['{\Delta}N = ' num2str(max(handles.cell_nums)-min(handles.cell_nums))]);
 %
 figurename = get(handles.figure1,'Name');
 str = strsplit(figurename,(' : '));
@@ -1237,7 +1246,7 @@ function [minval, maxval] = visualization_range(handles,index)
                         maxval = max(handles.rng_nuc_cell_area_ratio);
              end
 
-
+             
 % --------------------------------------------------------------------
 function mitotic_interval_FRET_ratio_heatmap_Callback(hObject, eventdata, handles)
 % hObject    handle to mitotic_interval_FRET_ratio_heatmap (see GCBO)
@@ -1250,188 +1259,6 @@ function mitotic_interval_FRET_ratio_heatmap_Callback(hObject, eventdata, handle
         tracks_to_show_Callback(hObject, eventdata, handles);
     end
     t_dependent_Nuclei_ratio_FRET_ratio_heatmapper(handles);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [tracks_out,track_indices,norm_FRET_ratio,norm_nuc_size,peak_shift] = ... 
-                    get_mitotic_intervals(handles,tracks)
-tracks_out = [];
-track_indices = [];
-norm_FRET_ratio = [];
-norm_nuc_size = [];
-peak_shift = [];
-
-LLeft = handles.MI_LLeft;
-LRight = handles.MI_LRight;
-peaktol = handles.MI_peak_proximity_tol;
-t1 = handles.MI_FRET_peak_tol;
-t2 = handles.MI_nucsize_peak_tol;
-dt = handles.dt*60; % interval between frames in minutes
-big_smoothing_window  = round(handles.MI_large_smoothing_window/dt);
-small_smoothing_window  = round(handles.MI_small_smoothing_window/dt);
-
-verbose = get(handles.show_per_frame_mean_std,'enable');
-
-if strcmp('on',verbose)
-    hw = waitbar(0,'finding mitotic intervals.. please wait');
-end
-warning('off');
-for k=1:numel(tracks)
-if strcmp('on',verbose) && ~isempty(hw), waitbar(k/numel(tracks),hw); drawnow, end    
-    track = tracks{k};
-    %FRET_ratio = 1./squeeze(track(:,4)); % use if only D,A swapped :) 
-    FRET_ratio = squeeze(track(:,4)); % the correct one
-    nucleus_size = squeeze(track(:,7));
-    %
-    if ismember(size(track,2),[10 11 15])
-        cell_density = squeeze(track(:,10))/(handles.pixelsize)^2;
-    end    
-    %
-    sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]); % small smoothing window - HARDCODED
-    [~,lf_FRET] = TD_high_pass_filter(sm_s,big_smoothing_window);
-    s1 = sm_s-lf_FRET;
-    % repeat for nuclei size
-    sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
-    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
-    s2 = sm_s-lf;
-    % repeat for cell density
-    sm_s = medfilt2(cell_density,[small_smoothing_window 1]);
-    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
-    s3 = sm_s-lf;    
-    % normalize signals
-    s1 = (s1-mean(s1(:)))/std(s1(:));
-    s2 = (s2-mean(s2(:)))/std(s2(:));  
-    s3 = (s3-mean(s3(:)))/std(s3(:));
-    
-    s1_v = s1; %vanilla
-    s2_v = s2; %vanilla
-
-    L = fix(6/handles.dt);
-    if length(s1)<=L, continue, end
-    % one minute/step upsampling
-    f = round(handles.dt/(1/60));
-    s1 = interp(s1,f);
-    s2 = interp(s2,f);
-    s3 = interp(s3,f);
-    
-    r1 = -diff(s1);
-    r2 = -diff(s2);
-    r3 = +diff(s3);
-
-      [pks_1,locs_1] = findpeaks(r1,'MinPeakWidth',f,'MinPeakHeight',t1);
-      [pks_2,locs_2] = findpeaks(r2,'MinPeakWidth',f,'MinPeakHeight',t2);
-      [pks_3,locs_3] = findpeaks(r3,'MinPeakWidth',f,'MinPeakHeight',.001);      
-
-     ranges = [];
-     shifts = [];
-   
-% initial version considernig nuc.size and FRET ratio derivative peaks only     
-%      for kk=1:length(locs_1)
-%          L1 = locs_1(kk);
-%          for mm=1:length(locs_2)
-%              L2 = locs_2(mm);
-%              if abs(L1-L2)<peaktol
-%                 % range
-%                 rb = locs_1(kk) - LLeft;
-%                 re = locs_1(kk) + LRight;
-%                 if rb>=1 && re <= length(s1)
-%                     ranges = [ranges; [rb re] ];
-%                     shifts = [shifts; locs_1(kk)-locs_2(mm) ];
-%                 end
-%              end
-%          end
-%      end
-
-% this way one can take into account cell density
-     % intervals defintion.. quite experimental - starts
-     se=strel('disk',peaktol);
-     z1=zeros(size(r1));
-     z2=z1;
-     z1(locs_1)=1;
-     z2(locs_2)=1; 
-        % removing from z2 nuc.size drops not reuslting in cell density jump
-        z3=z1;
-        z3(locs_3)=1;
-        i2 = find(z2~=0);
-        i3 = find(z3~=0);
-        d = max(1,floor(peaktol/2)); 
-        for kk=1:numel(i2)
-            L2=i2(kk);
-            L2_is_OK = false;
-            for mm=1:numel(i3)
-                L3=i3(mm);
-                distance = L3-L2;
-                if d>distance&&distance>=0
-                    L2_is_OK = true;
-                    break;
-                end
-            end
-            if ~L2_is_OK
-                z2(L2)=0;
-            end
-        end
-        % removing from z2 nuc.size drops not reuslting in cell density jump
-     z2_dil=imdilate(z2,se);
-     locs_1_OK=find((z1&(z2_dil))>0);
-     %
-     for kk=1:numel(locs_1_OK)
-                L1 = locs_1(kk); % my index
-                rb = L1 - LLeft;
-                re = L1 + LRight;
-                if rb>=1 && re <= length(s1)
-                    ranges = [ranges; [rb re] ];                    
-                         %find shift
-                         shift = 0;
-                         for mm=1:length(locs_2)
-                            L2 = locs_2(mm);
-                            if abs(L1-L2)<peaktol
-                                shift = L1-L2;
-                                break;
-                            end
-                         end
-                    shifts = [shifts; shift];
-                end         
-     end
-     % intervals defintion.. quite experimental - ends
-     %  
-     LV = floor((handles.MI_LLeft+handles.MI_LRight+1)/f);
-     for kk=1:size(ranges,1)
-                    rb=max(1,fix(ranges(kk,1)/f));
-                    re=rb+LV;
-                    % OUTPUTS ASSIGNMENT
-                    tracks_out = [tracks_out; {track(rb:re,:)}];
-                    track_indices = [ track_indices; k];
-                    norm_FRET_ratio = [norm_FRET_ratio; s1_v(rb:re)'];
-                    norm_nuc_size = [norm_nuc_size; s2_v(rb:re)'];
-                    peak_shift = [peak_shift; fix(shifts(kk)/f)];
-     end
-      
-%      if 0~=size(ranges,1)
-%         figure;
-%         f=1:length(s1);
-%         h1=gca;
-%         plot(f,s1,'k.-',f,s2,'b.-','linewidth',2);
-%         hold on
-%             plot(1:length(r1),r1,'r-',1:length(r2),r2,'m-',1:length(r2),r3,'k:','linewidth',3); 
-%             hold on
-%                 plot(locs_1,pks_1,'gs',locs_2,pks_2,'c^',locs_3,pks_3,'k*','linewidth',3); 
-%                 
-%                 for kk=1:size(ranges,1)
-%                     rb=ranges(kk,1);
-%                     re=ranges(kk,2);
-%                     range = zeros(size(s1));
-%                     range(rb:re) = 1;
-%                     plot(f,range,'g--','linewidth',3);
-%                     hold on;
-%                 end
-%                 hold off;
-%                 
-%         grid(h1,'on');
-%         %legend({'FRET ratio','nuc. size','-d/dt(FRET ratio)','-d/dt(nuc. size)','FRET derivative peak','nuc. size derivative peak','interval'},'fontsize',14);
-%      end
-
-end
-if strcmp('on',verbose) && ~isempty(hw), delete(hw), drawnow; end
-warning('on');
 
 function single_FOVs_options(handles,flag)  % 'off' or 'on'
     set(handles.show_per_frame_mean_std,'Enable',flag);
@@ -1476,25 +1303,28 @@ for k=1:numel(filenames)
     handles.ST_raw_data_filenames = [handles.ST_raw_data_filenames; repmat(filenames(k),numel(tracks),1) ];
 
     handles.dt = dt;
-    handles.pixelsize = microns_per_pixel;    
-    
+    handles.pixelsize = microns_per_pixel;     
+end
+if ~isempty(hw), delete(hw), drawnow; end
+
+    handles.ME = detect_mitotic_events(handles,'on'); % verbose
+    %
     [MI_tracks, ... 
     MI_track_indices, ...
     MI_norm_FRET_ratio, ...
     MI_norm_nuc_size, ...
-    MI_peak_shift] = get_mitotic_intervals(handles,tracks);
+    MI_peak_shift, ...
+    MI_fnames] = get_mitotic_intervals_by_using_mitotic_events(handles,'on');
     %
     if ~isempty(MI_tracks)
-        handles.MI_tracks = [handles.MI_tracks; MI_tracks];
-        handles.MI_norm_FRET_ratio = [handles.MI_norm_FRET_ratio; MI_norm_FRET_ratio];
-        handles.MI_norm_nuc_size = [handles.MI_norm_nuc_size; MI_norm_nuc_size]; 
-        handles.MI_fnames = cat(1,handles.MI_fnames,repmat(cellstr(filenames{k}),[size(MI_tracks,1) 1]));
-        handles.MI_track_indices = [handles.MI_track_indices; MI_track_indices];
-        handles.MI_peak_shift = [handles.MI_peak_shift; MI_peak_shift];
+        handles.MI_tracks = MI_tracks;
+        handles.MI_norm_FRET_ratio = MI_norm_FRET_ratio;
+        handles.MI_norm_nuc_size = MI_norm_nuc_size; 
+        handles.MI_fnames = MI_fnames;
+        handles.MI_track_indices = MI_track_indices;
+        handles.MI_peak_shift = MI_peak_shift;
     end
-end
-if ~isempty(hw), delete(hw), drawnow; end
-
+    
 set(handles.pixel_size_edit,'String',num2str(handles.pixelsize));
 set(handles.delta_t_edit,'String',num2str(handles.dt)); 
 
@@ -1564,14 +1394,11 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 % --------------------------------------------------------------------
-function mitotic_interval_ERK_FRET_paramsetup_Callback(hObject, eventdata, handles)
-% hObject    handle to mitotic_interval_ERK_FRET_paramsetup (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-t_dependent_Nuclei_ratio_FRET_mitotic_intvl_settings(handles);
+function mitotic_event_detection_setup_Callback(hObject, eventdata, handles)
+t_dependent_Nuclei_ratio_FRET_ME_MI_settings(handles);
 
 % --------------------------------------------------------------------
-function mitotic_interval_ERK_FRET_save_intervals_Callback(hObject, eventdata, handles)
+function mitotic_interval_FRET_save_intervals_Callback(hObject, eventdata, handles)
     if isfield(handles,'MI_tracks') && ~isempty(handles.MI_tracks)    
         [fname, fpath] = uiputfile('*.mat','Save Intervals as..','_mitotic_intervals.mat');
         if fpath == 0; return; end
@@ -1588,20 +1415,217 @@ function mitotic_interval_ERK_FRET_save_intervals_Callback(hObject, eventdata, h
         %    
         save(filespec,'MI_tracks','MI_norm_FRET_ratio','MI_norm_nuc_size','MI_fnames','MI_track_indices','MI_peak_shift','dt','pixelsize');
     end 
-            
-            
-
-
+                        
 % --------------------------------------------------------------------
 function HTS_heatmapper_Callback(hObject, eventdata, handles)
     %
     t_dependent_Nuclei_ratio_FRET_HTS_heatmapper(handles);
-
-
-
+    % detect_mitotic_events(handles,'on')
 
 % --------------------------------------------------------------------
 function MI_HTS_mapper_Callback(hObject, eventdata, handles)
     %
     t_dependent_Nuclei_ratio_FRET_HTS_MI_heatmapper(handles);
     
+    
+function mevents = detect_mitotic_events(handles,verbose)
+            %handles.ST_raw_data = [handles.ST_raw_data; tracks];    
+            %handles.ST_raw_data_filenames = [handles.ST_raw_data_filenames; repmat(filenames(k),numel(tracks),1) ];
+
+t_nucsize_drv_uncond    = handles.MED_t_nucsize_drv_uncond; % 0.4; % threshold for unconditional acceptance (derivative strength)
+t_nucsize_drv_cond      = handles.MED_t_nucsize_drv_cond; % 0.25; % threshold for conditional acceptance (derivative strength)
+dt_twin_max             = handles.MED_dt_twin_max; % 76; % beyond 60 minutes, can consider as next mitotic      
+T_min                   = handles.MED_T_min; % 5; % don't consider signals shorter than T_min     
+big_smoothing_window    = handles.MED_big_smoothing_window; % 280; % min
+small_smoothing_window  = handles.MED_small_smoothing_window; % 35; %min;
+t_nucsize_ratio         = handles.MED_t_nucsize_ratio; % 1.75;
+DT                      = handles.MED_DT; % 10; % time interval (min) either to the past or future to calculate average nuc_size there
+                        
+L_min = fix(T_min/handles.dt);
+
+dt_min = handles.dt*60; % interval between frames in minutes
+% convert to frames to use in smoothing
+big_smoothing_window  = round(big_smoothing_window/dt_min);
+small_smoothing_window  = round(small_smoothing_window/dt_min);
+
+%verbose = get(handles.show_per_frame_mean_std,'enable');
+
+if strcmp('on',verbose)
+    hw = waitbar(0,'finding mitotic events.. please wait');
+end
+
+warning('off');
+
+mevents = [];
+
+tracks = handles.ST_raw_data;
+for track_ind=1:numel(tracks)
+if strcmp('on',verbose) && ~isempty(hw), waitbar(track_ind/numel(tracks),hw); drawnow, end    
+    track = tracks{track_ind};    
+    %
+    FRET_ratio = squeeze(track(:,4));
+    nucleus_size = squeeze(track(:,7));
+    %
+     sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]);
+     [~,lf_FRET] = TD_high_pass_filter(sm_s,big_smoothing_window);
+     s1 = sm_s-lf_FRET;
+    % repeat for nuclei size
+    sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
+    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s2 = sm_s-lf;
+    % normalize signals
+    s1 = (s1-mean(s1(:)))/std(s1(:));
+    s2 = (s2-mean(s2(:)))/std(s2(:));  
+        
+    if length(s2)<=L_min, continue, end
+    
+    % one minute/step upsampling
+    fac = round(handles.dt/(1/60));
+    s1 = interp(s1,fac);
+    s2 = interp(s2,fac);
+    
+    nucleus_size_interp = interp(nucleus_size,fac);
+    nucleus_size_interp = nucleus_size_interp(2:numel(nucleus_size_interp)); % shift to compare with derivative
+        
+    r2 = -diff(s2); % derivative of nuc_size
+    
+    [pks_2,locs_2] = findpeaks(r2,'MinPeakWidth',fac,'MinPeakHeight',t_nucsize_drv_cond); % peaks of r2 derivative
+            
+     z2 = zeros(size(r2)); % z2 (minutes axis where ME are marked "1").. whatever - may be sizeof r2 or r3
+     z2(locs_2) = 1; % assign them all as valid first, then analyze to set some of them to 0
+     i2 = find(z2~=0);
+
+        for kk=1:numel(i2)
+            L2=i2(kk); % location of nuclear size derivative's jump
+            if pks_2(kk)>t_nucsize_drv_uncond % unconditional acceptance
+                L2_is_OK = true;
+            else % maybe it will work with weak criterion
+                L2_is_OK = pks_2(kk)>t_nucsize_drv_cond; % good starting point if satisfies weak criterion
+                    if L2_is_OK %
+                        bfre = max(1,L2-DT):L2;
+                        aftr = L2:min(L2+DT,numel(nucleus_size_interp));
+                        nuc_size_bfre = mean(nucleus_size_interp(bfre)); % max?
+                        nuc_size_aftr = mean(nucleus_size_interp(aftr)); % min?
+                        %
+                        if nuc_size_bfre/nuc_size_aftr < t_nucsize_ratio % but unfortunately nuc_size differennce isn't big enough
+                            L2_is_OK = false;
+                        end
+                    end
+            end
+            if ~L2_is_OK
+                z2(L2) = 0; % set to 0 if satisfies neither unconditional, nor weak criterion
+            end            
+        end
+
+      % delete twins from z2 (minutes axis where ME are marked "1")         
+      if 0==sum(z2), continue, end
+      %
+      cnd = num2cell(find(z2==1)); % candidates
+      exclusion = [];
+      for k=2:numel(cnd)
+          if cnd{k}-cnd{k-1}<dt_twin_max
+              exclusion = [exclusion; k];
+          end
+      end
+      cnd_corr = cnd;
+      cnd_corr(exclusion)=[];       
+
+% VISUALIZATION
+%         z2 = zeros(size(z2));      
+%         z2(cell2mat(cnd_corr))=1;                      
+%         %
+%         mes = find(z2~=0);
+%         figure;
+%         h2=subplot(2,1,1);
+%         ff=1:length(s2);
+%         plot(h2,ff,s1,'g:',ff,s2,'k.-','linewidth',2);
+%         hold(h2,'on');
+%             plot(h2,1:length(r2),r2,'m.-','linewidth',3); 
+%             hold(h2,'on');
+%                 plot(h2,mes,4*ones(size(mes)),'r*',locs_2,pks_2,'m*','linewidth',3);                 
+%                 hold(h2,'off');                
+%         grid(h2,'on');                
+%             
+%         h3=subplot(2,1,2);
+%             me = [];
+%             for k=1:numel(cnd_corr)
+%                 within_track_ME_frame_index = max(1,round(cnd_corr{k}/fac));
+%                 me = [me; within_track_ME_frame_index];
+%             end        
+%             plot(h3,1:length(nucleus_size),nucleus_size/mean(nucleus_size),'k.-',1:length(nucleus_size),FRET_ratio/mean(FRET_ratio),'c:',me,ones(size(me)),'r*','linewidth',2);
+%             grid(h3,'on');
+%            disp('');
+% VISUALIZATION
+        
+        % calculate actual index in the track for every event and add to "mevents"
+        for k=1:numel(cnd_corr)
+            within_track_ME_frame_index = max(1,round(cnd_corr{k}/fac));
+            mevents = [mevents; [track_ind within_track_ME_frame_index]];
+        end    
+end
+
+size(mevents,1)
+
+if strcmp('on',verbose) && ~isempty(hw), delete(hw), drawnow; end
+warning('on');
+
+
+function [tracks_out,track_indices,norm_FRET_ratio,norm_nuc_size,peak_shift,filenames_out] = ... 
+                    get_mitotic_intervals_by_using_mitotic_events(handles,verbose)                
+tracks_out = [];
+track_indices = [];
+norm_FRET_ratio = [];
+norm_nuc_size = [];
+peak_shift = [];
+filenames_out = cell(0);
+
+if isempty(handles.ME), return, end
+
+big_smoothing_window    = handles.MED_big_smoothing_window; % 280; % min
+small_smoothing_window  = handles.MED_small_smoothing_window; % 35; %min;
+
+% convert to frames from minutes
+dt_min = handles.dt*60; % [minutes]
+big_smoothing_window  = round(big_smoothing_window/dt_min);
+small_smoothing_window  = round(small_smoothing_window/dt_min);
+    LLeft = round(handles.MI_LLeft/dt_min);
+    LRight = round(handles.MI_LRight/dt_min);
+
+if strcmp('on',verbose)
+    hw = waitbar(0,'finding mitotic intervals.. please wait');
+end
+
+tracks = handles.ST_raw_data;
+for k=1:size(handles.ME,1)
+if strcmp('on',verbose) && ~isempty(hw), waitbar(k/size(handles.ME,1),hw); drawnow, end
+    track_ind   = handles.ME(k,1);
+    track = tracks{track_ind};
+    FRET_ratio = squeeze(track(:,4));
+    nucleus_size = squeeze(track(:,7));
+    %
+    sm_s = medfilt2(FRET_ratio,[small_smoothing_window 1]);
+    [~,lf_FRET] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s1 = sm_s-lf_FRET;
+    % repeat for nuclei size
+    sm_s = medfilt2(nucleus_size,[small_smoothing_window 1]);
+    [~,lf] = TD_high_pass_filter(sm_s,big_smoothing_window);
+    s2 = sm_s-lf;
+    % normalize signals
+    s1 = (s1-mean(s1(:)))/std(s1(:));
+    s2 = (s2-mean(s2(:)))/std(s2(:));  
+
+    mevent = handles.ME(k,2); % index of ME centre within track
+    rb = mevent - LLeft;
+    re = mevent + LRight;
+    
+    if rb>=1 && re<=length(s1)
+                    tracks_out = [tracks_out; {track(rb:re,:)}];
+                    track_indices = [ track_indices; track_ind];
+                    norm_FRET_ratio = [norm_FRET_ratio; s1(rb:re)'];
+                    norm_nuc_size = [norm_nuc_size; s2(rb:re)'];
+                    peak_shift = [peak_shift; 0]; % not used
+                    filenames_out = [filenames_out; handles.ST_raw_data_filenames{track_ind}];
+    end    
+end % loop over mitotic events
+if strcmp('on',verbose) && ~isempty(hw), delete(hw), drawnow; end
+                                
