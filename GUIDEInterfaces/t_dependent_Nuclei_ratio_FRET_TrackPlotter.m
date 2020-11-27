@@ -509,6 +509,8 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     handles.MI_norm_nuc_size = [];
     handles.MI_peak_shift = [];
     
+    handles.ST_raw_data_filenames = repmat({filename},[size(tracks,1) 1]); % corresponding filenames
+        
     handles.ME = detect_mitotic_events(handles,'on'); % verbose  
     %
     [MI_tracks, ... 
