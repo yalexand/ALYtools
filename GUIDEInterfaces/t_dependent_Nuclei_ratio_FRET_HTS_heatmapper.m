@@ -376,8 +376,10 @@ function [selected_wells,D] = create_heatmap_data(handles)
             frame_index = find(track_k(:,1)==handles.cur_frame);
             if ~isempty(frame_index)
                 value = track_k(frame_index,param_index);
-                index = find(ismember(selected_wells,handles.raw_data_tokens{k}));                
-                sample{index} = [sample{index} value];
+                index = find(ismember(selected_wells,handles.raw_data_tokens{k})); 
+                if ~isempty(index)
+                    sample{index} = [sample{index} value];
+                end
             end
     end
                
