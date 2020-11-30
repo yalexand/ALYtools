@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_HTS_heatmapper(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_HTS_heatmapper
 
-% Last Modified by GUIDE v2.5 01-Nov-2020 18:25:06
+% Last Modified by GUIDE v2.5 30-Nov-2020 19:51:03
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_HTS_heatmapper_OpeningFcn, ...
@@ -70,12 +70,14 @@ set(handles.letter_end,'String',handles.letters);
 set(handles.number_start,'String',handles.numbers);
 set(handles.number_end,'String',handles.numbers);
 set(handles.remove_outliers,'Value',0);
+set(handles.vizualization_mode,'String',{'platemap','chart'});
 
 set(handles.parameter,'Value',6); % FRET ratio
 set(handles.number_start,'Value',1);
 set(handles.number_end,'Value',12);
 set(handles.letter_start,'Value',1);
 set(handles.letter_end,'Value',8);
+set(handles.vizualization_mode,'Value',2);
 
 handles.max_frame = floor(handles.TrackPlotter_handles.filter_table.Data(1,2)/handles.TrackPlotter_handles.dt);
 handles.cur_frame = floor(str2double(get(handles.evaluation_time,'String'))/handles.TrackPlotter_handles.dt);
@@ -113,6 +115,14 @@ handles.cur_frame = floor(str2double(get(handles.evaluation_time,'String'))/hand
     end
             
     handles.raw_data_tokens = raw_data_tokens;
+    
+%%%%%%%%%%%%%%%%%% continued 30_11_2020    
+    handles.diagram_panel = uipanel(handles.figure1,'visible','off');
+    handles.diagram_panel.Position = [0.15 0.05 .7 .8];
+    
+    handles.platemap_panel = uipanel(handles.figure1,'visible','off');
+    handles.platemap_panel.Position = [0.1 0.20 .8 .5];    
+%%%%%%%%%%%%%%%%%% continued 30_11_2020    
         
     update_diagram_Callback(hObject, eventdata, handles);
 
@@ -134,31 +144,85 @@ function varargout = t_dependent_Nuclei_ratio_FRET_HTS_heatmapper_OutputFcn(hObj
 varargout{1} = handles.output;
 
 
+% % --- Executes on button press in update_diagram.
+% function update_diagram_Callback(hObject, eventdata, handles)
+% 
+%     p = uipanel(handles.figure1);
+%     p.Position = [0.15 0.05 .7 .8];
+%         
+%     [selected_wells,D] = create_heatmap_data(handles);
+%     
+%     handles.h = heatmap(p,selected_wells,selected_wells,D);
+%     handles.h.Colormap = jet;
+%     
+%     s = get(handles.parameter,'String');
+%     param_name = s{get(handles.parameter,'Value')};
+%     s = get(handles.statistic,'String');
+%     statistic_name = s{get(handles.statistic,'Value')};
+%     
+%     handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
+%                        'h , ' param_name,' , ',statistic_name];
+%     
+%     bckg_color = get(handles.figure1,'Color');
+%     handles.h.MissingDataColor = bckg_color;    
+%     handles.h.GridVisible = 'off';    
+% % Update handles structure
+% handles.D = D;
+% guidata(hObject, handles);
+
 % --- Executes on button press in update_diagram.
 function update_diagram_Callback(hObject, eventdata, handles)
 
-    p = uipanel(handles.figure1);
-    p.Position = [0.15 0.05 .7 .8];
-        
-    [selected_wells,D] = create_heatmap_data(handles);
-    
-    handles.h = heatmap(p,selected_wells,selected_wells,D);
-    handles.h.Colormap = jet;
-    
     s = get(handles.parameter,'String');
     param_name = s{get(handles.parameter,'Value')};
+    
     s = get(handles.statistic,'String');
     statistic_name = s{get(handles.statistic,'Value')};
+
+    mode  = get(handles.vizualization_mode,'value');
     
-    handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
-                       'h , ' param_name,' , ',statistic_name];
+    if 2==mode % chart    
+        set(handles.diagram_panel,'visible','on');  
+        set(handles.platemap_panel,'visible','off');
+        set(handles.statistic,'String',{'p-value: KS','p-value: t-test','p-value: Wilcoxon','Cohen"s d','|median diff|'});
+        set(handles.statistic,'visible','on'); 
+        set(handles.generate_t_dependence,'Enable','off');
+        guidata(hObject, handles);
+
+        [selected_wells,D] = create_heatmap_data(handles);
+
+        handles.h = heatmap(handles.diagram_panel,selected_wells,selected_wells,D);
+        handles.h.Colormap = jet;
+
+        handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
+                           'h , ' param_name,' , ',statistic_name];
+
+        bckg_color = get(handles.figure1,'Color');
+        handles.h.MissingDataColor = bckg_color;    
+        handles.h.GridVisible = 'off';    
+        % Update handles structure
+        handles.D = D; % look slike, not needed
+        guidata(hObject, handles);
+    else % platemap
+        set(handles.diagram_panel,'visible','off');  
+        set(handles.platemap_panel,'visible','on');
+        set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis'});
+        set(handles.statistic,'visible','on');
+        set(handles.generate_t_dependence,'Enable','on');
+        guidata(hObject, handles);
+
+        [~,D] = create_platemap_data(handles);    
+        handles.h = heatmap(handles.platemap_panel,handles.numbers,handles.letters,D);
+        handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
+                           'h , ' param_name,' , ',statistic_name];    
+        bckg_color = get(handles.figure1,'Color');
+        handles.h.MissingDataColor = bckg_color;        
+        handles.h.Colormap = jet;
+    end
     
-    bckg_color = get(handles.figure1,'Color');
-    handles.h.MissingDataColor = bckg_color;    
-    handles.h.GridVisible = 'off';    
-% Update handles structure
-handles.D = D;
-guidata(hObject, handles);
+ guidata(hObject, handles);
+
+
 
 % --- Executes on selection change in statistic.
 function statistic_Callback(hObject, eventdata, handles)
@@ -435,3 +499,118 @@ function remove_outliers_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of remove_outliers
+
+
+% continued designing...
+
+function [selected_wells,D] = create_platemap_data(handles) 
+
+    tracks = handles.TrackPlotter_handles.raw_data;
+    wells = handles.raw_data_tokens;    
+    %
+    feature_index = get(handles.parameter,'Value');
+    
+                switch feature_index                    
+                    case 4 % #nghbrs                    
+                        param_index = 9;
+                    case 5 % cell density
+                        param_index = 10;
+                    case 6 % FRET ratio
+                        param_index = 4;
+                    case 8 % donor intensity                     
+                        param_index = 5;
+                    case 9 % acceptor intensity
+                        param_index = 6;
+                    case 10 % nucleus size
+                        param_index = 7;
+                    case 11 % Pearson                      
+                        param_index = 8;
+                    case 14 % FRET molar fraction
+                        param_index = 11;
+                    case 15 % cell size
+                        param_index = 12;
+                    case 16 % 
+                        param_index = 13;
+                    case 17 % 
+                        param_index = 14;
+                    case 18 % 
+                        param_index = 15;
+                    case 2 % speed                        
+                        %Y = squeeze(handles.velocity_t{k});
+                        param_index = 4;
+                    case 19 % nuc_cell_are_ratio ??
+                        % Y = squeeze(handles.nuc_cell_area_ratio_t{k});                                                
+                        param_index = 4;                        
+                end                                        
+
+
+    selected_wells = select_wells(handles);
+
+    C = cell(8,12);
+
+    % run over all tracks at frame f 
+    ndata = numel(tracks);   
+    for dat = 1:ndata        
+            track = tracks{dat};
+            frame_index = find(track(:,1)==handles.cur_frame);
+            index = find(ismember(selected_wells,wells{dat}));
+            if ~isempty(frame_index) && ~isempty(index)
+                value = track(frame_index,param_index);
+                [k,m] = get_letter_number_indices(handles,wells{dat});
+                C{k,m} = [C{k,m}; value];
+            end
+    end
+    %    
+    D = NaN(8,12);
+    for k=1:8
+        for m=1:12
+            x = C{k,m};
+            if ~isempty(x) && numel(x)>1
+                        if get(handles.remove_outliers,'Value')
+                            x=rmoutliers(x,'median');
+                        end
+                    %  set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis'});
+                    switch(get(handles.statistic,'Value'))
+                        case 1
+                            D(k,m) = mean(x);
+                        case 2
+                            D(k,m) = std(x);
+                        case 3
+                            D(k,m) = median(x);
+                        case 4
+                            D(k,m) = max(x) - min(x);
+                        case 5
+                            D(k,m) = skewness(x);
+                        case 6
+                            D(k,m) = kurtosis(x);                            
+                    end
+            end                    
+        end
+    end
+
+function [letter_ind,number_ind] = get_letter_number_indices(handles,well_token)
+    s = strsplit(well_token,'-');
+    letter_ind = find(ismember(handles.letters,s{1}));
+    number_ind = find(ismember(handles.numbers,s{2}));
+
+% --- Executes on selection change in vizualization_mode.
+function vizualization_mode_Callback(hObject, eventdata, handles)
+update_diagram_Callback(hObject, eventdata, handles);
+
+% --- Executes during object creation, after setting all properties.
+function vizualization_mode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to vizualization_mode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes on button press in generate_t_dependence.
+function generate_t_dependence_Callback(hObject, eventdata, handles)
+% hObject    handle to generate_t_dependence (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
