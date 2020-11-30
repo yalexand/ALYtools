@@ -473,6 +473,8 @@ function [selected_wells,D] = create_heatmap_data(handles)
                         P = abs( mean(x1) - mean(x2) )/s;
                     case 5
                         P = abs(median(x1)-median(x2));
+                    case 6 
+                        P = nan;
                 end
                 D(k,m) = P; 
             end            
@@ -538,11 +540,10 @@ function [selected_wells,D] = create_platemap_data(handles)
                     case 2 % speed                        
                         %Y = squeeze(handles.velocity_t{k});
                         param_index = 4;
-                    case 19 % nuc_cell_are_ratio ??
+                    case {1,3,19,7,13} % nuc_cell_are_ratio ??
                         % Y = squeeze(handles.nuc_cell_area_ratio_t{k});                                                
                         param_index = 4;                        
                 end                                        
-
 
     selected_wells = select_wells(handles);
 
