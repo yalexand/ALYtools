@@ -57,7 +57,7 @@ handles.output = hObject;
 
 handles.TrackPlotter_handles = varargin{1};
 [~,NAME,EXT]=fileparts(handles.TrackPlotter_handles.fullfilename);
-set(handles.figure1, 'Name', ['FRET ratio heatmap : ' NAME EXT]);
+set(handles.figure1, 'Name', ['HTS mapper : ' NAME EXT]);
 set(handles.parameter,'String',handles.TrackPlotter_handles.features);
 
 handles.letters = {'A','B','C','D','E','F','G','H'};
@@ -615,3 +615,125 @@ function generate_t_dependence_Callback(hObject, eventdata, handles)
 % hObject    handle to generate_t_dependence (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+t = (0:(handles.max_frame-1))*handles.TrackPlotter_handles.dt;
+f_sample = cell(numel(t),1);
+
+    tracks = handles.TrackPlotter_handles.raw_data;
+    wells = handles.raw_data_tokens;    
+    %
+    feature_index = get(handles.parameter,'Value');
+    
+                switch feature_index                    
+                    case 4 % #nghbrs                    
+                        param_index = 9;
+                    case 5 % cell density
+                        param_index = 10;
+                    case 6 % FRET ratio
+                        param_index = 4;
+                    case 8 % donor intensity                     
+                        param_index = 5;
+                    case 9 % acceptor intensity
+                        param_index = 6;
+                    case 10 % nucleus size
+                        param_index = 7;
+                    case 11 % Pearson                      
+                        param_index = 8;
+                    case 14 % FRET molar fraction
+                        param_index = 11;
+                    case 15 % cell size
+                        param_index = 12;
+                    case 16 % 
+                        param_index = 13;
+                    case 17 % 
+                        param_index = 14;
+                    case 18 % 
+                        param_index = 15;
+                    case 2 % speed                        
+                        %Y = squeeze(handles.velocity_t{k});
+                        param_index = 4;
+                    case {1,3,19,7,13} % nuc_cell_are_ratio ??
+                        % Y = squeeze(handles.nuc_cell_area_ratio_t{k});                                                
+                        param_index = 4;                        
+                end                                        
+
+    selected_wells = select_wells(handles);
+
+    % run over all tracks at frame f 
+    hw = waitbar(0,'gathering statistics..','WindowStyle','modal');
+    ndata = numel(tracks);   
+    for dat = 1:ndata
+        %[ dat ndata ]
+            track = tracks{dat};
+            index = find(ismember(selected_wells,wells{dat}));
+            if ~isempty(index)
+                for f = 1:numel(f_sample)
+                    minmax_f = minmax(track(:,1)');
+                    if f>=minmax_f(1) && f<=minmax_f(2)
+                        f_ind = find(f==track(:,1));
+                        value = track(f_ind,param_index);
+                        f_sample{f} = [f_sample{f}; value];
+                    end                
+                end
+            end
+        if ~isempty(hw), waitbar(dat/ndata,hw); drawnow, end
+    end
+    if ~isempty(hw), delete(hw), drawnow; end            
+    %
+    mode = get(handles.statistic,'Value');
+    %
+    D = NaN(numel(f_sample),1);
+    D_std = D;
+    for f=1:numel(f_sample)
+            x = f_sample{f};
+            if ~isempty(x) && numel(x)>1
+                        if get(handles.remove_outliers,'Value')
+                            x=rmoutliers(x,'median');
+                        end
+                    %  set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis'});
+                    if intersect(mode,[1,2,3])
+                        D_std(f) = std(x);
+                    end
+                    %
+                    switch mode
+                        case 1
+                            D(f) = mean(x);
+                        case 2
+                            D(f) = D_std(f);
+                        case 3
+                            D(f) = median(x);
+                        case 4
+                            D(f) = max(x) - min(x);
+                        case 5
+                            D(f) = skewness(x);
+                        case 6
+                            D(f) = kurtosis(x);                            
+                    end
+            end                    
+    end
+    
+    token1 = selected_wells{1};
+    token2 = selected_wells{end};
+    h = figure;
+    set(h, 'Name', ['HTS mapper : ' token1 ' ... ' token2]);
+    
+    if intersect(mode,[1,3])
+        plot(gca,t,D,'k.-','linewidth',3);
+        hold(gca,'on');
+        shadedErrorBar(t,D,D_std,'lineProps',{'k.-','linewidth',2,'markersize',24});
+        hold(gca,'off');        
+    else
+        plot(gca,t,D,'k.-','linewidth',3);
+    end
+    grid(gca,'on');    
+    xlabel(gca,'time [h]');
+    index = get(handles.statistic,'Value');
+    s = get(handles.statistic,'String');
+    statistic_name = s{index};
+    s = get(handles.parameter,'String');
+    parameter_name = s{feature_index};
+    ylabel([statistic_name ' ( ' parameter_name ' ) ']);
+            
+    %guidata(hObject, handles);
+    uiresume(handles.figure1);
+    
