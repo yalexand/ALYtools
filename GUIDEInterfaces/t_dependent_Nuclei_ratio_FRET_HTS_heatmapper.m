@@ -612,11 +612,9 @@ end
 
 % --- Executes on button press in generate_t_dependence.
 function generate_t_dependence_Callback(hObject, eventdata, handles)
-% hObject    handle to generate_t_dependence (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
 t = (0:(handles.max_frame-1))*handles.TrackPlotter_handles.dt;
+
 f_sample = cell(numel(t),1);
 
     tracks = handles.TrackPlotter_handles.raw_data;
@@ -659,7 +657,6 @@ f_sample = cell(numel(t),1);
 
     selected_wells = select_wells(handles);
 
-    % run over all tracks at frame f 
     hw = waitbar(0,'gathering statistics..','WindowStyle','modal');
     ndata = numel(tracks);   
     for dat = 1:ndata
@@ -734,6 +731,5 @@ f_sample = cell(numel(t),1);
     parameter_name = s{feature_index};
     ylabel([statistic_name ' ( ' parameter_name ' ) ']);
             
-    %guidata(hObject, handles);
     uiresume(handles.figure1);
     
