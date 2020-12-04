@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_HTS_heatmapper(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_HTS_heatmapper
 
-% Last Modified by GUIDE v2.5 30-Nov-2020 19:51:03
+% Last Modified by GUIDE v2.5 04-Dec-2020 20:01:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -187,6 +187,7 @@ function update_diagram_Callback(hObject, eventdata, handles)
         set(handles.statistic,'String',{'p-value: KS','p-value: t-test','p-value: Wilcoxon','Cohen"s d','|median diff|'});
         set(handles.statistic,'visible','on'); 
         set(handles.generate_t_dependence,'Enable','off');
+        set(handles.save_current_time_slice,'Enable','off');
         guidata(hObject, handles);
 
         [selected_wells,D] = create_heatmap_data(handles);
@@ -209,6 +210,7 @@ function update_diagram_Callback(hObject, eventdata, handles)
         set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis'});
         set(handles.statistic,'visible','on');
         set(handles.generate_t_dependence,'Enable','on');
+        set(handles.save_current_time_slice,'Enable','on');
         guidata(hObject, handles);
 
         [~,D] = create_platemap_data(handles);    
@@ -612,7 +614,7 @@ end
 
 % --- Executes on button press in generate_t_dependence.
 function generate_t_dependence_Callback(hObject, eventdata, handles)
-
+    
 t = (0:(handles.max_frame-1))*handles.TrackPlotter_handles.dt;
 
 f_sample = cell(numel(t),1);
@@ -733,3 +735,52 @@ f_sample = cell(numel(t),1);
             
     uiresume(handles.figure1);
     
+
+% --------------------------------------------------------------------
+function Untitled_1_Callback(hObject, eventdata, handles)
+% hObject    handle to Untitled_1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function save_current_time_slice_Callback(hObject, eventdata, handles)
+
+    tracks = handles.TrackPlotter_handles.raw_data;
+    wells = handles.raw_data_tokens;    
+        
+    records = [];
+    
+    nparams = size(tracks{1},2);
+    
+    selected_wells = select_wells(handles);
+
+   % run over all tracks at frame f 
+    hw = waitbar(0,'gathering statistics..','WindowStyle','modal');
+    ndata = numel(tracks);   
+    for dat = 1:ndata        
+            track = tracks{dat};
+            frame_index = find(track(:,1)==handles.cur_frame);
+            index = find(ismember(selected_wells,wells{dat}));
+            if ~isempty(frame_index) && ~isempty(index)
+                record = track(frame_index,:);
+                records = [records; [wells{dat} num2cell(record)] ];
+            end
+        if ~isempty(hw), waitbar(dat/ndata,hw); drawnow, end
+    end
+    if ~isempty(hw), delete(hw), drawnow; end            
+
+[filename, pathname] = uiputfile( ...
+       {'*.xls';'*.mat';'*.*'}, ...
+        'Save as');
+    
+    if contains(filename,'xls')
+        if 11==nparams
+            caption = {'well','frame','xc','yc','FRET ratio','ID','IA','nuc.size','Pearson','#nghb','cell density','beta FRET'};
+        elseif 15 == nparams
+            caption = {'well','frame','xc','yc','FRET ratio','ID','IA','nuc.size','Pearson','#nghb','cell density','beta FRET','cell area','ref I cell','ref I nuc','ref I nuc/cell'};
+        end
+        xlswrite([pathname filesep filename],[caption; records]);
+    else
+        save([pathname filesep filename],'records');
+    end
