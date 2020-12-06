@@ -173,21 +173,23 @@ varargout{1} = handles.output;
 % --- Executes on button press in update_diagram.
 function update_diagram_Callback(hObject, eventdata, handles)
 
-    s = get(handles.parameter,'String');
-    param_name = s{get(handles.parameter,'Value')};
-    
-    s = get(handles.statistic,'String');
-    statistic_name = s{get(handles.statistic,'Value')};
-
     mode  = get(handles.vizualization_mode,'value');
     
     if 2==mode % chart    
         set(handles.diagram_panel,'visible','on');  
         set(handles.platemap_panel,'visible','off');
         set(handles.statistic,'String',{'p-value: KS','p-value: t-test','p-value: Wilcoxon','Cohen"s d','|median diff|'});
+                if get(handles.statistic,'Value')>5
+                   set(handles.statistic,'Value',1);
+                end
         set(handles.statistic,'visible','on'); 
         set(handles.generate_t_dependence,'Enable','off');
         set(handles.save_current_time_slice,'Enable','off');
+        s = get(handles.parameter,'String');
+        param_name = s{get(handles.parameter,'Value')};    
+            s = get(handles.statistic,'String');
+            statistic_name = s{get(handles.statistic,'Value')};
+        %                
         guidata(hObject, handles);
 
         [selected_wells,D] = create_heatmap_data(handles);
@@ -207,10 +209,15 @@ function update_diagram_Callback(hObject, eventdata, handles)
     else % platemap
         set(handles.diagram_panel,'visible','off');  
         set(handles.platemap_panel,'visible','on');
-        set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis'});
+        set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis','sample size'});
         set(handles.statistic,'visible','on');
         set(handles.generate_t_dependence,'Enable','on');
         set(handles.save_current_time_slice,'Enable','on');
+        s = get(handles.parameter,'String');
+        param_name = s{get(handles.parameter,'Value')};    
+            s = get(handles.statistic,'String');
+            statistic_name = s{get(handles.statistic,'Value')};
+        %        
         guidata(hObject, handles);
 
         [~,D] = create_platemap_data(handles);    
@@ -220,9 +227,10 @@ function update_diagram_Callback(hObject, eventdata, handles)
         bckg_color = get(handles.figure1,'Color');
         handles.h.MissingDataColor = bckg_color;        
         handles.h.Colormap = jet;
+        guidata(hObject, handles);        
     end
     
- guidata(hObject, handles);
+
 
 
 
@@ -585,7 +593,9 @@ function [selected_wells,D] = create_platemap_data(handles)
                         case 5
                             D(k,m) = skewness(x);
                         case 6
-                            D(k,m) = kurtosis(x);                            
+                            D(k,m) = kurtosis(x);
+                        case 7
+                            D(k,m) = length(x);
                     end
             end                    
         end
@@ -689,7 +699,7 @@ f_sample = cell(numel(t),1);
                         if get(handles.remove_outliers,'Value')
                             x=rmoutliers(x,'median');
                         end
-                    %  set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis'});
+                    %  set(handles.statistic,'String',{'mean','std','median','range','skewness','kurtosis','sample size'});
                     if intersect(mode,[1,2,3])
                         D_std(f) = std(x);
                     end
@@ -706,7 +716,9 @@ f_sample = cell(numel(t),1);
                         case 5
                             D(f) = skewness(x);
                         case 6
-                            D(f) = kurtosis(x);                            
+                            D(f) = kurtosis(x);
+                        case 7
+                            D(f) = length(x);
                     end
             end                    
     end
@@ -773,6 +785,8 @@ function save_current_time_slice_Callback(hObject, eventdata, handles)
 [filename, pathname] = uiputfile( ...
        {'*.xls';'*.mat';'*.*'}, ...
         'Save as');
+    
+    if 0==filename, return, end
     
     if contains(filename,'xls')
         if 11==nparams
