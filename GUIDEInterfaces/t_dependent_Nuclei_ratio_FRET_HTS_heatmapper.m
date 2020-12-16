@@ -143,33 +143,6 @@ function varargout = t_dependent_Nuclei_ratio_FRET_HTS_heatmapper_OutputFcn(hObj
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
-
-% % --- Executes on button press in update_diagram.
-% function update_diagram_Callback(hObject, eventdata, handles)
-% 
-%     p = uipanel(handles.figure1);
-%     p.Position = [0.15 0.05 .7 .8];
-%         
-%     [selected_wells,D] = create_heatmap_data(handles);
-%     
-%     handles.h = heatmap(p,selected_wells,selected_wells,D);
-%     handles.h.Colormap = jet;
-%     
-%     s = get(handles.parameter,'String');
-%     param_name = s{get(handles.parameter,'Value')};
-%     s = get(handles.statistic,'String');
-%     statistic_name = s{get(handles.statistic,'Value')};
-%     
-%     handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
-%                        'h , ' param_name,' , ',statistic_name];
-%     
-%     bckg_color = get(handles.figure1,'Color');
-%     handles.h.MissingDataColor = bckg_color;    
-%     handles.h.GridVisible = 'off';    
-% % Update handles structure
-% handles.D = D;
-% guidata(hObject, handles);
-
 % --- Executes on button press in update_diagram.
 function update_diagram_Callback(hObject, eventdata, handles)
 
@@ -185,15 +158,15 @@ function update_diagram_Callback(hObject, eventdata, handles)
         set(handles.statistic,'visible','on'); 
         set(handles.generate_t_dependence,'Enable','off');
         set(handles.save_current_time_slice,'Enable','off');
-        s = get(handles.parameter,'String');
-        param_name = s{get(handles.parameter,'Value')};    
             s = get(handles.statistic,'String');
             statistic_name = s{get(handles.statistic,'Value')};
         %                
         guidata(hObject, handles);
 
-        [selected_wells,D] = create_heatmap_data(handles);
-
+        [selected_wells,D] = create_heatmap_data(hObject,handles);
+        s = get(handles.parameter,'String');
+        param_name = s{get(handles.parameter,'Value')};    
+        
         handles.h = heatmap(handles.diagram_panel,selected_wells,selected_wells,D);
         handles.h.Colormap = jet;
 
@@ -213,14 +186,15 @@ function update_diagram_Callback(hObject, eventdata, handles)
         set(handles.statistic,'visible','on');
         set(handles.generate_t_dependence,'Enable','on');
         set(handles.save_current_time_slice,'Enable','on');
-        s = get(handles.parameter,'String');
-        param_name = s{get(handles.parameter,'Value')};    
             s = get(handles.statistic,'String');
             statistic_name = s{get(handles.statistic,'Value')};
         %        
         guidata(hObject, handles);
-
-        [~,D] = create_platemap_data(handles);    
+        %
+        [~,D] = create_platemap_data(hObject,handles); 
+        s = get(handles.parameter,'String');
+        param_name = s{get(handles.parameter,'Value')};    
+                
         handles.h = heatmap(handles.platemap_panel,handles.numbers,handles.letters,D);
         handles.h.Title = ['t = ' get(handles.evaluation_time,'String'), ...    
                            'h , ' param_name,' , ',statistic_name];    
@@ -401,42 +375,19 @@ for k=get(handles.letter_start,'Value'):get(handles.letter_end,'Value')
     end
 end
 
-function [selected_wells,D] = create_heatmap_data(handles) 
+function [selected_wells,D] = create_heatmap_data(hObject,handles) 
     %    
     feature_index = get(handles.parameter,'Value');
     
-                switch feature_index                    
-                    case 4 % #nghbrs                    
-                        param_index = 9;
-                    case 5 % cell density
-                        param_index = 10;
-                    case 6 % FRET ratio
-                        param_index = 4;
-                    case 8 % donor intensity                     
-                        param_index = 5;
-                    case 9 % acceptor intensity
-                        param_index = 6;
-                    case 10 % nucleus size
-                        param_index = 7;
-                    case 11 % Pearson                      
-                        param_index = 8;
-                    case 14 % FRET molar fraction
-                        param_index = 11;
-                    case 15 % cell size
-                        param_index = 12;
-                    case 16 % 
-                        param_index = 13;
-                    case 17 % 
-                        param_index = 14;
-                    case 18 % 
-                        param_index = 15;
-                    case 2 % speed                        
-                        %Y = squeeze(handles.velocity_t{k});
-                        param_index = 4;
-                    case 19 % nuc_cell_are_ratio ??
-                        % Y = squeeze(handles.nuc_cell_area_ratio_t{k});                                                
-                        param_index = 4;                        
-                end                                        
+    [param_index,coeff] = get_param_index_in_track(feature_index,handles);
+    if 0==param_index % go back to FRET ratio
+        coeff = 1;
+        feature_index = 6;
+        param_index = 4;
+        set(handles.parameter,'Value',feature_index);
+        guidata(hObject, handles);
+    end
+
     %
     selected_wells = select_wells(handles);
     N = numel(selected_wells);
@@ -449,7 +400,7 @@ function [selected_wells,D] = create_heatmap_data(handles)
             track_k = handles.raw_data{k};
             frame_index = find(track_k(:,1)==handles.cur_frame);
             if ~isempty(frame_index)
-                value = track_k(frame_index,param_index);
+                value = track_k(frame_index,param_index)*coeff;
                 index = find(ismember(selected_wells,handles.raw_data_tokens{k})); 
                 if ~isempty(index)
                     sample{index} = [sample{index} value];
@@ -515,45 +466,21 @@ function remove_outliers_Callback(hObject, eventdata, handles)
 
 % continued designing...
 
-function [selected_wells,D] = create_platemap_data(handles) 
+function [selected_wells,D] = create_platemap_data(hObject,handles) 
 
     tracks = handles.TrackPlotter_handles.raw_data;
     wells = handles.raw_data_tokens;    
     %
     feature_index = get(handles.parameter,'Value');
-    
-                switch feature_index                    
-                    case 4 % #nghbrs                    
-                        param_index = 9;
-                    case 5 % cell density
-                        param_index = 10;
-                    case 6 % FRET ratio
-                        param_index = 4;
-                    case 8 % donor intensity                     
-                        param_index = 5;
-                    case 9 % acceptor intensity
-                        param_index = 6;
-                    case 10 % nucleus size
-                        param_index = 7;
-                    case 11 % Pearson                      
-                        param_index = 8;
-                    case 14 % FRET molar fraction
-                        param_index = 11;
-                    case 15 % cell size
-                        param_index = 12;
-                    case 16 % 
-                        param_index = 13;
-                    case 17 % 
-                        param_index = 14;
-                    case 18 % 
-                        param_index = 15;
-                    case 2 % speed                        
-                        %Y = squeeze(handles.velocity_t{k});
-                        param_index = 4;
-                    case {1,3,19,7,13} % nuc_cell_are_ratio ??
-                        % Y = squeeze(handles.nuc_cell_area_ratio_t{k});                                                
-                        param_index = 4;                        
-                end                                        
+                                          
+    [param_index,coeff] = get_param_index_in_track(feature_index,handles);
+    if 0==param_index % go back to FRET ratio
+        coeff = 1;
+        feature_index = 6;
+        param_index = 4;
+        set(handles.parameter,'Value',feature_index);
+        guidata(hObject, handles);
+    end
 
     selected_wells = select_wells(handles);
 
@@ -566,7 +493,7 @@ function [selected_wells,D] = create_platemap_data(handles)
             frame_index = find(track(:,1)==handles.cur_frame);
             index = find(ismember(selected_wells,wells{dat}));
             if ~isempty(frame_index) && ~isempty(index)
-                value = track(frame_index,param_index);
+                value = track(frame_index,param_index)*coeff;
                 [k,m] = get_letter_number_indices(handles,wells{dat});
                 C{k,m} = [C{k,m}; value];
             end
@@ -633,39 +560,15 @@ f_sample = cell(numel(t),1);
     wells = handles.raw_data_tokens;    
     %
     feature_index = get(handles.parameter,'Value');
-    
-                switch feature_index                    
-                    case 4 % #nghbrs                    
-                        param_index = 9;
-                    case 5 % cell density
-                        param_index = 10;
-                    case 6 % FRET ratio
-                        param_index = 4;
-                    case 8 % donor intensity                     
-                        param_index = 5;
-                    case 9 % acceptor intensity
-                        param_index = 6;
-                    case 10 % nucleus size
-                        param_index = 7;
-                    case 11 % Pearson                      
-                        param_index = 8;
-                    case 14 % FRET molar fraction
-                        param_index = 11;
-                    case 15 % cell size
-                        param_index = 12;
-                    case 16 % 
-                        param_index = 13;
-                    case 17 % 
-                        param_index = 14;
-                    case 18 % 
-                        param_index = 15;
-                    case 2 % speed                        
-                        %Y = squeeze(handles.velocity_t{k});
-                        param_index = 4;
-                    case {1,3,19,7,13} % nuc_cell_are_ratio ??
-                        % Y = squeeze(handles.nuc_cell_area_ratio_t{k});                                                
-                        param_index = 4;                        
-                end                                        
+                                      
+    [param_index,coeff] = get_param_index_in_track(feature_index,handles);
+    if 0==param_index % go back to FRET ratio
+        coeff = 1;
+        feature_index = 6;
+        param_index = 4;
+        set(handles.parameter,'Value',feature_index);
+        guidata(hObject, handles);
+    end
 
     selected_wells = select_wells(handles);
 
@@ -680,7 +583,7 @@ f_sample = cell(numel(t),1);
                     minmax_f = minmax(track(:,1)');
                     if f>=minmax_f(1) && f<=minmax_f(2)
                         f_ind = find(f==track(:,1));
-                        value = track(f_ind,param_index);
+                        value = track(f_ind,param_index)*coeff;
                         f_sample{f} = [f_sample{f}; value];
                     end                
                 end
@@ -798,3 +701,21 @@ function save_current_time_slice_Callback(hObject, eventdata, handles)
     else
         save([pathname filesep filename],'records');
     end
+
+%------------------------------------------------
+function [index,coeff] = get_param_index_in_track(par_ind,handles)    
+    % if cannot sort, then go back to FRET ratio
+    coeff = 1;
+    if ismember(par_ind,handles.TrackPlotter_handles.features_void) || ...
+                                ~ismember(par_ind,[4:6 8:11 14:18 20:23])
+        index = 0;
+    else % it is possible to get the index for the sorting key data
+        index = handles.TrackPlotter_handles.features_lut(par_ind);
+        coeff = handles.TrackPlotter_handles.features_coeff(par_ind);
+    end
+
+
+
+
+
+    

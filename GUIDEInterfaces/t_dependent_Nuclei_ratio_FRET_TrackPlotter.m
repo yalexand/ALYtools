@@ -75,7 +75,11 @@ handles.features = {'duration [h]', ...
                     'Cell intensity (ref)',...
                     'Nucleus intensity (ref)',...
                     'Nuc/Cyt intensity (ref)',...
-                    'Nuc/Cell area (ref)',...                    
+                    'Nuc/Cell area (ref)',...   
+                    'Nucleus solidity',...
+                    'Nucleus shape factor',...
+                    'Nucleus eccentricity',...
+                    'Nucleus orientation',...
                     };
 
 handles.mask = [];    
@@ -102,8 +106,14 @@ handles.rng_FRET_molar_fraction = [0 1];
 handles.rng_cell_area = [20 750*10];
 handles.rng_cell_intensity_ref = [0 1000];
 handles.rng_nuc_intensity_ref = [0 1000];
-handles.rng_intensity_ref_nuc_cyt_ratio = [0 7];
+handles.rng_intensity_ref_nuc_cyt_ratio = [0 20];
 handles.rng_nuc_cell_area_ratio = [0 1];
+%
+handles.rng_nuc_solidity = [0 1];
+handles.rng_nuc_shape_factor = [0.95 2];
+handles.rng_nuc_eccentricity = [0 1];
+handles.rng_nuc_orientation = [-90 90];
+
 % ranges for visualization
 
 handles.timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS'); %to ID from outside 
@@ -236,8 +246,8 @@ set(handles.time_plot_colour_feature,'Value',7);
 
 set(handles.actual_dependence_checkbox,'Value',true);
 
-visualize_histo2(hObject,handles);
-visualize_time_dependence(hObject,handles);
+%visualize_histo2(hObject,handles);
+%visualize_time_dependence(hObject,handles);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -502,6 +512,52 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     
     handles.ST_raw_data = tracks;
   
+%%%%%%%
+% handles.features = {'duration [h]', ...                   1
+%                     'XY speed [um/min]', ...              2
+%                     'XY directionality', ...              3
+%                     '#neighbours', ...                    4
+%                     'cell density', ...                   5
+%                     'FRET ratio', ...                     6
+%                     'FRET ratio variability', ...         7
+%                     'Donor intensity',...                 8
+%                     'Acc. intensity',...                  9
+%                     'nucleus size [um^2]',...             10
+%                     'D/A Pearson corr.',...               11
+%                     't(start) [h]',...                    12
+%                     'FRET ratio c-time [min]',...         13
+%                     'FRET molar fraction', ...            14
+%                     'Cell area (ref) [um^2]',...          15
+%                     'Cell intensity (ref)',...            16
+%                     'Nucleus intensity (ref)',...         17
+%                     'Nuc/Cyt intensity (ref)',...         18
+%                     'Nuc/Cell area (ref)',...             19
+%                     'Nucleus solidity',...                20
+%                     'Nucleus shape factor',...            21
+%                     'Nucleus eccentricity',...            22
+%                     'Nucleus orientation',...             23
+handles.features_coeff = ones(1,numel(handles.features));
+        handles.features_coeff(5) = (handles.pixelsize)^(-2);
+        handles.features_coeff(10) = (handles.pixelsize)^2;
+        handles.features_coeff(15) = (handles.pixelsize)^2;
+switch size(handles.ST_raw_data{1},2)
+    case 11
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 0 0 0 0];         % no 3rd channel, no nuc. shape
+        handles.features_void = 15:23;
+
+    case 15
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 0 0 0 0];     % with 3rd channel, no nuc shape
+        handles.features_void = 20:23;
+    case 16
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 12 13 14 15];     % no 3rd channel, with nuc shapes
+        handles.features_void = 15:19;
+    case 20
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 16 17 18 19]; % with 3rd channel, with nuc. shapes
+        handles.features_void = [];
+end
+guidata(hObject,handles);
+%%%%%%%    
+        
     handles.MI_tracks = cell(0);
     handles.MI_fnames = cell(0);
     handles.MI_track_indices = [];
@@ -670,17 +726,46 @@ for k=1:numel(D)
 %         legend({'autocorrelation','up.confidence bound'},'fontsize',16);
 %         disp(k);
     %
-    if 19 == numel(handles.features)
-        try
-        track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
-        track_data(k,16+2) = mean(squeeze(track(:,13)));
-        track_data(k,17+2) = mean(squeeze(track(:,14)));
-        track_data(k,18+2) = mean(squeeze(track(:,15)));
-        nuc_cell_area_ratio_t{k} = nucleus_size./squeeze(track(:,12));
-        track_data(k,19+2) = mean(nuc_cell_area_ratio_t{k}); % nucleus to cell area ratio
-        catch
-        end
-    end           
+       
+% problems  - size of params may be or 15 or 16 or 20
+%    
+% WAS HERE BEFORE - WE CAN DO BETTER    
+%     if 19 == numel(handles.features)
+%         try
+%         track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
+%         track_data(k,16+2) = mean(squeeze(track(:,13)));
+%         track_data(k,17+2) = mean(squeeze(track(:,14)));
+%         track_data(k,18+2) = mean(squeeze(track(:,15)));
+%         nuc_cell_area_ratio_t{k} = nucleus_size./squeeze(track(:,12));
+%         track_data(k,19+2) = mean(nuc_cell_area_ratio_t{k}); % nucleus to cell area ratio
+%         catch
+%         end
+%     end           
+    switch size(track,2)
+        case 15 % 3-rd channel only
+            track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
+            track_data(k,16+2) = mean(squeeze(track(:,13)));
+            track_data(k,17+2) = mean(squeeze(track(:,14)));
+            track_data(k,18+2) = mean(squeeze(track(:,15)));
+            nuc_cell_area_ratio_t{k} = nucleus_size./squeeze(track(:,12));
+            track_data(k,19+2) = mean(nuc_cell_area_ratio_t{k}); % nucleus to cell area ratio
+        case 16 % % no 3rd channel, with nuc shapes
+            track_data(k,20+2) = mean(squeeze(track(:,12))); % solidity
+            track_data(k,21+2) = mean(squeeze(track(:,13))); % shape factor
+            track_data(k,22+2) = mean(squeeze(track(:,14))); % eccentricity
+            track_data(k,23+2) = mean(squeeze(track(:,15))); % orientation        
+        case 20
+            track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
+            track_data(k,16+2) = mean(squeeze(track(:,13)));
+            track_data(k,17+2) = mean(squeeze(track(:,14)));
+            track_data(k,18+2) = mean(squeeze(track(:,15)));
+            nuc_cell_area_ratio_t{k} = nucleus_size./squeeze(track(:,12));
+            track_data(k,19+2) = mean(nuc_cell_area_ratio_t{k}); % nucleus to cell area ratio
+            track_data(k,20+2) = mean(squeeze(track(:,16))); % solidity
+            track_data(k,21+2) = mean(squeeze(track(:,17))); % shape factor
+            track_data(k,22+2) = mean(squeeze(track(:,18))); % eccentricity
+            track_data(k,23+2) = mean(squeeze(track(:,19))); % orientation                
+    end
 end
 
 dur = squeeze(track_data(:,1+2));
@@ -748,14 +833,22 @@ handles.rng_start_time = [min(stt) max(stt)];
 % --------------------------------------------------------------------
 function visualize_histo2(hObject,handles)
 
+cla(handles.histo2_axes,'reset');
+set(handles.histo2_axes, 'xticklabel', [], 'yticklabel', []);
+axes(handles.histo2_axes);
+
 D = handles.track_data;
-if isempty(D), return, end;
+if isempty(D), return, end
 
 % need to use filtered data here
 x_ind = get(handles.histo2_X_feature,'Value');
 y_ind = get(handles.histo2_Y_feature,'Value');
 x_data = squeeze(D(:,x_ind+2));
 y_data = squeeze(D(:,y_ind+2));
+
+if isempty(x_data) || 0==sum(x_data(:)) || isempty(y_data) || 0==sum(y_data(:))
+    return,
+end
 
 mask = handles.mask; % shouldn't be empty
 x_data=x_data(mask==1);
@@ -769,13 +862,13 @@ mode = str{get(handles.histo2_mode,'Value')};
                                                          
 if strcmp(mode,'scatter')
     plot(handles.histo2_axes,x_data,y_data,'r.');
-    if ismember(x_ind,[2:11 13 14]) && ismember(y_ind,[2:11 13 14])
+    if ismember(x_ind,[2:11 13:23]) && ismember(y_ind,[2:11 13:23])
         axis(handles.histo2_axes,[x_min_val x_max_val y_min_val y_max_val]);
     end
     grid(handles.histo2_axes,'on');
 elseif strcmp(mode,'histo2')
     corr_map_W = 100;    
-    if ismember(x_ind,[2:11 13 14]) && ismember(y_ind,[2:11 13 14])
+    if ismember(x_ind,[2:11 13:23]) && ismember(y_ind,[2:11 13:23])
         x_data = [x_data; x_min_val; x_max_val];
         x_data(x_data<x_min_val)=x_min_val;
         x_data(x_data>x_max_val)=x_max_val;
@@ -796,21 +889,51 @@ elseif strcmp(mode,'histo2')
     set(AXES, 'xticklabel', [], 'yticklabel', []);
 end
 
+% handles.features = {'duration [h]', ...                   1
+%                     'XY speed [um/min]', ...              2
+%                     'XY directionality', ...              3
+%                     '#neighbours', ...                    4
+%                     'cell density', ...                   5
+%                     'FRET ratio', ...                     6
+%                     'FRET ratio variability', ...         7
+%                     'Donor intensity',...                 8
+%                     'Acc. intensity',...                  9
+%                     'nucleus size [um^2]',...             10
+%                     'D/A Pearson corr.',...               11
+%                     't(start) [h]',...                    12
+%                     'FRET ratio c-time [min]',...         13
+%                     'FRET molar fraction', ...            14
+%                     'Cell area (ref) [um^2]',...          15
+%                     'Cell intensity (ref)',...            16
+%                     'Nucleus intensity (ref)',...         17
+%                     'Nuc/Cyt intensity (ref)',...         18
+%                     'Nuc/Cell area (ref)',...             19
+%                     'Nucleus solidity',...                20
+%                     'Nucleus shape factor',...            21
+%                     'Nucleus eccentricity',...            22
+%                     'Nucleus orientation',...             23
+%                     };
 % --------------------------------------------------------------------
 function visualize_time_dependence(hObject,handles)
-D = handles.track_data;
-if isempty(D), return, end;
 
-DR = handles.raw_data;
+cla(handles.time_plot_axes,'reset');
+axes(handles.time_plot_axes);
 
-% need to use filtered data here
 c_ind = get(handles.time_plot_colour_feature,'Value');
 y_ind = get(handles.time_plot_Y_feature,'Value');
+
+% some may be not available
+if ismember(y_ind,handles.features_void) || ismember(c_ind,handles.features_void), return, end
+
+D = handles.track_data;
+if isempty(D), return, end
+
 c_data = squeeze(D(:,c_ind+2));
 y_data = squeeze(D(:,y_ind+2));
 tb_data = squeeze(D(:,1));
 te_data = squeeze(D(:,2));
 
+% need to use filtered data here
 mask = handles.mask;
 
 n1=numel(y_data);
@@ -820,92 +943,35 @@ set(handles.track_numbers,'String',[num2str(n1) ' : ' num2str(n2)]);
 % define colors
 Ngrades = 256;
 Colors = jet(Ngrades);
-min_val = min(c_data);
-max_val = max(c_data);
-% ??? [min_val, max_val] = visualization_range(handles,c_ind);
+c_min_val = min(c_data);
+c_max_val = max(c_data);
+%[c_min_val, c_max_val] = visualization_range(handles,c_ind);
 
-show_actual_dependence = false;
-%if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18])
-if ismember(y_ind,[4 5 6 8 9 10 11 14 15 16 17 18 2 19])
-    show_actual_dependence = true;
+can_show_actual_dependence = false;
+%
+if ismember(y_ind,[2 4:6 8:11 14:23])
+    can_show_actual_dependence = true;
 end
-
-cla(handles.time_plot_axes,'reset');
-axes(handles.time_plot_axes);
 
 for k = 1:numel(y_data)
     if 1==mask(k)
-        index = max(1,round((c_data(k) - min_val)/(max_val - min_val)*Ngrades));
-        X = [tb_data(k) te_data(k)];
-        Y = [y_data(k) y_data(k)];
-        if show_actual_dependence && get(handles.actual_dependence_checkbox,'Value') 
+        index = max(1,round((c_data(k) - c_min_val)/(c_max_val - c_min_val)*Ngrades));
+        if can_show_actual_dependence && get(handles.actual_dependence_checkbox,'Value') 
             %
-            % infer the X,Y data for plotting depending on what it is
-            track = DR{k};            
-            X = track(:,1)*handles.dt;            
-            Y = [];
-                    %1   'duration [h]', ...
-                    %2   'XY speed [um/min]', ...
-                    %3   'XY directionality', ...
-                    %4*   '#neighbours', ...
-                    %5*   'cell density', ...
-                    %6*   'FRET ratio', ...
-                    %7   'FRET ratio variability', ...
-                    %8*   'Donor intensity',...
-                    %9*   'Acc. intensity',...
-                    %10*   'nucleus size [um^2]',...
-                    %11*   'D/A Pearson corr.',... 
-                    %12   't(start) [h]'            
-                switch y_ind                    
-                    case 4 % #nghbrs                    
-                        if ismember(size(track,2),[10 11 15])
-                            Y = squeeze(track(:,9));
-                        end
-                    case 5 % cell density
-                        if ismember(size(track,2),[10 11 15])
-                            Y = squeeze(track(:,10))/(handles.pixelsize)^2;
-                        end
-                    case 6 % FRET ratio
-                        Y = squeeze(track(:,4));
-                    case 8 % donor intensity                     
-                        Y = squeeze(track(:,5));
-                    case 9 % acceptor intensity
-                        Y = squeeze(track(:,6));
-                    case 10 % nucleus size
-                        Y = squeeze(track(:,7))*(handles.pixelsize)^2;
-                    case 11 % Pearson                      
-                        Y = squeeze(track(:,8));
-                    case 14 % FRET molar fraction
-                        try
-                        Y = squeeze(track(:,11));
-                        catch
-                        end
-                    case 15 % cell size
-                        try
-                        Y = squeeze(track(:,12))*(handles.pixelsize)^2;
-                        catch
-                        end
-                    case 16 % 
-                        try
-                        Y = squeeze(track(:,13));
-                        catch
-                        end
-                    case 17 % 
-                        try
-                        Y = squeeze(track(:,14));
-                        catch
-                        end
-                    case 18 % 
-                        try
-                        Y = squeeze(track(:,15));
-                        catch
-                        end                                                
-                    case 2 % speed                        
-                        Y = squeeze(handles.velocity_t{k});
-                    case 19 % 
-                        Y = squeeze(handles.nuc_cell_area_ratio_t{k});                        
-                end                                        
+            track = handles.raw_data{k};
+            X = track(:,1)*handles.dt;
             %
+            if 2==y_ind
+               Y = squeeze(handles.velocity_t{k}); 
+            elseif 19==y_ind
+               Y = squeeze(handles.nuc_cell_area_ratio_t{k});
+            else
+               % infer the X,Y data for plotting depending on what it is
+               Y = squeeze(track(:,handles.features_lut(y_ind)))*handles.features_coeff(y_ind);
+            end
+        else
+            X = [tb_data(k) te_data(k)];
+            Y = [y_data(k) y_data(k)];            
         end
         if isempty(Y) % back
             X = [tb_data(k) te_data(k)];            
@@ -918,12 +984,12 @@ for k = 1:numel(y_data)
     end
 end
 
-if ~(show_actual_dependence && get(handles.actual_dependence_checkbox,'Value')) 
+if ~(can_show_actual_dependence && get(handles.actual_dependence_checkbox,'Value')) 
     plot(handles.time_plot_axes,tb_data(mask==1),y_data(mask==1),'k.');
 end
 
 % try to plot stats curve if possible
-if isfield(handles,'NUC_STATS')    
+if isfield(handles,'NUC_STATS') && ~ismember(y_ind,[7 12 13]) && strcmp('on',get(handles.show_per_frame_mean_std,'Enable'))   
               index = 0;
               switch y_ind                    
                     case 4 % #nghbrs
@@ -941,30 +1007,63 @@ if isfield(handles,'NUC_STATS')
                     case 11 % Pearson
                         index = 2;
                     case 14 % FRET molar fraction
-                        index = 8;                                                                                                
-                    case 15 % 
+                        index = 8;
+              end              
+
+            if      15 == size(track,2) % +3-rd channel, no nuc.shapes, 12 size of NUC_STATS
+                switch y_ind
+                    case 15 %
                         index = 9;  %12; % cell size                                                                       
                     case 16 % 
                         index = 10; %13; % cell intensity ref                                                                       
                     case 17 % 
                         index = 11; %14; % nuke intensity ref                                                                       
                     case 18 % 
-                        index = 12; %15; % nuc/cell ref intensity ratio                                                                                                                                               
-                    case 19 % 
-                        index = 13; %16; % nuc/cell ref area ratio                                                                                                                       
-              end
-              
+                        index = 12; %15; % nuc/cell ref intensity ratio
+                end
+            elseif  16 == size(track,2) % no 3-rd channel +nuc.shapes, 13 size of NUC_STATS
+                switch y_ind
+                    case 20 %
+                        index = 9;  %12 solidity                               
+                    case 21 % 
+                        index = 10; %13 shape factor
+                    case 22 % 
+                        index = 11; %14 eccentricity
+                    case 23 % 
+                        index = 12; %15 orientation
+                end                
+            elseif  20 == size(track,2) % +3-rd channel, +nuc.shapes 17 size of NUC_STATS
+                switch y_ind
+                    case 15 %
+                        index = 9;  %12; % cell size                                                                       
+                    case 16 % 
+                        index = 10; %13; % cell intensity ref                                                                       
+                    case 17 % 
+                        index = 11; %14; % nuke intensity ref                                                                       
+                    case 18 % 
+                        index = 12; %15; % nuc/cell ref intensity ratio
+                    case 20 %
+                        index = 13;  %12 solidity                               
+                    case 21 % 
+                        index = 14; %13 shape factor
+                    case 22 % 
+                        index = 15; %14 eccentricity
+                    case 23 % 
+                        index = 16; %15 orientation
+                end                
+            end
+                                          
     if 0~=index  
         mean_std = get(handles.show_per_frame_mean_std,'Value');
         if mean_std && index <= size(handles.NUC_STATS,2)
             meanvals = squeeze(handles.NUC_STATS(:,index,1)); % mean
             stdvals = squeeze(handles.NUC_STATS(:,index,2)); % std
             taxis = handles.dt*(1:numel(meanvals));
-            if ~isempty(intersect(index,[1 9]))
+            if ~isempty(intersect(y_ind,[10 15])) % nucleus or cell size
                 meanvals = meanvals*(handles.pixelsize)^2;
                 stdvals = stdvals*(handles.pixelsize)^2;        
             end
-            if 7==index
+            if 5==y_ind
                 meanvals = meanvals/(handles.pixelsize)^2;
                 stdvals = stdvals/(handles.pixelsize)^2;      
             end                
@@ -992,30 +1091,30 @@ end
 
 hold(handles.time_plot_axes,'off');
 
-[min_val, max_val] = visualization_range(handles,c_ind);
-                            
+% may be, may be not ?
+[c_min_val, c_max_val] = visualization_range(handles,c_ind);
+%                            
 try % calm down if there is no data,     
-    c = colorbar(handles.time_plot_axes,'TickLabels',{linspace(min_val,max_val,11)});        
-    caxis(handles.time_plot_axes,[min_val,max_val]);
+    c = colorbar(handles.time_plot_axes,'TickLabels',{linspace(c_min_val,c_max_val,11)});        
+    caxis(handles.time_plot_axes,[c_min_val,c_max_val]);
     cmap = jet(256);       
     colormap(handles.time_plot_axes,cmap);                
     c.Label.String = handles.features(c_ind);            
 catch
 end
-
-try
-axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
-catch 
-end
-
+%
+% try ??
+% axis(handles.time_plot_axes,[min(tb_data) max(te_data) min(y_data) max(y_data)]);
+% catch 
+% end
+%
 [y_min_val, y_max_val] = visualization_range(handles,y_ind);
 axis(handles.time_plot_axes,[min(tb_data) max(te_data) y_min_val y_max_val]);                                      
-
+%
 xlabel(handles.time_plot_axes,'time [h]');
 %str = get(handles.time_plot_Y_feature,'String') 
 %ylabel(handles.time_plot_axes,str{y_ind});
 grid(handles.time_plot_axes,'on');
-
 
 % --------------------------------------------------------------------
 function mask = calculate_mask(hObject,handles)
@@ -1245,10 +1344,21 @@ function [minval, maxval] = visualization_range(handles,index)
                         maxval = max(handles.rng_intensity_ref_nuc_cyt_ratio); 
                     case 19 % 
                         minval = min(handles.rng_nuc_cell_area_ratio);
-                        maxval = max(handles.rng_nuc_cell_area_ratio);
+                        maxval = max(handles.rng_nuc_cell_area_ratio);                        
+                    case 20 % 
+                        minval = min(handles.rng_nuc_solidity);
+                        maxval = max(handles.rng_nuc_solidity);
+                    case 21 % 
+                        minval = min(handles.rng_nuc_shape_factor);
+                        maxval = max(handles.rng_nuc_shape_factor);
+                    case 22 % 
+                        minval = min(handles.rng_nuc_eccentricity);
+                        maxval = max(handles.rng_nuc_eccentricity);
+                    case 23 % 
+                        minval = min(handles.rng_nuc_orientation);
+                        maxval = max(handles.rng_nuc_orientation);                                                
              end
-
-             
+                          
 % --------------------------------------------------------------------
 function mitotic_interval_FRET_ratio_heatmap_Callback(hObject, eventdata, handles)
 % hObject    handle to mitotic_interval_FRET_ratio_heatmap (see GCBO)
@@ -1308,6 +1418,24 @@ for k=1:numel(filenames)
     handles.pixelsize = microns_per_pixel;     
 end
 if ~isempty(hw), delete(hw), drawnow; end
+
+%%%%%%%
+switch size(handles.ST_raw_data{1},2)
+    case 11
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 0 0 0 0];         % no 3rd channel, no nuc. shape
+        handles.features_void = 15:23;
+    case 15
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 0 0 0 0];     % with 3rd channel, no nuc shape
+        handles.features_void = 20:23;
+    case 16
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 12 13 14 15];     % no 3rd channel, with nuc shapes
+        handles.features_void = 15:19;
+    case 20
+        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 16 17 18 19]; % with 3rd channel, with nuc. shapes
+        handles.features_void = [];
+end
+guidata(hObject,handles);
+%%%%%%%
 
     handles.ME = detect_mitotic_events(handles,'on'); % verbose
     %
@@ -1630,4 +1758,4 @@ if strcmp('on',verbose) && ~isempty(hw), waitbar(k/size(handles.ME,1),hw); drawn
     end    
 end % loop over mitotic events
 if strcmp('on',verbose) && ~isempty(hw), delete(hw), drawnow; end
-                                
+

@@ -165,13 +165,13 @@ for k=1:nFovs
             intensity_ratio = zeros(sX,sY);
             %
             L = lab_nukes(:,:,k);
-            stats = regionprops(L,'Centroid');
+            stats = regionprops(L,'Centroid','Area','Solidity','Perimeter','Eccentricity','Orientation');
             nnucs = max(L(:));
             %
             if 3==sC
-                nuc_data = zeros(nnucs,11); % 11-th is molar fraction estimate 
+                nuc_data = zeros(nnucs,11+5); % 11-th is molar fraction estimate + 5 nuc shape
             elseif 5==sC
-                nuc_data = zeros(nnucs,15); % cyto area, cyto intensity ref, nuc intensity ref, and nuc/cyt ratio
+                nuc_data = zeros(nnucs,15+5); % cyto area, cyto intensity ref, nuc intensity ref, and nuc/cyt ratio + 5 nuc shapes
                 LC = lab_cells(:,:,k);
                 lut_k = nuc_to_cell_luts{k};
             end
@@ -227,7 +227,21 @@ for k=1:nFovs
                     end                        
                     nuc_data(n,14) = mean(sample_ref_nuc(:));
                     nuc_data(n,15) = nuc_data(n,14)/nuc_data(n,13);
-                end                
+                end 
+                
+                % nuclear shape factors
+                if 3==sC
+                    I0=11;
+                elseif 5==sC
+                    I0=15;
+                end
+                % solidity, perimeter, eccentricity, orientation
+                nuc_data(n,I0+1) = stats(n).Solidity;
+                nuc_data(n,I0+2) = (stats(n).Perimeter)^2/4/pi/stats(n).Area;
+                nuc_data(n,I0+3) = stats(n).Eccentricity;
+                nuc_data(n,I0+4) = stats(n).Orientation;
+                nuc_data(n,I0+5) = rand; % RESERVED
+                % nuclear shape
             end
             
             % adjacency matrices (symmetric)
@@ -336,10 +350,10 @@ end
 % 4 FRET ratio 5
 % 9 nnghb 6
 % 10 cell density 7
-% 11 FRET fraction 8
+% 11 FRET fraction 8 - without nuclear params, without 3rd channel
 if 3==sC
-    indices = [1 3 6 5 4 9 10 11];
-    NUC_STATS = zeros(nFovs,8,5); % mean, std, median, 025Q, 075Q
+    indices = [1 3 6 5 4 9 10 11, 12, 13, 14, 15, 16]; % 13 - 12/2020 layout
+    NUC_STATS = zeros(nFovs,13,5); % mean, std, median, 025Q, 075Q
     for k=1:nFovs
         nuc_data = NUCDATA{k};
         % parfor j=1:numel(indices)
@@ -356,8 +370,8 @@ else
 % 13 cell intensity in reference channel
 % 14 nucleus intensity in reference channel
 % 15 intensity ratio nuc/cell in ref. channel
-    indices = [1 3 6 5 4 9 10 11 12 13 14 15];
-    NUC_STATS = zeros(nFovs,12,5); % mean, std, median, 025Q, 075Q
+    indices = [1 3 6 5 4 9 10 11 12 13 14 15, 16, 17, 18, 19, 20];
+    NUC_STATS = zeros(nFovs,17,5); % mean, std, median, 025Q, 075Q
     for k=1:nFovs
         nuc_data = NUCDATA{k};
         % parfor j=1:numel(indices)
@@ -522,9 +536,9 @@ min_track_length = 4;
         for k=1:numel(tracks)
             track = tracks{k};
             if 3==sC
-                ext_track = zeros(size(track,1),11); %frame,x,y+8 params
+                ext_track = zeros(size(track,1),11+5); %frame,x,y+13 params
             elseif 5==sC
-                ext_track = zeros(size(track,1),15); %frame,x,y+12 params
+                ext_track = zeros(size(track,1),15+5); %frame,x,y+17 params
             end
             %
             if size(track,1)>=min_track_length
@@ -580,6 +594,24 @@ min_track_length = 4;
                         ext_track(m,14) = nuc_intensity_ref;
                         ext_track(m,15) = nuc_intensity_ref/cell_intensity_ref;
                     end
+                    
+% nuclear shape
+                    if 3==sC
+                        I0 = 11;
+                    elseif 5==sC
+                        I0 = 15;
+                    end
+                    solidity =              nuc_data(nuc_lab,I0+1);
+                    shape_factor =          nuc_data(nuc_lab,I0+2);
+                    eccentricity =          nuc_data(nuc_lab,I0+3);
+                    orientation =           nuc_data(nuc_lab,I0+4);
+                    ext_track(m,I0+1) = solidity;
+                    ext_track(m,I0+2) = shape_factor;
+                    ext_track(m,I0+3) = eccentricity;
+                    ext_track(m,I0+4) = orientation;
+                    ext_track(m,I0+5) = rand; % RESERVED
+% nuclear shape
+                                        
                  %
             end
             end % if track is not too short
@@ -606,5 +638,5 @@ save(fullfname,'tracks','dt','microns_per_pixel','NUC_STATS','cell_nums');
 % catch
 %     disp('error when trying to initiate t_dependent_Nuclei_ratio_FRET_TrackPlotter');
 % end
-        fig = uint16(reshape(fig,[sX sY sC nFovs sZ]));  % XYCTZ                      
+        fig = uint16(reshape(fig,[sX sY sC nFovs sZ]));  % XYCTZ                       
 end

@@ -147,51 +147,17 @@ function visualize(hObject,handles)
         display_tracks = display_tracks(mask,:);
     end
     
-    track = tracks{1};
-    
-    par_ind = get(handles.features_chooser,'Value');        
-              index = 0;
-                 switch par_ind                    
-                    case 4 % #nghbrs                    
-                        if ismember(size(track,2),[10 11 15])
-                            index = 9;
-                        end
-                    case 5 % cell density
-                        if ismember(size(track,2),[10 11 15])
-                            index = 10;
-                        end
-                    case 6 % FRET ratio
-                            index = 4;
-                    case 8 % donor intensity                     
-                        index = 5;
-                    case 9 % acceptor intensity
-                        index = 6;
-                    case 10 % nucleus size
-                        index = 7;
-                    case 11 % Pearson                      
-                        index = 8;
-                    case 14 % FRET molar fraction
-                        index = 11;
-                    case 15 % cell size
-                        if 15== size(track,2)
-                        index = 12;
-                        end
-                    case 16 % 
-                       if 15== size(track,2)
-                        index = 13;
-                        end
-                    case 17 % 
-                        if 15== size(track,2)
-                        index = 14;
-                        end
-                    case 18 % 
-                         if 15== size(track,2)
-                        index = 15;
-                        end
-                 end                  
-   
-                 if 0==index, return, end
-                 
+    par_ind = get(handles.features_chooser,'Value');
+
+    % if cannot sort, then go back to FRET ratio
+    if ismember(par_ind,handles.TrackPlotter_handles.features_void) || ...
+                                ~ismember(par_ind,[4:6 8:11 14:18 20:23])
+        set(handles.features_chooser,'Value',6); 
+        par_ind = 6;
+        index = 4;
+    else % it is possible to get the index for the sorting key data
+        index = handles.TrackPlotter_handles.features_lut(par_ind);
+    end
                  valarr = [];
                  for k=1:numel(tracks)
                     track = tracks{k};
