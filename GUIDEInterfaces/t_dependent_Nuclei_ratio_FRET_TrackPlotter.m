@@ -150,7 +150,7 @@ elseif 5 == nargin-3
 %         % to refine it now
 %         handles.raw_data = refine_tracks_by_sorting_mitotic_intervals(handles,tracks);
 %         %handles.raw_data = tracks;
-    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
+    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(handles);
     %
     % set filename in window title
     set(handles.figure1, 'Name', [handles.figureName ' : ' varargin{4}]);
@@ -181,7 +181,7 @@ elseif 2 == nargin-3
         handles.raw_data = tracks;
 
         % this object is for visualizing       
-        [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
+        [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(handles);
 
         set(handles.figure1, 'Name', [handles.figureName ' : ' filename]);
 
@@ -283,7 +283,7 @@ else
     guidata(hObject,handles);
     return;
 end
-[handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
+[handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
        for k=1:numel(handles.features)
@@ -325,7 +325,7 @@ else
     guidata(hObject,handles);
     return;
 end
-[handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
+[handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(handles);
 minmaxlimits(1,1)=min(squeeze(handles.track_data(1,:)));
 minmaxlimits(1,2)=max(squeeze(handles.track_data(2,:)));
        for k=1:numel(handles.features)
@@ -508,56 +508,12 @@ function load_trackmate_plus_data(pathname,filename,hObject,handles)
     handles.pixelsize = microns_per_pixel;
         set(handles.pixel_size_edit,'String',num2str(handles.pixelsize));
         set(handles.delta_t_edit,'String',num2str(handles.dt));
-    %
-    
+    %   
     handles.ST_raw_data = tracks;
+    [handles.features_lut,handles.features_void,handles.features_coeff] = ... 
+                                    set_features_to_data_correspondence(handles);
+    guidata(hObject,handles);
   
-%%%%%%%
-% handles.features = {'duration [h]', ...                   1
-%                     'XY speed [um/min]', ...              2
-%                     'XY directionality', ...              3
-%                     '#neighbours', ...                    4
-%                     'cell density', ...                   5
-%                     'FRET ratio', ...                     6
-%                     'FRET ratio variability', ...         7
-%                     'Donor intensity',...                 8
-%                     'Acc. intensity',...                  9
-%                     'nucleus size [um^2]',...             10
-%                     'D/A Pearson corr.',...               11
-%                     't(start) [h]',...                    12
-%                     'FRET ratio c-time [min]',...         13
-%                     'FRET molar fraction', ...            14
-%                     'Cell area (ref) [um^2]',...          15
-%                     'Cell intensity (ref)',...            16
-%                     'Nucleus intensity (ref)',...         17
-%                     'Nuc/Cyt intensity (ref)',...         18
-%                     'Nuc/Cell area (ref)',...             19
-%                     'Nucleus solidity',...                20
-%                     'Nucleus shape factor',...            21
-%                     'Nucleus eccentricity',...            22
-%                     'Nucleus orientation',...             23
-handles.features_coeff = ones(1,numel(handles.features));
-        handles.features_coeff(5) = (handles.pixelsize)^(-2);
-        handles.features_coeff(10) = (handles.pixelsize)^2;
-        handles.features_coeff(15) = (handles.pixelsize)^2;
-switch size(handles.ST_raw_data{1},2)
-    case 11
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 0 0 0 0];         % no 3rd channel, no nuc. shape
-        handles.features_void = 15:23;
-
-    case 15
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 0 0 0 0];     % with 3rd channel, no nuc shape
-        handles.features_void = 20:23;
-    case 16
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 12 13 14 15];     % no 3rd channel, with nuc shapes
-        handles.features_void = 15:19;
-    case 20
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 16 17 18 19]; % with 3rd channel, with nuc. shapes
-        handles.features_void = [];
-end
-guidata(hObject,handles);
-%%%%%%%    
-        
     handles.MI_tracks = cell(0);
     handles.MI_fnames = cell(0);
     handles.MI_track_indices = [];
@@ -587,9 +543,9 @@ guidata(hObject,handles);
     tracks_to_show_Callback(hObject, [], handles);
 
 % --------------------------------------------------------------------
-function [track_data,velocity_t,nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles)
+function [track_data,velocity_t,nuc_cell_area_ratio_t] = calculate_track_data(handles)
 D = handles.raw_data;
-if isempty(D), return, end;
+if isempty(D), return, end
 
 velocity_t = cell(numel(D),1);
 nuc_cell_area_ratio_t = cell(numel(D),1);
@@ -727,20 +683,7 @@ for k=1:numel(D)
 %         disp(k);
     %
        
-% problems  - size of params may be or 15 or 16 or 20
-%    
-% WAS HERE BEFORE - WE CAN DO BETTER    
-%     if 19 == numel(handles.features)
-%         try
-%         track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
-%         track_data(k,16+2) = mean(squeeze(track(:,13)));
-%         track_data(k,17+2) = mean(squeeze(track(:,14)));
-%         track_data(k,18+2) = mean(squeeze(track(:,15)));
-%         nuc_cell_area_ratio_t{k} = nucleus_size./squeeze(track(:,12));
-%         track_data(k,19+2) = mean(nuc_cell_area_ratio_t{k}); % nucleus to cell area ratio
-%         catch
-%         end
-%     end           
+% size of params may be or 15 or 16 or 20
     switch size(track,2)
         case 15 % 3-rd channel only
             track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
@@ -754,7 +697,7 @@ for k=1:numel(D)
             track_data(k,21+2) = mean(squeeze(track(:,13))); % shape factor
             track_data(k,22+2) = mean(squeeze(track(:,14))); % eccentricity
             track_data(k,23+2) = mean(squeeze(track(:,15))); % orientation        
-        case 20
+        case 20 % with 3rd channel, with nuc shapes
             track_data(k,15+2) = mean(squeeze(track(:,12)))*(handles.pixelsize)^2;
             track_data(k,16+2) = mean(squeeze(track(:,13)));
             track_data(k,17+2) = mean(squeeze(track(:,14)));
@@ -1419,23 +1362,9 @@ for k=1:numel(filenames)
 end
 if ~isempty(hw), delete(hw), drawnow; end
 
-%%%%%%%
-switch size(handles.ST_raw_data{1},2)
-    case 11
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 0 0 0 0];         % no 3rd channel, no nuc. shape
-        handles.features_void = 15:23;
-    case 15
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 0 0 0 0];     % with 3rd channel, no nuc shape
-        handles.features_void = 20:23;
-    case 16
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 12 13 14 15];     % no 3rd channel, with nuc shapes
-        handles.features_void = 15:19;
-    case 20
-        handles.features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 16 17 18 19]; % with 3rd channel, with nuc. shapes
-        handles.features_void = [];
-end
-guidata(hObject,handles);
-%%%%%%%
+    [handles.features_lut,handles.features_void,handles.features_coeff] = ... 
+                                    set_features_to_data_correspondence(handles);
+    guidata(hObject,handles);
 
     handles.ME = detect_mitotic_events(handles,'on'); % verbose
     %
@@ -1483,7 +1412,7 @@ function tracks_to_show_Callback(hObject, eventdata, handles)
     end
 
     % this object is for visualizing       
-    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(hObject,handles);
+    [handles.track_data,handles.velocity_t,handles.nuc_cell_area_ratio_t] = calculate_track_data(handles);
 
     if isfield(handles,'filenames') && ~isempty(handles.filenames)
         handles.fullfilename = [handles.filenames{1} ' .. ' handles.filenames{numel(handles.filenames)}];
@@ -1758,4 +1687,50 @@ if strcmp('on',verbose) && ~isempty(hw), waitbar(k/size(handles.ME,1),hw); drawn
     end    
 end % loop over mitotic events
 if strcmp('on',verbose) && ~isempty(hw), delete(hw), drawnow; end
+
+%-------------------------------
+function [features_lut,features_void,features_coeff] = set_features_to_data_correspondence(handles)
+%%%%%%%
+% handles.features = {'duration [h]', ...                   1
+%                     'XY speed [um/min]', ...              2
+%                     'XY directionality', ...              3
+%                     '#neighbours', ...                    4
+%                     'cell density', ...                   5
+%                     'FRET ratio', ...                     6
+%                     'FRET ratio variability', ...         7
+%                     'Donor intensity',...                 8
+%                     'Acc. intensity',...                  9
+%                     'nucleus size [um^2]',...             10
+%                     'D/A Pearson corr.',...               11
+%                     't(start) [h]',...                    12
+%                     'FRET ratio c-time [min]',...         13
+%                     'FRET molar fraction', ...            14
+%                     'Cell area (ref) [um^2]',...          15
+%                     'Cell intensity (ref)',...            16
+%                     'Nucleus intensity (ref)',...         17
+%                     'Nuc/Cyt intensity (ref)',...         18
+%                     'Nuc/Cell area (ref)',...             19
+%                     'Nucleus solidity',...                20
+%                     'Nucleus shape factor',...            21
+%                     'Nucleus eccentricity',...            22
+%                     'Nucleus orientation',...             23
+features_coeff = ones(1,numel(handles.features));
+features_coeff(5) = (handles.pixelsize)^(-2);
+features_coeff(10) = (handles.pixelsize)^2;
+features_coeff(15) = (handles.pixelsize)^2;
+switch size(handles.ST_raw_data{1},2)
+    case 11
+        features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 0 0 0 0];         % no 3rd channel, no nuc. shape
+        features_void = 15:23;
+    case 15
+        features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 0 0 0 0];     % with 3rd channel, no nuc shape
+        features_void = 20:23;
+    case 16
+        features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 0 0 0 0 0 12 13 14 15];     % no 3rd channel, with nuc shapes
+        features_void = 15:19;
+    case 20
+        features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 16 17 18 19]; % with 3rd channel, with nuc. shapes
+        features_void = [];
+end
+
 
