@@ -102,8 +102,8 @@ b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D;
 %
 E = 1 - tau_FRET/tau_D;
 A = 1/phi*(b_A/b_D)*(t_A/t_D)*(eps_A/eps_D)*(Q_A/Q_D);
-B = (t_A/t_D)*E/Q_D*b_A;
-C = (1-(1-E)*b_A);
+B = b_A*E*Q_A;
+C = b_A*E;
 % then beta_FRET = (Z-A)./(B+Z*C); where Z is FRET ratio calculated with bleed-through corrected intensities
 % PARAMETERS USED TO CALCULATE FRET MOLAR FRACTION
 
