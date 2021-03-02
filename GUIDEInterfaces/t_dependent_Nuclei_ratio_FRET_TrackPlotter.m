@@ -22,10 +22,10 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 25-Nov-2020 17:13:01
+% Last Modified by GUIDE v2.5 01-Mar-2021 09:53:29
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @t_dependent_Nuclei_ratio_FRET_TrackPlotter_OpeningFcn, ...
@@ -1731,6 +1731,80 @@ switch size(handles.ST_raw_data{1},2)
     case 20
         features_lut = [0 0 0 9 10 4 0 5 6 7 8 0 0 11 12 13 14 15 0 16 17 18 19]; % with 3rd channel, with nuc. shapes
         features_void = [];
+end
+
+% --------------------------------------------------------------------
+function exportTrackData_Callback(hObject, eventdata, handles)
+% hObject    handle to exportTrackData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% This function is designed to dump out all feature information for all
+% fovs & tracks (over time). The current output is fov_track.csv
+
+% Target save location
+path = uigetdir(matlabroot, 'Export Directory');
+
+% Header information
+header = handles.features;
+header = [{'frame_index'}, {'x'}, {'y'}, header(:)'];
+headers_lut = handles.features_lut;
+headers_lut(1, 1:3) = 1:3;
+headers_lut = nonzeros(headers_lut);
+present_headers = header(headers_lut);
+
+%WAAAHA :P
+present_headers = strrep(present_headers, ' ', '_');
+present_headers = strrep(present_headers, '[', '');
+present_headers = strrep(present_headers, ']', '');
+present_headers = strrep(present_headers, '/', '_per_');
+present_headers = strrep(present_headers, '#', 'number_of_');
+present_headers = strrep(present_headers, '.', '');
+present_headers = strrep(present_headers, '^', '');
+present_headers = strrep(present_headers, '(', '_');
+present_headers = strrep(present_headers, ')', '');
+
+% Add DT to our headers
+present_headers = {present_headers{1}, 'dt', present_headers{2:end}};
+
+% Add nuclear cell area - not sure why this index is not in the
+% features_lut?
+add_nuc_area = false;
+if ~ismember(19, handles.features_void)
+    add_nuc_area = true;
+    present_headers = [present_headers(:)', {'nuclear_area_ratio'}];
+end
+
+% Track counter dict
+track_counter = containers.Map;
+
+% Loop through our tracks but retain source information
+for index = 1:numel(handles.ST_raw_data_filenames)
+    track_source = handles.ST_raw_data_filenames{index, 1};
+    [~, track_source, ~] = fileparts(track_source);
+    
+    % Track counter
+    if ismember(track_source, keys(track_counter))
+        track_counter(track_source) = track_counter(track_source) + 1;
+    else
+        track_counter(track_source) = 1;
+    end
+    track_data = handles.raw_data{index, 1};
+    
+    % Add dt
+    track_data = [track_data(:, 1), track_data(:, 1) * handles.dt, track_data(:, 2:end)];
+    
+    % Optionally inject nuclear area ratio
+    if add_nuc_area
+        track_data = [track_data(:, 1:end), handles.nuc_cell_area_ratio_t{index}];
+    end
+    
+    % Save location
+    filepath = strcat(path, filesep, track_source, '_track_', num2str(track_counter(track_source)), '.csv');
+    
+    % Save file
+    table = array2table(track_data, 'VariableNames', present_headers);
+    writetable(table, filepath);
 end
 
 
