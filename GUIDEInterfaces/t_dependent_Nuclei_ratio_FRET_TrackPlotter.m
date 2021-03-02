@@ -1755,11 +1755,14 @@ answer = questdlg('.mat or .csv output?', 'Output Format', '.mat', '.csv', '.mat
 
 % Header information
 header = handles.features;
+coeff = handles.features_coeff;
 header = [{'frame_index'}, {'x'}, {'y'}, header(:)'];
-headers_lut = handles.features_lut;
-headers_lut(1, 1:3) = 1:3;
-headers_lut = nonzeros(headers_lut);
-present_headers = header(headers_lut);
+coeff = [1, 1, 1, coeff(:)'];
+features_lut = handles.features_lut;
+features_lut(1, 1:3) = 1:3;
+features_lut = nonzeros(features_lut);
+present_headers = header(features_lut);
+present_coeff = coeff(features_lut);
 
 %WAAAHA :P
 present_headers = strrep(present_headers, ' ', '_');
@@ -1774,6 +1777,15 @@ present_headers = strrep(present_headers, ')', '');
 
 % Add DT to our headers
 present_headers = {present_headers{1}, 'dt', present_headers{2:end}, 'me_event_mask'};
+present_coeff = [present_coeff(1), 1, present_coeff(2:end), 1];
+
+% Add XY speed
+add_speed = false;
+if ~ismember(2, handles.features_void)
+    add_speed = true;
+    present_headers = [present_headers(:)', {'xy_speed'}];
+    present_coeff = [present_coeff(:)', 1];
+end
 
 % Add nuclear cell area - not sure why this index is not in the
 % features_lut?
@@ -1781,6 +1793,7 @@ add_nuc_area = false;
 if ~ismember(19, handles.features_void)
     add_nuc_area = true;
     present_headers = [present_headers(:)', {'nuclear_area_ratio'}];
+    present_coeff = [present_coeff(:)', 1];
 end
 
 % Track counter dict
@@ -1816,10 +1829,18 @@ for index = 1:count
     end
     track_data = [track_data(:, 1:end), binary_vector];
     
+    % Optionally add speed
+    if add_speed
+        track_data = [track_data(:, 1:end), handles.velocity_t{index}];
+    end
+    
     % Optionally inject nuclear area ratio
     if add_nuc_area
         track_data = [track_data(:, 1:end), handles.nuc_cell_area_ratio_t{index}];
     end
+    
+    % Handle coefficients
+    track_data = track_data .* present_coeff;
     
     % Optional filtering of outputs based on MEs
     if should_filter && sum(binary_vector) == 0
