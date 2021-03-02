@@ -1779,7 +1779,10 @@ end
 track_counter = containers.Map;
 
 % Loop through our tracks but retain source information
-for index = 1:numel(handles.ST_raw_data_filenames)
+count = numel(handles.ST_raw_data_filenames);
+h1 = waitbar(0, "Exporting data - please wait");
+for index = 1:count
+    waitbar(index/count, h1, "Exporting data - please wait");
     track_source = handles.ST_raw_data_filenames{index, 1};
     [~, track_source, ~] = fileparts(track_source);
     
@@ -1806,5 +1809,5 @@ for index = 1:numel(handles.ST_raw_data_filenames)
     table = array2table(track_data, 'VariableNames', present_headers);
     writetable(table, filepath);
 end
-
+close(h1);
 
