@@ -22,7 +22,7 @@ function varargout = t_dependent_Nuclei_ratio_FRET_TrackPlotter(varargin)
 
 % Edit the above text to modify the response to help t_dependent_Nuclei_ratio_FRET_TrackPlotter
 
-% Last Modified by GUIDE v2.5 01-Mar-2021 09:53:29
+% Last Modified by GUIDE v2.5 02-Mar-2021 14:11:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1734,7 +1734,7 @@ switch size(handles.ST_raw_data{1},2)
 end
 
 % --------------------------------------------------------------------
-function exportTrackData_Callback(hObject, eventdata, handles)
+function exportTrackData_Callback(hObject, eventdata, handles, should_filter)
 % hObject    handle to exportTrackData (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -1742,8 +1742,16 @@ function exportTrackData_Callback(hObject, eventdata, handles)
 % This function is designed to dump out all feature information for all
 % fovs & tracks (over time). The current output is fov_track.csv
 
+% Optional arg handling
+if ~exist('should_filter', 'var')
+    should_filter = false;
+end
+
 % Target save location
 path = uigetdir(matlabroot, 'Export Directory');
+
+% Quest dialog for output format
+answer = questdlg('.mat or .csv output?', 'Output Format', '.mat', '.csv', '.mat');
 
 % Header information
 header = handles.features;
@@ -1765,7 +1773,7 @@ present_headers = strrep(present_headers, '(', '_');
 present_headers = strrep(present_headers, ')', '');
 
 % Add DT to our headers
-present_headers = {present_headers{1}, 'dt', present_headers{2:end}};
+present_headers = {present_headers{1}, 'dt', present_headers{2:end}, 'me_event_mask'};
 
 % Add nuclear cell area - not sure why this index is not in the
 % features_lut?
@@ -1779,6 +1787,7 @@ end
 track_counter = containers.Map;
 
 % Loop through our tracks but retain source information
+mat_output = struct();
 count = numel(handles.ST_raw_data_filenames);
 h1 = waitbar(0, "Exporting data - please wait");
 for index = 1:count
@@ -1792,22 +1801,59 @@ for index = 1:count
     else
         track_counter(track_source) = 1;
     end
-    track_data = handles.raw_data{index, 1};
+    
+    % Get the data
+    track_data = handles.raw_data{index, 1};    
     
     % Add dt
     track_data = [track_data(:, 1), track_data(:, 1) * handles.dt, track_data(:, 2:end)];
+    
+    % Add the MEs
+    loc = find(handles.ME(:, 1)==index);
+    binary_vector = zeros(size(track_data, 1), 1);
+    if ~isnan(loc)
+        binary_vector(handles.ME(loc, 2), 1) = 1;
+    end
+    track_data = [track_data(:, 1:end), binary_vector];
     
     % Optionally inject nuclear area ratio
     if add_nuc_area
         track_data = [track_data(:, 1:end), handles.nuc_cell_area_ratio_t{index}];
     end
     
-    % Save location
-    filepath = strcat(path, filesep, track_source, '_track_', num2str(track_counter(track_source)), '.csv');
+    % Optional filtering of outputs based on MEs
+    if should_filter && sum(binary_vector) == 0
+        continue
+    end
     
-    % Save file
+    % Handle output format options
+    track_name = strcat(track_source, '_track_', num2str(track_counter(track_source)));
     table = array2table(track_data, 'VariableNames', present_headers);
-    writetable(table, filepath);
+    switch answer
+        
+        % Save as mat
+        case '.mat'
+            track_name = genvarname(track_name);
+            mat_output.(track_name) = table;
+            
+        % Save as csv
+        case '.csv'
+            % Save file
+            filepath = strcat(path, filesep, track_name, '.csv');
+            writetable(table, filepath);
+    end
 end
 close(h1);
 
+% If we want as a mat
+if strcmp('.mat', answer)
+    filepath = strcat(path, filesep, 'FRET_TrackPlotter_Output_', date, '.mat');
+    save(filepath, 'mat_output');
+end
+
+% --------------------------------------------------------------------
+function exportFiltered_Callback(hObject, eventdata, handles)
+% hObject    handle to exportFiltered (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+exportTrackData_Callback(hObject, eventdata, handles, true);
