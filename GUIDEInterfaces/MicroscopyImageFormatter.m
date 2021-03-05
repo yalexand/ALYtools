@@ -22,10 +22,10 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 05-Mar-2021 09:45:25
+% Last Modified by GUIDE v2.5 05-Mar-2021 18:30:55
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @MicroscopyImageFormatter_OpeningFcn, ...
@@ -775,8 +775,8 @@ end
 guidata(hObject,handles);
 
 hold(AXES,'off');
-    xlabel(AXES,'time [h]');
-    ylabel(AXES,'offset-subtracted mean intensity');
+    xlabel(AXES,'time [h]','fontsize',8);
+    ylabel(AXES,'offset-subtracted mean ref. intensity','fontsize',8);
     grid(AXES,'on');
 legend(AXES,LEGEND);
 
