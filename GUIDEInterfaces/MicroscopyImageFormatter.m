@@ -456,14 +456,9 @@ function load_image_Callback(hObject, eventdata, handles)
         
 % --- Executes on button press in recalculate_corrections.
 function recalculate_corrections_Callback(hObject, eventdata, handles)
-% here one needs to apply pre-calculated corrections to the loaded image
+% applies pre-calculated corrections to the loaded image
 %
-% additive (1)
-% multiplicative (1)
-% additive (2)
-% multiplicative (2)
-%
-if isempty(handles.raw_img), return, end
+if isempty(handles.ref_img), return, end
 
 [SX,SY,n_channels,~,st] = size(handles.ref_img);
 handles.corrected_img = zeros(size(handles.ref_img));
@@ -487,10 +482,11 @@ for c = 1:n_channels
     p_xy  = handles.p_xy{c};
     f_t = handles.f_t{c};
     %
+    hw = waitbar(0,['introducing corrections to channel ' num2str(c)]);
     for f = 1:st
         I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset;
         switch model
-            case 'additive (1)' % f(t) acts only on background
+            case 'additive (1)'         % f(t) acts only on background
                 EO = I - Eb*f_t(f)*p_xy;
             case 'multiplicative (1)'   
                 EO = I./p_xy - Eb*f_t(f);                
@@ -501,8 +497,9 @@ for c = 1:n_channels
         end
         EO(EO<0)=0;
         handles.corrected_img(:,:,c,1,f) = EO;
-        [c f]
+        if ~isempty(hw), waitbar(f/st,hw); end
     end
+    if ~isempty(hw), delete(hw), drawnow; end
     %    
 end
 guidata(hObject,handles);
