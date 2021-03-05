@@ -456,9 +456,58 @@ function load_image_Callback(hObject, eventdata, handles)
         
 % --- Executes on button press in recalculate_corrections.
 function recalculate_corrections_Callback(hObject, eventdata, handles)
-% hObject    handle to recalculate_corrections (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% here one needs to apply pre-calculated corrections to the loaded image
+%
+% additive (1)
+% multiplicative (1)
+% additive (2)
+% multiplicative (2)
+%
+if isempty(handles.raw_img), return, end
+
+[SX,SY,n_channels,~,st] = size(handles.ref_img);
+handles.corrected_img = zeros(size(handles.ref_img));
+for c = 1:n_channels
+    
+    s = get(handles.model_1,'String'); % all the same
+    switch c
+        case 1
+            model = s{get(handles.model_1,'Value')};
+        case 2
+            model = s{get(handles.model_2,'Value')};            
+        case 3
+            model = s{get(handles.model_3,'Value')};            
+        case 4
+            model = s{get(handles.model_4,'Value')};            
+        case 5            
+            model = s{get(handles.model_5,'Value')};            
+    end %switch
+    %
+    Eb = handles.Eb{c};
+    p_xy  = handles.p_xy{c};
+    f_t = handles.f_t{c};
+    %
+    for f = 1:st
+        I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset;
+        switch model
+            case 'additive (1)' % f(t) acts only on background
+                EO = I - Eb*f_t(f)*p_xy;
+            case 'multiplicative (1)'   
+                EO = I./p_xy - Eb*f_t(f);                
+            case 'additive (2)'         % f(t) acts on everyhting
+                EO = I/f_t(f) - Eb*p_xy;                
+            case 'multiplicative (2)'   
+                EO = I./( f_t(f)*p_xy ) - Eb;
+        end
+        EO(EO<0)=0;
+        handles.corrected_img(:,:,c,1,f) = EO;
+        [c f]
+    end
+    %    
+end
+guidata(hObject,handles);
+
+show_image(handles,'corrected_img','image_corrected',[]);
 
 
 
@@ -544,13 +593,15 @@ function load_ref_Callback(hObject, eventdata, handles)
 
         v = load_Optosplit_image(full_path_to_file);
         if isempty(v), return, end
-        handles.ref_img = v;
-        handles.raw_img = v;
+        handles.ref_img = single(v);
+        handles.raw_img = single(v);
         guidata(hObject,handles);
         %
         [~,FNAME,FEXT] = fileparts(full_path_to_file);
         show_image(handles,'raw_img','image_raw',[FNAME FEXT]);
         show_image(handles,'raw_img','image_corrected',[]);
+        
+        get_correction_functions_from_ref(hObject,handles);
 
 % ---         
 function show_image(handles,what_to_show,where_to_show,TITLE)    
@@ -656,3 +707,85 @@ function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
     catch
         disp('cannot send image to Icy');
     end
+
+%------------------------------    
+function get_correction_functions_from_ref(hObject,handles)
+
+offset = handles.offset;
+polynom_order  = 12;
+
+[SX,SY,n_channels,~,st] = size(handles.ref_img);
+
+colors = {'r','g','b','g','c'};
+AXES = handles.time_dependence_corr;
+reset(AXES);
+LEGEND = cell(0);
+
+for channel = 1:n_channels
+
+    ref = squeeze(handles.ref_img(:,:,channel,1,:));
+    
+    intensity = zeros(st,1);
+
+    w = 40; % exclude noisy pixels?
+    rx = w:SX-w;
+    ry = w:SY-w;
+
+    parfor f=1:st
+        intensity(f) = mean(ref(rx,ry,f),'All') - offset;
+    end
+
+    frms = (1:st)';
+    p = polyfit(frms,intensity,polynom_order);
+    intensity_fit = polyval(p,frms);
+    f_t = intensity_fit/intensity_fit(1);
+
+    taxis = (frms-1)*handles.min_per_frame/60;    
+    plot(AXES,taxis,intensity,[colors{channel} '.-'],taxis,intensity_fit,'k:','linewidth',3);
+    hold(AXES,'on');
+    LEGEND = [LEGEND num2str(channel) 'fit'];
+
+    % calculate normalized profile
+    prof = squeeze(sum(ref(:,:,1:st),3)) - offset;    
+    % smooth
+    smooth_scale = 3;    
+    prof = imopen(prof,strel('disk',smooth_scale,0));
+    prof = gsderiv(prof,smooth_scale,0);
+
+    [xmax,ymax] = find(prof==max(prof(:)));
+    prof = prof/prof(xmax(1),ymax(1));
+    %icy_imshow(prof,num2str(channel));
+    
+    % calculate Eb    
+    ds = 10;
+    rx = (xmax-ds):(xmax+ds);
+    ry = (ymax-ds):(ymax+ds);    
+    rx(rx<1)=[];    
+    ry(ry<1)=[];           
+    %
+    sample = ref(rx,ry,1:3);
+    Eb = mean(sample(:)) - offset;
+    
+    handles.f_t{channel} = f_t;
+    handles.p_xy{channel} = prof;
+    handles.Eb{channel} = Eb;
+    
+end
+
+guidata(hObject,handles);
+
+hold(AXES,'off');
+    xlabel(AXES,'time [h]');
+    ylabel(AXES,'offset-subtracted mean intensity');
+    grid(AXES,'on');
+legend(AXES,LEGEND);
+
+
+
+
+
+
+
+
+    
+    
