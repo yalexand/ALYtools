@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 05-Mar-2021 18:30:55
+% Last Modified by GUIDE v2.5 08-Mar-2021 10:24:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -52,28 +52,29 @@ function MicroscopyImageFormatter_OpeningFcn(hObject, eventdata, handles, vararg
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to MicroscopyImageFormatter (see VARARGIN)
 
-ALYtools_dir = 'C:\Users\alexany\ALYtools';
-addpath(ALYtools_dir);
-addpath_ALYtools;
+set(handles.image_type,'String',{'Nikon','Optosplit 2 channels','Optosplit 3 channels'});
 
-this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
+% HARDCODED - OPTOSPLIT
+    set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
 
-% HARDCODED
-set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
-set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
-set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
+    this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
+    set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
+    set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
+    set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
+
+    % values
+    handles.umppix = 0.68';
+    handles.offset = 100';
+    handles.downsample = 1;
+    handles.min_per_frame = 5;
+% HARDCODED - OPTOSPLIT
+
+set(handles.umppix_edit,'String',num2str(handles.umppix));
+set(handles.offset_edit,'String',num2str(handles.offset));
+set(handles.downsample_edit,'String',num2str(handles.downsample));
+set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
 
 set(handles.show_channel,'String',{'1','2','3','4','5','All'});
-
-set(handles.umppix_edit,'String','0.68');
-set(handles.offset_edit,'String','100');
-set(handles.downsample_edit,'String','1');
-set(handles.min_per_frame_edit,'String','5');
-% values
-handles.umppix = 0.68';
-handles.offset = 100';
-handles.downsample = 1;
-handles.min_per_frame = 5;
 
 handles.ref_img = [];   
 handles.raw_img = [];   
@@ -444,7 +445,7 @@ function load_image_Callback(hObject, eventdata, handles)
 
             full_path_to_file =  [pathname filesep filename];           
 
-            v = load_Optosplit_image(full_path_to_file);
+            v = load_microscopy_image(handles,full_path_to_file);
             if isempty(v), return, end
             %
             handles.raw_img = v;
@@ -582,13 +583,25 @@ function do_them_all_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+function v = load_microscopy_image(handles,full_path_to_file)
+    set(handles.image_type,'String',{'Nikon','Optosplit 2 channels','Optosplit 3 channels'});
+    s = get(handles.image_type,'String');
+    switch char(s(get(handles.image_type,'Value')))
+        case 'Optosplit 2 channels'
+            v = load_Optosplit_image(full_path_to_file);
+        case 'Optosplit 3 channels'
+            v = [];  % to do 
+        case 'Nikon'
+            v = [];  % to do
+    end
+
 
 % --- Executes on button press in load_ref.
 function load_ref_Callback(hObject, eventdata, handles)
 
     full_path_to_file = get(handles.ref_image_file,'String');
 
-        v = load_Optosplit_image(full_path_to_file);
+        v = load_microscopy_image(handles,full_path_to_file);
         if isempty(v), return, end
         handles.ref_img = single(v);
         handles.raw_img = single(v);
@@ -613,6 +626,10 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
         current_channel_to_show = str2num(s{ind});
 
         img = image(:,:,current_channel_to_show,1,frame_to_show);
+        %
+        t = mean(img(:)) + 1.65*std(img(:));
+        img(img>t) = t;
+        %
         imshow(uint8(map(img,0,255)), 'Parent', ax);
         
         if ~isempty(TITLE)
@@ -778,11 +795,24 @@ hold(AXES,'off');
 legend(AXES,LEGEND);
 
 
+% --- Executes on selection change in image_type.
+function image_type_Callback(hObject, eventdata, handles)
+% hObject    handle to image_type (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns image_type contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from image_type
 
 
+% --- Executes during object creation, after setting all properties.
+function image_type_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to image_type (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
 
-
-
-
-    
-    
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
