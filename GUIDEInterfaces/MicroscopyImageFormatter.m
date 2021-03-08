@@ -584,7 +584,6 @@ function do_them_all_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 function v = load_microscopy_image(handles,full_path_to_file)
-    set(handles.image_type,'String',{'Nikon','Optosplit 2 channels','Optosplit 3 channels'});
     s = get(handles.image_type,'String');
     switch char(s(get(handles.image_type,'Value')))
         case 'Optosplit 2 channels'
