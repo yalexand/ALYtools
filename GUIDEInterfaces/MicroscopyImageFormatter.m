@@ -63,16 +63,38 @@ set(handles.image_type,'String',{'Nikon','Optosplit 2 channels','Optosplit 3 cha
     set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
 
     % values
-    handles.umppix = 0.68';
-    handles.offset = 100';
+    handles.umppix = 0.68;
+    handles.offset = 100;
     handles.downsample = 1;
     handles.min_per_frame = 5;
+    src_channels = '12';
+    dst_channels = '12';
 % HARDCODED - OPTOSPLIT
+
+% HARDCODED - NIKON
+%     set(handles.image_type,'Value',1); % 'Optosplit 2 channels' 
+% 
+%     image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210303_KV01.7_LTTL1_2';
+%     dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
+%     set(handles.src_dir,'String',image_dir);
+%     set(handles.dst_dir,'String',dst_dir);
+%     set(handles.ref_image_file,'String',[image_dir filesep '20210303_KV01.7_LTTL1_2_MMStack_A-1_0.ome.tif']);
+%     % values
+%     handles.umppix = 0.65;
+%     handles.offset = 100;
+%     handles.downsample = 2;
+%     handles.min_per_frame = 5;
+%     src_channels = '1234';
+%     dst_channels = '124';
+% HARDCODED - NIKON
 
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 set(handles.offset_edit,'String',num2str(handles.offset));
 set(handles.downsample_edit,'String',num2str(handles.downsample));
 set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
+set(handles.src_channels,'String',src_channels);
+set(handles.dst_channels,'String',dst_channels);
+
 
 set(handles.show_channel,'String',{'1','2','3','4','5','All'});
 
@@ -461,8 +483,8 @@ function recalculate_corrections_Callback(hObject, eventdata, handles)
 %
 if isempty(handles.ref_img), return, end
 
-[SX,SY,n_channels,~,st] = size(handles.ref_img);
-handles.corrected_img = zeros(size(handles.ref_img));
+[SX,SY,n_channels,~,st] = size(handles.raw_img);
+handles.corrected_img = zeros(size(handles.raw_img));
 for c = 1:n_channels
     
     s = get(handles.model_1,'String'); % all the same
@@ -591,7 +613,7 @@ function v = load_microscopy_image(handles,full_path_to_file)
         case 'Optosplit 3 channels'
             v = [];  % to do 
         case 'Nikon'
-            v = [];  % to do
+            v = load_Nikon_image(handles,full_path_to_file);
     end
 
 
@@ -619,12 +641,14 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
     ax = eval(['handles.' where_to_show]);
 
         frame_to_show = str2num(get(handles.frame_to_show,'String'));
-
+        
         s = get(handles.show_channel,'String');
         ind = get(handles.show_channel,'Value');
         current_channel_to_show = str2num(s{ind});
 
-        img = image(:,:,current_channel_to_show,1,frame_to_show);
+        frame_to_show = min(size(image,5),frame_to_show); % ?
+        
+        img = single(image(:,:,current_channel_to_show,1,frame_to_show));
         %
         t = mean(img(:)) + 1.65*std(img(:));
         img(img>t) = t;
@@ -736,6 +760,35 @@ LEGEND = cell(0);
 
 for channel = 1:n_channels
 
+    if size(handles.ref_img,5)==1 % specific case when no t-dependence is available
+        handles.f_t{channel} = ones(100000,1); % :) should be enough..
+        
+        %handles.p_xy{channel} = ones(size(handles.ref_img(),1),size(handles.ref_img(),2));
+        %handles.Eb{channel} = 0;                        
+            u = handles.ref_img(:,:,channel,1,1);
+            % calculate normalized profile
+            prof = u - offset;    
+            % smooth
+            smooth_scale = 10;
+            prof = imopen(prof,strel('disk',smooth_scale,0));
+            prof = gsderiv(prof,smooth_scale,0);        
+            [xmax,ymax] = find(prof==max(prof(:)));
+            prof = prof/prof(xmax(1),ymax(1));
+            handles.p_xy{channel} = prof;
+            
+            % calculate Eb
+            ref = squeeze(handles.ref_img(:,:,channel,1,1));
+            ds = 10;
+            rx = (xmax-ds):(xmax+ds);
+            ry = (ymax-ds):(ymax+ds);    
+            rx(rx<1)=[];    
+            ry(ry<1)=[];           
+            %
+            sample = ref(rx,ry,1);
+            Eb = mean(sample(:)) - offset;                                
+            handles.Eb{channel} = Eb;
+    else
+    
     ref = squeeze(handles.ref_img(:,:,channel,1,:));
     
     intensity = zeros(st,1);
@@ -778,11 +831,13 @@ for channel = 1:n_channels
     %
     sample = ref(rx,ry,1:3);
     Eb = mean(sample(:)) - offset;
-    
+           
     handles.f_t{channel} = f_t;
     handles.p_xy{channel} = prof;
     handles.Eb{channel} = Eb;
     
+    end
+        
 end
 
 guidata(hObject,handles);
@@ -815,3 +870,65 @@ function image_type_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+function v = load_Nikon_image(handles,full_path_to_file)
+v = [];
+
+if ~isfile(full_path_to_file), return, end
+
+s = get(handles.src_channels,'String');
+n_src_channels = numel(s);
+src_channels = zeros(n_src_channels,1);
+for k=1:n_src_channels
+    src_channels(k) = str2num(s(k));
+end
+s = get(handles.dst_channels,'String');
+n_dst_channels = numel(s);
+dst_channels = zeros(n_dst_channels,1);
+for k=1:n_dst_channels
+    dst_channels(k) = str2num(s(k));
+end
+
+[~,~,I] = bfopen_v(full_path_to_file);
+[sx_src,sy_src,~,st_src] = size(I);
+
+sx = sx_src;
+sy = sy_src;
+f = handles.downsample;
+if 1~=f
+    u = squeeze(single(I(:,:,1,1)));
+    [sx,sy] = size(imresize(u,1/f));    
+end
+%
+st = st_src/n_src_channels;
+%
+v = zeros(sx,sy,n_dst_channels,1,st);
+
+for k=1:st
+    i_b = n_src_channels*(k-1)+1;
+    i_e = i_b + n_src_channels-1;
+    slice = I(:,:,1,i_b:i_e);
+    for m=1:n_dst_channels
+            u = squeeze(slice(:,:,dst_channels(m)));
+        if 1~=f
+            u = imresize(u,1/f);
+        end
+        v(:,:,m,1,k) = u;
+    end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
