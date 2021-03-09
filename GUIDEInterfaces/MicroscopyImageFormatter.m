@@ -529,15 +529,9 @@ guidata(hObject,handles);
 show_image(handles,'corrected_img','image_corrected',[]);
 
 
-
 function frame_to_show_Callback(hObject, eventdata, handles)
-% hObject    handle to frame_to_show (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of frame_to_show as text
-%        str2double(get(hObject,'String')) returns contents of frame_to_show as a double
-
+        show_image(handles,'raw_img','image_raw',[]);
+        show_image(handles,'corrected_img','image_corrected',[]);
 
 % --- Executes during object creation, after setting all properties.
 function frame_to_show_CreateFcn(hObject, eventdata, handles)
@@ -554,13 +548,8 @@ end
 
 % --- Executes on selection change in show_channel.
 function show_channel_Callback(hObject, eventdata, handles)
-% hObject    handle to show_channel (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns show_channel contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from show_channel
-
+        show_image(handles,'raw_img','image_raw',[]);
+        show_image(handles,'corrected_img','image_corrected',[]);
 
 % --- Executes during object creation, after setting all properties.
 function show_channel_CreateFcn(hObject, eventdata, handles)
@@ -678,7 +667,7 @@ function v = load_microscopy_image(handles,full_path_to_file)
     s = get(handles.image_type,'String');
     switch char(s(get(handles.image_type,'Value')))
         case 'Optosplit 2 channels'
-            v = load_Optosplit_image(full_path_to_file);
+            v = load_Optosplit_image(handles,full_path_to_file);
         case 'Optosplit 3 channels'
             v = [];  % to do 
         case 'Nikon'
@@ -709,15 +698,17 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
     image = eval(['handles.' what_to_show]);
     ax = eval(['handles.' where_to_show]);
 
-        frame_to_show = str2num(get(handles.frame_to_show,'String'));
+        frame = str2num(get(handles.frame_to_show,'String'));
+        if isempty(frame) || frame<=0 || frame > size(image,5)
+            frame = 1;
+            set(handles.frame_to_show,'String',num2str(frame))
+        end
         
         s = get(handles.show_channel,'String');
         ind = get(handles.show_channel,'Value');
         current_channel_to_show = str2num(s{ind});
-
-        frame_to_show = min(size(image,5),frame_to_show); % ?
         
-        img = single(image(:,:,current_channel_to_show,1,frame_to_show));
+        img = single(image(:,:,current_channel_to_show,1,frame));
         %
         t = mean(img(:)) + 1.65*std(img(:));
         img(img>t) = t;
@@ -729,7 +720,7 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
         end
     
 % --- Example function used for debugging with Optosplit data    
-function v = load_Optosplit_image(full_path_to_image)
+function v = load_Optosplit_image(handles,full_path_to_image)
 
 v = [];
 
@@ -771,6 +762,8 @@ try
         v(:,:,2,1,f) = uA_reg;    
     end
 
+     set(handles.show_channel,'String',{'1','2'});
+    
 catch
     disp(['error when trying to load image ' full_path_to_image]);
 end
@@ -985,7 +978,9 @@ for k=1:st
     end
 end
 
-
+s = cell(0);
+for k=1:n_dst_channels, s = [s num2str(k)]; end
+set(handles.show_channel,'String',s);
 
 
 
