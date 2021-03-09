@@ -55,37 +55,36 @@ function MicroscopyImageFormatter_OpeningFcn(hObject, eventdata, handles, vararg
 set(handles.image_type,'String',{'Nikon','Optosplit 2 channels','Optosplit 3 channels'});
 
 % HARDCODED - OPTOSPLIT
-    set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
-
-    this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
-    set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
-    set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
-    set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
-
-    % values
-    handles.umppix = 0.68;
-    handles.offset = 100;
-    handles.downsample = 1;
-    handles.min_per_frame = 5;
-    src_channels = '12';
-    dst_channels = '12';
+%     set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
+% 
+%     this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
+%     set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
+%     set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
+%     set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
+% 
+%     % values
+%     handles.umppix = 0.68;
+%     handles.offset = 100;
+%     handles.downsample = 1;
+%     handles.min_per_frame = 5;
+%     src_channels = '12';
+%     dst_channels = '12';
 % HARDCODED - OPTOSPLIT
 
 % HARDCODED - NIKON
-%     set(handles.image_type,'Value',1); % 'Optosplit 2 channels' 
-% 
-%     image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210303_KV01.7_LTTL1_2';
-%     dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
-%     set(handles.src_dir,'String',image_dir);
-%     set(handles.dst_dir,'String',dst_dir);
-%     set(handles.ref_image_file,'String',[image_dir filesep '20210303_KV01.7_LTTL1_2_MMStack_A-1_0.ome.tif']);
-%     % values
-%     handles.umppix = 0.65;
-%     handles.offset = 100;
-%     handles.downsample = 2;
-%     handles.min_per_frame = 5;
-%     src_channels = '1234';
-%     dst_channels = '124';
+    set(handles.image_type,'Value',1); % 'Nikon' 
+    image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210303_KV01.7_LTTL1_2';
+    dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
+    set(handles.src_dir,'String',image_dir);
+    set(handles.dst_dir,'String',dst_dir);
+    set(handles.ref_image_file,'String',[image_dir filesep '20210303_KV01.7_LTTL1_2_MMStack_A-1_0.ome.tif']);
+    % values
+    handles.umppix = 0.325;
+    handles.offset = 100;
+    handles.downsample = 2;
+    handles.min_per_frame = 5;
+    src_channels = '1234';
+    dst_channels = '124';
 % HARDCODED - NIKON
 
 set(handles.umppix_edit,'String',num2str(handles.umppix));
@@ -601,9 +600,79 @@ end
 
 % --- Executes on button press in do_them_all.
 function do_them_all_Callback(hObject, eventdata, handles)
-% hObject    handle to do_them_all (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+
+[filenames,pathname] = uigetfile('*.tif','Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
+if isempty(filenames), return, end       
+if isnumeric(filenames) && 0==filenames, return, end
+
+if ischar(filenames)
+    filenames = {filenames};
+end
+for k=1:numel(filenames)
+
+    try
+        handles.raw_img = load_microscopy_image(handles,[get(handles.src_dir,'String') filesep filenames{k}]);
+    catch
+        disp(['error when loading ' filenames{k}]);
+        continue;
+    end
+    
+        [SX,SY,n_channels,~,st] = size(handles.raw_img);
+        handles.corrected_img = zeros(size(handles.raw_img));
+        for c = 1:n_channels
+            %            
+            s = get(handles.model_1,'String'); % all the same
+            switch c
+                case 1
+                    model = s{get(handles.model_1,'Value')};
+                case 2
+                    model = s{get(handles.model_2,'Value')};            
+                case 3
+                    model = s{get(handles.model_3,'Value')};            
+                case 4
+                    model = s{get(handles.model_4,'Value')};            
+                case 5            
+                    model = s{get(handles.model_5,'Value')};            
+            end %switch
+            %
+            Eb = handles.Eb{c};
+            p_xy  = handles.p_xy{c};
+            f_t = handles.f_t{c};
+            %
+            hw = waitbar(0,['introducing corrections to channel ' num2str(c)]);
+            for f = 1:st
+                I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset;
+                switch model
+                    case 'additive (1)'         % f(t) acts only on background
+                        EO = I - Eb*f_t(f)*p_xy;
+                    case 'multiplicative (1)'   
+                        EO = I./p_xy - Eb*f_t(f);                
+                    case 'additive (2)'         % f(t) acts on everyhting
+                        EO = I/f_t(f) - Eb*p_xy;                
+                    case 'multiplicative (2)'   
+                        EO = I./( f_t(f)*p_xy ) - Eb;
+                end
+                EO(EO<0)=0;
+                handles.corrected_img(:,:,c,1,f) = EO;
+                if ~isempty(hw), waitbar(f/st,hw); end
+            end
+            if ~isempty(hw), delete(hw), drawnow; end
+        end
+        %            
+        guidata(hObject,handles);
+        
+        show_image(handles,'corrected_img','image_corrected',filenames{k});
+        show_image(handles,'raw_img','image_raw',[]);
+        
+        guidata(hObject,handles);        
+        
+        savename = filenames{k};
+        if ~contains(savename,'ome')
+            savename = strrep(savename,'.tif','.ome.tif'); % aaaaa....
+        end
+        bfsave(uint16(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
+end
+
 
 function v = load_microscopy_image(handles,full_path_to_file)
     s = get(handles.image_type,'String');
@@ -731,7 +800,7 @@ function set_ref_image_file_Callback(hObject, eventdata, handles)
 % --- Executes on button press in send_raw_to_Icy.
 function send_raw_to_Icy_Callback(hObject, eventdata, handles)
     try
-        icy_imshow(handles.raw_img);
+        icy_imshow(uint16(handles.raw_img));
     catch
         disp('cannot send image to Icy');
     end
@@ -740,7 +809,7 @@ function send_raw_to_Icy_Callback(hObject, eventdata, handles)
 % --- Executes on button press in send_corrected_to_Icy.
 function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
     try
-        icy_imshow(handles.corrected_img);
+        icy_imshow(uint16(handles.corrected_img));
     catch
         disp('cannot send image to Icy');
     end
@@ -761,8 +830,7 @@ LEGEND = cell(0);
 for channel = 1:n_channels
 
     if size(handles.ref_img,5)==1 % specific case when no t-dependence is available
-        handles.f_t{channel} = ones(100000,1); % :) should be enough..
-        
+        handles.f_t{channel} = ones(100000,1); % :) should be enough..      
         %handles.p_xy{channel} = ones(size(handles.ref_img(),1),size(handles.ref_img(),2));
         %handles.Eb{channel} = 0;                        
             u = handles.ref_img(:,:,channel,1,1);
