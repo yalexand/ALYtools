@@ -22,10 +22,10 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 11-Mar-2021 19:51:12
+% Last Modified by GUIDE v2.5 12-Mar-2021 11:49:41
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
+gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @MicroscopyImageFormatter_OpeningFcn, ...
@@ -1119,4 +1119,138 @@ function save_settings_Callback(hObject, eventdata, handles)
             % to do
             %
 
-            
+% --------------------------------------------------------------------
+function derive_corrections_from_data_Callback(hObject, eventdata, handles)
+
+[filenames,pathname] = uigetfile('*.tif','Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
+if isempty(filenames), return, end       
+if isnumeric(filenames) && 0==filenames, return, end
+
+%
+if ischar(filenames)
+    filenames = {filenames};
+end
+
+offset = handles.offset;
+
+% % WHY parfor IS IT SO UNSTABLE? 
+img_acc = cell(numel(filenames),1);
+%parfor k=1:numel(filenames)
+for k=1:numel(filenames)
+    raw_img = [];
+    try
+        raw_img = load_microscopy_image(handles,[get(handles.src_dir,'String') filesep filenames{k}]);
+    catch
+        disp(['error when loading ' filenames{k}]);
+        continue;
+    end
+    img_acc{k} = raw_img;
+end
+
+img_data = [];
+for k=1:numel(filenames)
+    img_data = cat(5,img_data,img_acc{k});
+    size(img_data)
+end
+
+[sx,sy,sc,~,~] = size(img_data);
+%
+img_data = img_data - offset;
+% ??
+t = quantile(img_data(:),0.99);
+img_data(img_data>t)=t;
+
+ref = zeros(sx,sy,sc,1,1);
+%
+for c=1:sc
+    ref_c = zeros(sx,sy);
+    for x=1:sx
+        disp(x);
+        parfor y=1:sy
+            s = img_data(x,y,c,1,:);
+            t = quantile(s,0.01); % take minimum value
+            ref_c(x,y)=t;
+        end
+    end
+    ref(:,:,c) = ref_c;
+end
+%
+% a bit of correction. as we need rather average, not minimum
+% we presume Poissonic noise, i.e. that [ref_measured = ref_true - sqrt(ref_true)] and then find ref_true
+ref = 1/2*( 1 + 2*ref + sqrt(4*ref + 1) );
+clear('img_data');
+%
+% create dimensionless p_xy correction images for channels
+xmax = zeros(sc,1);
+ymax = zeros(sc,1);
+for channel = 1:sc
+            prof = ref(:,:,channel,1,1);
+            % calculate normalized profile
+            % smooth
+            smooth_scale = 10;
+            prof = imopen(prof,strel('disk',smooth_scale,0));
+            prof = gsderiv(prof,smooth_scale,0);        
+            [xmax(channel),ymax(channel)] = find(prof==max(prof(:)));
+            prof = prof/prof(xmax(1),ymax(1));            
+%                 icy_imshow(handles.p_xy{channel},['reference ' num2str(channel)]);
+%                 icy_imshow(prof,['derived from data ' num2str(channel)]);            
+            handles.p_xy{channel} = prof;
+end
+%
+% work on Eb and temporal dependencies
+f_data = zeros(size(img_acc,1),sc,size(img_acc{1},5));
+st = size(img_acc{1},5);
+
+    for k=1:size(img_acc,1)  
+        k
+        for c=1:sc
+            ds = 10;
+            rx = (xmax(c)-ds):(xmax(c)+ds);
+            ry = (ymax(c)-ds):(ymax(c)+ds);    
+            rx(rx<1)=[];    
+            ry(ry<1)=[];           
+            %            
+            u = img_acc{k};
+            parfor f=1:st
+                u_f = u(:,:,c,1,f);
+                sample = u_f(rx,ry,1);
+                f_data(k,c,f) = median(sample(:)) - offset;
+                f
+            end
+        end
+    end
+
+f_data = squeeze(min(f_data,[],1));
+%
+colors = {'r','g','b','g','c'};
+AXES = handles.time_dependence_corr;
+reset(AXES);
+LEGEND = cell(0);
+
+polynom_order = 12;
+%
+for c=1:sc
+    handles.Eb{c} = f_data(c,1);
+    %
+    intensity = f_data(c,:)';
+    frms = (1:st)';
+    p = polyfit(frms,intensity,polynom_order);
+    intensity_fit = polyval(p,frms);
+    f_t = intensity_fit/intensity_fit(1);
+
+    taxis = (frms-1)*handles.min_per_frame/60;    
+    semilogy(AXES,taxis,intensity,[colors{c} '.-'],taxis,intensity_fit,'k:','linewidth',3);
+    hold(AXES,'on');
+    LEGEND = [LEGEND num2str(channel) 'fit'];
+    %
+    handles.f_t{c} = f_t;
+end
+
+guidata(hObject,handles);
+
+hold(AXES,'off');
+    xlabel(AXES,'time [h]','fontsize',8);
+    ylabel(AXES,'offset-subtracted mean ref. intensity','fontsize',8);
+    grid(AXES,'on');
+legend(AXES,LEGEND);
+
