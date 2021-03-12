@@ -22,10 +22,10 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 08-Mar-2021 10:24:48
+% Last Modified by GUIDE v2.5 11-Mar-2021 19:51:12
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @MicroscopyImageFormatter_OpeningFcn, ...
@@ -54,38 +54,64 @@ function MicroscopyImageFormatter_OpeningFcn(hObject, eventdata, handles, vararg
 
 set(handles.image_type,'String',{'Nikon','Optosplit 2 channels','Optosplit 3 channels'});
 
+handles.Optosplit_registration_roix = [];
+handles.Optosplit_registration_roiy1 = [];
+handles.Optosplit_registration_roiy2 = [];
+handles.Optosplit_registration_tform = [];
+handles.Optosplit_registration_droi_x = [];
+handles.Optosplit_registration_droi_y = [];
+
 % HARDCODED - OPTOSPLIT
-%     set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
-% 
-%     this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
-%     set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
-%     set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
-%     set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
-% 
-%     % values
-%     handles.umppix = 0.68;
-%     handles.offset = 100;
-%     handles.downsample = 1;
-%     handles.min_per_frame = 5;
-%     src_channels = '12';
-%     dst_channels = '12';
+    set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
+
+    this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
+    set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
+    set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
+    set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
+
+    % values
+    handles.umppix = 0.68;
+    handles.offset = 100;
+    handles.downsample = 1;
+    handles.min_per_frame = 5;
+    src_channels = '12';
+    dst_channels = '12';
 % HARDCODED - OPTOSPLIT
 
-% HARDCODED - NIKON
-    set(handles.image_type,'Value',1); % 'Nikon' 
-    image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210303_KV01.7_LTTL1_2';
-    dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
-    set(handles.src_dir,'String',image_dir);
-    set(handles.dst_dir,'String',dst_dir);
-    set(handles.ref_image_file,'String',[image_dir filesep '20210303_KV01.7_LTTL1_2_MMStack_A-1_0.ome.tif']);
-    % values
-    handles.umppix = 0.325;
-    handles.offset = 100;
-    handles.downsample = 2;
-    handles.min_per_frame = 5;
-    src_channels = '1234';
-    dst_channels = '124';
-% HARDCODED - NIKON
+% % HARDCODED - NIKON
+%     set(handles.image_type,'Value',1); % 'Nikon' 
+%     image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210303_KV01.7_LTTL1_2';
+%     dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
+%     set(handles.src_dir,'String',image_dir);
+%     set(handles.dst_dir,'String',dst_dir);
+%     set(handles.ref_image_file,'String',[image_dir filesep '20210303_KV01.7_LTTL1_2_MMStack_A-1_0.ome.tif']);
+%     % values
+%     handles.umppix = 0.325;
+%     handles.offset = 100;
+%     handles.downsample = 2;
+%     handles.min_per_frame = 5;
+%     src_channels = '1234';
+%     dst_channels = '124';
+% % HARDCODED - NIKON
+
+
+% %HARDCODED - NIKON another dataset!
+%     set(handles.image_type,'Value',1); % 'Nikon' 
+%     image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210307_KV01.9_PC9_LTTL2\Kv01.9';
+%     image_dir = 'c:\users\alexany\tmp';
+%     dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
+%     set(handles.src_dir,'String',image_dir);
+%     set(handles.dst_dir,'String',dst_dir);
+%     set(handles.ref_image_file,'String',[image_dir filesep 'KV01.9_MMStack_D-4_.ome.tif']);
+%     values
+%     handles.umppix = 0.650;
+%     handles.offset = 190; % !!!
+%     handles.downsample = 1;
+%     handles.min_per_frame = 5;
+%     src_channels = '1234';
+%     dst_channels = '124';
+% %HARDCODED - NIKON
+
 
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 set(handles.offset_edit,'String',num2str(handles.offset));
@@ -93,7 +119,6 @@ set(handles.downsample_edit,'String',num2str(handles.downsample));
 set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
 set(handles.src_channels,'String',src_channels);
 set(handles.dst_channels,'String',dst_channels);
-
 
 set(handles.show_channel,'String',{'1','2','3','4','5','All'});
 
@@ -662,11 +687,11 @@ for k=1:numel(filenames)
         bfsave(uint16(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
 end
 
-
+%--------------------------------------------------------------
 function v = load_microscopy_image(handles,full_path_to_file)
     s = get(handles.image_type,'String');
     switch char(s(get(handles.image_type,'Value')))
-        case 'Optosplit 2 channels'
+        case 'Optosplit 2 channels'                      
             v = load_Optosplit_image(handles,full_path_to_file);
         case 'Optosplit 3 channels'
             v = [];  % to do 
@@ -692,7 +717,7 @@ function load_ref_Callback(hObject, eventdata, handles)
         
         get_correction_functions_from_ref(hObject,handles);
 
-% ---         
+%--------------------------------------------------------------    
 function show_image(handles,what_to_show,where_to_show,TITLE)    
 
     image = eval(['handles.' what_to_show]);
@@ -719,55 +744,42 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
             title(ax,TITLE);
         end
     
-% --- Example function used for debugging with Optosplit data    
+%--------------------------------------------------------------
 function v = load_Optosplit_image(handles,full_path_to_image)
 
 v = [];
 
-    Y_split = 342;
-    dx = 8; 
-    dy = 8; 
-    Lx = 492+4;
-    Ly = 326+4;
-    rxD = dx:dx+Lx;
-    ryD = dy:dy+Ly;
-    ryA = Y_split+dy:Y_split+dy+Ly;
-    rxA = dx:dx+Lx;
+roix = handles.Optosplit_registration_roix;
+roiy1 = handles.Optosplit_registration_roiy1;
+roiy2 = handles.Optosplit_registration_roiy2;
+tform = handles.Optosplit_registration_tform;
+droi_x = handles.Optosplit_registration_droi_x;
+droi_y = handles.Optosplit_registration_droi_y;
 
-load('tform_D_to_A_P4_1','tform');    
-
-try
-    [~,~,I] = bfopen_v(full_path_to_image);
-    [sx,sy,sc,sz,st] = size(I);
-
-    %I(:,:,:,:,120:122) = I(:,:,:,:,117:119);
-    %I(:,:,:,:,123:126) = I(:,:,:,:,127:130);
-    % icy_imshow(I); % it is OK
-
-    v = [];
-
-    for f=1:st
-        uD = single(I(rxD,ryD,1,1,f));
-        uA = single(I(rxA,ryA,1,1,f));
-        [SX,SY]=size(uD);
-        uA_reg = imwarp(uA,tform,'OutputView',imref2d(size(uD)));
-        %
-        uD = uD(2:SX-1,5:SY-1);
-        uA_reg = uA_reg(2:SX-1,5:SY-1);
-
-        if isempty(v)
-            v = zeros(size(uD,1),size(uD,2),2,1,st);
-        end
-        v(:,:,1,1,f) = uD;
-        v(:,:,2,1,f) = uA_reg;    
-    end
-
-     set(handles.show_channel,'String',{'1','2'});
-    
-catch
-    disp(['error when trying to load image ' full_path_to_image]);
+if isempty(roix)
+    disp('cannot load Optosplit image - registration not set up');
+    return;
 end
 
+    [~,~,I] = bfopen_v(full_path_to_image);
+    [sx,sy,sc,sz,st] = size(I);
+    %
+    for f=1:st
+        u = single(squeeze(I(:,:,1,1,f)));
+        u1 = u(roix,roiy1);
+        u2 = u(roix,roiy2);
+        
+        u2_reg = imwarp(u2,tform,'OutputView',imref2d(size(u1)));
+        
+        u1_ = u1(droi_x,droi_y);
+        u2_ = u2_reg(droi_x,droi_y);
+        if isempty(v)
+            v = zeros(size(u1_,1),size(u1_,2),2,1,st);
+        end
+        v(:,:,1,1,f) = u1_;
+        v(:,:,2,1,f) = u2_;            
+    end
+    %
 
 % --- Executes on button press in set_src_dir.
 function set_src_dir_Callback(hObject, eventdata, handles)
@@ -807,7 +819,7 @@ function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
         disp('cannot send image to Icy');
     end
 
-%------------------------------    
+%-------------------------------------------------------------- 
 function get_correction_functions_from_ref(hObject,handles)
 
 offset = handles.offset;
@@ -868,7 +880,7 @@ for channel = 1:n_channels
     f_t = intensity_fit/intensity_fit(1);
 
     taxis = (frms-1)*handles.min_per_frame/60;    
-    plot(AXES,taxis,intensity,[colors{channel} '.-'],taxis,intensity_fit,'k:','linewidth',3);
+    semilogy(AXES,taxis,intensity,[colors{channel} '.-'],taxis,intensity_fit,'k:','linewidth',3);
     hold(AXES,'on');
     LEGEND = [LEGEND num2str(channel) 'fit'];
 
@@ -932,6 +944,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+%--------------------------------------------------------------
 function v = load_Nikon_image(handles,full_path_to_file)
 v = [];
 
@@ -982,16 +995,128 @@ s = cell(0);
 for k=1:n_dst_channels, s = [s num2str(k)]; end
 set(handles.show_channel,'String',s);
 
+%--------------------------------------------------------------
+function [roix,roiy1,roiy2,tform,droi_x,droi_y] = get_Optosplit_registration_parameters(full_path_to_file)
+
+% this is 1 channel, multi-frame image, where 2 channels are imaged in
+% every frame side to side
+[~,~,I] = bfopen_v(full_path_to_file);
+
+[SX,SY,~,~,~] = size(I);
+
+u = squeeze(sum(single(I),5));
+
+D = 10;
+YC = round(SY/2);
+roiy1 = D:(YC-D);
+roiy2 = (YC+D):(SY-D);
+roix = D:(SX-D);
+u1 = u(roix,roiy1);
+    deltax = 0; % to debug 
+    deltay = 0;
+u2 = u(roix+deltax,roiy2+deltay);
+
+u1 = u1/mean(u1(:));
+u2 = u2/mean(u2(:));
+
+     fixed = u1;
+     warped = u2;
+     
+     fixed_plus = fixed + gsderiv(fixed,2,0);
+     warped_plus = warped + gsderiv(warped,2,0);
+     
+     [optimizer, metric] = imregconfig('multimodal');
+     tform = imregtform(warped_plus,fixed_plus,'translation', optimizer, metric);
+     % can visualize at this stage
+     % registered = imwarp(warped,tform,'OutputView',imref2d(size(fixed)));    
+         
+     dy = round(tform.T(3,1));
+     dx = round(tform.T(3,2));
+     disp([dx dy]);
+    
+    % design of diminished ROIs
+    roi_x = 1:size(u1,1);
+    droi_x = roi_x;
+    if dx>=0
+        droi_x = (dx+2):roi_x(end);
+    elseif dx<0
+        droi_x = 1:(roi_x(end)-abs(dx)-2);
+    end
+    %
+    roi_y = 1:size(u1,2);
+    droi_y = roi_y;
+    if dy>=0
+        droi_y = (dy+2):roi_y(end);
+    elseif dy<0
+        droi_y = 1:(roi_y(end)-abs(dy)-2);
+    end
+    %
+        
+% visualize
+%     fixed = fixed(droi_x,droi_y);
+%     warped = warped(droi_x,droi_y);
+%     registered = registered(droi_x,droi_y);    
+%     iv = zeros(size(fixed,1),size(fixed,2),3,1,1);            
+%     iv(:,:,1,1,1) = fixed;
+%     iv(:,:,2,1,1) = warped;
+%     iv(:,:,3,1,1) = registered;        
+%     icy_imshow(iv);
+
+%     v = [];
+%     for f=1:st
+%         u = squeeze(I(:,:,1,1,f));
+%         u1 = u(roix,roiy1);
+%         u2 = u(roix,roiy2);
+%         
+%         u2_reg = imwarp(u2,tform,'OutputView',imref2d(size(u1)));
+%         
+%         u1_ = u1(droi_x,droi_y);
+%         u2_ = u2_reg(droi_x,droi_y);
+%         if isempty(v)
+%             v = zeros(size(u1_,1),size(u1_,2),2,1,st);
+%         end
+%         v(:,:,1,1,f) = u1_;
+%         v(:,:,2,1,f) = u2_;            
+%     end
+%     icy_imshow(uint16(v),['dx = ' num2str(dx) ', dy = ' num2str(dy)]);
 
 
+% --------------------------------------------------------------------
+function Untitled_1_Callback(hObject, eventdata, handles)
+% hObject    handle to Untitled_1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
 
+% --------------------------------------------------------------------
+function setup_Optosplit_registration_Callback(hObject, eventdata, handles)
+
+            [filename,pathname] = uigetfile({'*.tif;*.tiff','Image Files'}, ...
+                'Select image file',get(handles.src_dir,'String'));
+            if filename == 0, return, end
+            full_path_to_example =  [pathname filesep filename];           
+    %
+    [handles.Optosplit_registration_roix, ...
+    handles.Optosplit_registration_roiy1, ...
+    handles.Optosplit_registration_roiy2, ...
+    handles.Optosplit_registration_tform, ...
+    handles.Optosplit_registration_droi_x, ...
+    handles.Optosplit_registration_droi_y] = get_Optosplit_registration_parameters(full_path_to_example);
+    %
+    set(handles.show_channel,'String',{'1','2'});
+    set(handles.src_channels,'String','12');
+    set(handles.dst_channels,'String','12');    
+    guidata(hObject,handles);
 
 
+% --------------------------------------------------------------------
+function save_settings_Callback(hObject, eventdata, handles)
+            start_dir = get(handles.src_dir,'String');
+            [fname, fpath] = uiputfile('*.mat','Save Settings as..',[start_dir filesep 'MicroscopyImageFormatter_settings']);
+            if fpath == 0; return; end
+            filespec = fullfile(fpath,fname);
+            %
+            % to do
+            %
 
-
-
-
-
-
-
+            
