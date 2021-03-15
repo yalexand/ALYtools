@@ -1113,13 +1113,39 @@ function setup_Optosplit_registration_Callback(hObject, eventdata, handles)
 
 % --------------------------------------------------------------------
 function save_settings_Callback(hObject, eventdata, handles)
-            start_dir = get(handles.src_dir,'String');
-            [fname, fpath] = uiputfile('*.mat','Save Settings as..',[start_dir filesep 'MicroscopyImageFormatter_settings']);
-            if fpath == 0; return; end
-            filespec = fullfile(fpath,fname);
+
+%             start_dir = get(handles.src_dir,'String');
+%             [fname, fpath] = uiputfile('*.mat','Save Settings as..',[start_dir filesep 'MicroscopyImageFormatter_settings']);
+%             if fpath == 0; return; end
+%             filespec = fullfile(fpath,fname);
             %
             % to do
             %
+            if isempty(handles.raw_img),return,end
+            %
+            [sx,sy,sc,~,st] = size(handles.raw_img);
+            %
+            S = round(handles.umppix*8);
+            K = 2.5;
+            t = 0.2;
+            %
+            in = handles.raw_img;
+            out = in;
+            for c=1:sc
+                parfor f=1:st
+                   u = squeeze(in(:,:,c,1,f));
+                   nth = nonlinear_tophat(u,S,K)-1;
+                    nth(nth<t)=0;
+                    nth = bwmorph(nth,'clean');
+                   out(:,:,c,1,f) = nth;
+                end
+            end
+            handles.sgm = out;
+            icy_imshow(handles.sgm);
+            %
+            % guide(hObject,handles);
+            %
+            % loop over models
             
 
 % --------------------------------------------------------------------
