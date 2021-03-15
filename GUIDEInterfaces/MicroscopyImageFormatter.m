@@ -830,6 +830,7 @@ polynom_order  = 12;
 [SX,SY,n_channels,~,st] = size(handles.ref_img);
 
 colors = {'r','g','b','g','c'};
+colors = {'r','g','b','k','c'};
 AXES = handles.time_dependence_corr;
 reset(AXES);
 LEGEND = cell(0);
@@ -1252,6 +1253,7 @@ st = size(img_acc{1},5);
 f_data = squeeze(min(f_data,[],1));
 %
 colors = {'r','g','b','g','c'};
+colors = {'r','g','b','k','c'};
 AXES = handles.time_dependence_corr;
 reset(AXES);
 LEGEND = cell(0);
