@@ -804,6 +804,7 @@ function set_ref_image_file_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in send_raw_to_Icy.
 function send_raw_to_Icy_Callback(hObject, eventdata, handles)
+    if isempty(handles.raw_img),return, end
     try
         icy_imshow(uint16(handles.raw_img));
     catch
@@ -813,6 +814,7 @@ function send_raw_to_Icy_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in send_corrected_to_Icy.
 function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
+    if isempty(handles.corrected_img),return, end
     try
         icy_imshow(uint16(handles.corrected_img));
     catch
@@ -1118,6 +1120,7 @@ function save_settings_Callback(hObject, eventdata, handles)
             %
             % to do
             %
+            
 
 % --------------------------------------------------------------------
 function derive_corrections_from_data_Callback(hObject, eventdata, handles)
