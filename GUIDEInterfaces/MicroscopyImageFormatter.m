@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 16-Mar-2021 12:01:07
+% Last Modified by GUIDE v2.5 16-Mar-2021 19:39:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -299,6 +299,14 @@ else
 end
 if ~dst_channels_OK
     set(hObject,'String','xxxxx');
+else
+            % clean images
+            handles.ref_img = [];
+            handles.raw_img = [];
+            handles.corrected_img = [];
+            %
+            cla(handles.image_raw,'reset');
+            cla(handles.image_corrected,'reset');    
 end
 guidata(hObject,handles);
     
@@ -1515,33 +1523,9 @@ hold(AXES,'off');
     grid(AXES,'on');
 legend(AXES,LEGEND);
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+
+% --------------------------------------------------------------------
+function File_Callback(hObject, eventdata, handles)
+% hObject    handle to File (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
