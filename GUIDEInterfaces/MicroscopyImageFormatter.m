@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 16-Mar-2021 09:29:10
+% Last Modified by GUIDE v2.5 16-Mar-2021 12:01:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -61,62 +61,19 @@ handles.Optosplit_registration_tform = [];
 handles.Optosplit_registration_droi_x = [];
 handles.Optosplit_registration_droi_y = [];
 
-% HARDCODED - OPTOSPLIT
-%     set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
-% 
-%     this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
-%     set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
-%     set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
-%     set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
-% 
-%     % values
-%     handles.umppix = 0.68;
-%     handles.offset = 100;
-%     handles.downsample = 1;
-%     handles.min_per_frame = 5;
-%     src_channels = '12';
-%     dst_channels = '12';
-%     set(handles.setup_Optosplit_registration,'Enable','On');
-%     set(handles.setup_Optosplit_registration,'Visible','On');
-% HARDCODED - OPTOSPLIT
-
-% % HARDCODED - NIKON
-%     set(handles.image_type,'Value',1); % 'Nikon' 
-%     image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210303_KV01.7_LTTL1_2';
-%     dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
-%     set(handles.src_dir,'String',image_dir);
-%     set(handles.dst_dir,'String',dst_dir);
-%     set(handles.ref_image_file,'String',[image_dir filesep '20210303_KV01.7_LTTL1_2_MMStack_A-1_0.ome.tif']);
-%     % values
-%     handles.umppix = 0.325;
-%     handles.offset = 100;
-%     handles.downsample = 2;
-%     handles.min_per_frame = 5;
-%     src_channels = '1234';
-%     dst_channels = '124';
-%     set(handles.setup_Optosplit_registration,'Enable','Off');
-%     set(handles.setup_Optosplit_registration,'Visible','Off');
-% % HARDCODED - NIKON
-
-
-% %HARDCODED - NIKON another dataset!
-    set(handles.image_type,'Value',1); % 'Nikon' 
-    %image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210307_KV01.9_PC9_LTTL2\Kv01.9';
-    image_dir = 'c:\users\alexany\tmp';
-    dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
-    set(handles.src_dir,'String',image_dir);
-    set(handles.dst_dir,'String',dst_dir);
-    set(handles.ref_image_file,'String',[image_dir filesep 'KV01.9_MMStack_D-4_.ome.tif']);
+    set(handles.src_dir,'String',['c:' filesep]);
+    set(handles.dst_dir,'String',['c:' filesep]);
+    set(handles.ref_image_file,'String','xxx');
     % values
     handles.umppix = 0.650;
-    handles.offset = 190; % !!!
+    handles.offset = 0; % !!!
     handles.downsample = 1;
     handles.min_per_frame = 5;
-    src_channels = '1234';
-    dst_channels = '124';
+    src_channels = '12345';
+    dst_channels = '12345';
     set(handles.setup_Optosplit_registration,'Enable','Off');
     set(handles.setup_Optosplit_registration,'Visible','Off');
-% %HARDCODED - NIKON
+    handles.polynom_order = 12;
 
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 set(handles.offset_edit,'String',num2str(handles.offset));
@@ -124,12 +81,14 @@ set(handles.downsample_edit,'String',num2str(handles.downsample));
 set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
 set(handles.src_channels,'String',src_channels);
 set(handles.dst_channels,'String',dst_channels);
+set(handles.t_dep_fitting_poly_order,'String',num2str(handles.polynom_order));
+set(handles.clean_reference,'Value',1);
 
 set(handles.show_channel,'String',{'1','2','3','4','5','All'});
 
-handles.ref_img = [];   
-handles.raw_img = [];   
-handles.corrected_img = [];  
+handles.ref_img = [];
+handles.raw_img = [];
+handles.corrected_img = [];
 
 handles.raw_image_filename = [];
 
@@ -158,15 +117,14 @@ function varargout = MicroscopyImageFormatter_OutputFcn(hObject, eventdata, hand
 varargout{1} = handles.output;
 
 
-
 function umppix_edit_Callback(hObject, eventdata, handles)
-% hObject    handle to umppix_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of umppix_edit as text
-%        str2double(get(hObject,'String')) returns contents of umppix_edit as a double
-
+    v = str2double(get(hObject,'String'));
+    if ~isempty(v) && v>0 
+        handles.umppix = v;        
+    else
+        set(hObject,'String',num2str(handles.umppix));
+    end
+    guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function umppix_edit_CreateFcn(hObject, eventdata, handles)
@@ -181,16 +139,16 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
 function min_per_frame_edit_Callback(hObject, eventdata, handles)
-% hObject    handle to min_per_frame_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    v = str2double(get(hObject,'String'));
+    if ~isempty(v) && v>0 
+        handles.min_per_frame = v;        
+    else
+        set(hObject,'String',num2str(handles.min_per_frame));
+    end
+    guidata(hObject,handles);
 
-% Hints: get(hObject,'String') returns contents of min_per_frame_edit as text
-%        str2double(get(hObject,'String')) returns contents of min_per_frame_edit as a double
-
-
+        
 % --- Executes during object creation, after setting all properties.
 function min_per_frame_edit_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to min_per_frame_edit (see GCBO)
@@ -204,15 +162,16 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
 function downsample_edit_Callback(hObject, eventdata, handles)
-% hObject    handle to downsample_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of downsample_edit as text
-%        str2double(get(hObject,'String')) returns contents of downsample_edit as a double
-
+    v = str2double(get(hObject,'String'));
+    if ~isempty(v) && v>0 
+        handles.downsample = v;        
+    else
+        set(hObject,'String',num2str(handles.downsample));
+    end
+    guidata(hObject,handles);
+    
+    
 
 % --- Executes during object creation, after setting all properties.
 function downsample_edit_CreateFcn(hObject, eventdata, handles)
@@ -298,12 +257,12 @@ end
 
 
 function src_channels_Callback(hObject, eventdata, handles)
-% hObject    handle to src_channels (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of src_channels as text
-%        str2double(get(hObject,'String')) returns contents of src_channels as a double
+s = get(hObject,'String');
+if ~ismember(s,{'1','12','123','1234','12345'})
+    set(hObject,'String','xxxxx');
+end
+guidata(hObject,handles);
+    
 
 
 % --- Executes during object creation, after setting all properties.
@@ -321,13 +280,28 @@ end
 
 
 function dst_channels_Callback(hObject, eventdata, handles)
-% hObject    handle to dst_channels (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of dst_channels as text
-%        str2double(get(hObject,'String')) returns contents of dst_channels as a double
-
+dst_channels = get(hObject,'String');
+%
+L_src = length(get(handles.src_channels,'String')); % may be <= 5
+L_dst = length(dst_channels);
+%
+if L_dst<=L_src
+    dst_channels_OK = true;    
+    for k=1:L_dst
+        ch_k = str2num(dst_channels(k));
+        if isempty(ch_k) || ch_k>L_src
+            dst_channels_OK = false;
+            break;
+        end
+    end
+else
+    dst_channels_OK = false;
+end
+if ~dst_channels_OK
+    set(hObject,'String','xxxxx');
+end
+guidata(hObject,handles);
+    
 
 % --- Executes during object creation, after setting all properties.
 function dst_channels_CreateFcn(hObject, eventdata, handles)
@@ -457,15 +431,14 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
 function offset_edit_Callback(hObject, eventdata, handles)
-% hObject    handle to offset_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of offset_edit as text
-%        str2double(get(hObject,'String')) returns contents of offset_edit as a double
-
+    v = str2double(get(hObject,'String'));
+    if ~isempty(v) && v>0 
+        handles.offset = v;        
+    else
+        set(hObject,'String',num2str(handles.offset));
+    end
+    guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function offset_edit_CreateFcn(hObject, eventdata, handles)
@@ -600,12 +573,14 @@ end
 
 
 function t_dep_fitting_poly_order_Callback(hObject, eventdata, handles)
-% hObject    handle to t_dep_fitting_poly_order (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+    v = int64(str2double(get(hObject,'String')));
+    if ~isempty(v) && isinteger(v) && v>=1 
+        handles.polynom_order = v;        
+    else
+        set(hObject,'String',num2str(handles.polynom_order));
+    end
+    guidata(hObject,handles);
 
-% Hints: get(hObject,'String') returns contents of t_dep_fitting_poly_order as text
-%        str2double(get(hObject,'String')) returns contents of t_dep_fitting_poly_order as a double
 
 
 % --- Executes during object creation, after setting all properties.
@@ -731,7 +706,9 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
 
     image = eval(['handles.' what_to_show]);
     ax = eval(['handles.' where_to_show]);
-
+    
+    if isempty(image), return, end
+    
         frame = str2num(get(handles.frame_to_show,'String'));
         if isempty(frame) || frame<=0 || frame > size(image,5)
             frame = 1;
@@ -773,6 +750,10 @@ end
     [~,~,I] = bfopen_v(full_path_to_image);
     [sx,sy,sc,sz,st] = size(I);
     %
+        s = get(handles.dst_channels,'String');
+            nch1 = int64(str2num(s(1)));
+            nch2 = int64(str2num(s(2)));
+    %
     for f=1:st
         u = single(squeeze(I(:,:,1,1,f)));
         u1 = u(roix,roiy1);
@@ -785,31 +766,38 @@ end
         if isempty(v)
             v = zeros(size(u1_,1),size(u1_,2),2,1,st);
         end
-        v(:,:,1,1,f) = u1_;
-        v(:,:,2,1,f) = u2_;            
+        v(:,:,nch1,1,f) = u1_;
+        v(:,:,nch2,1,f) = u2_;            
     end
     %
 
 % --- Executes on button press in set_src_dir.
 function set_src_dir_Callback(hObject, eventdata, handles)
-% hObject    handle to set_src_dir (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
+directoryname = uigetdir(pwd,'Pick SRC Directory');
+if isempty(directoryname), return, end
+if isfolder(directoryname) 
+    set(handles.src_dir,'String',directoryname);
+    guidata(hObject,handles);
+end
 
 % --- Executes on button press in set_dst_dir.
 function set_dst_dir_Callback(hObject, eventdata, handles)
-% hObject    handle to set_dst_dir (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
+directoryname = uigetdir(pwd,'Pick DST Directory');
+if isempty(directoryname), return, end
+if isfolder(directoryname) 
+    set(handles.dst_dir,'String',directoryname);
+    guidata(hObject,handles);
+end
 
 % --- Executes on button press in set_ref_image_file.
 function set_ref_image_file_Callback(hObject, eventdata, handles)
-% hObject    handle to set_ref_image_file (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
+    [filename,pathname] = uigetfile({'*.tif;*.tiff','Image Files'}, ...
+    'Select image file',get(handles.src_dir,'String'));
+    if filename == 0, return, end
+    full_path_to_example =  [pathname filesep filename];           
+    %
+    set(handles.ref_image_file,'String',full_path_to_example);
+    guidata(hObject,handles);
 
 % --- Executes on button press in send_raw_to_Icy.
 function send_raw_to_Icy_Callback(hObject, eventdata, handles)
@@ -834,7 +822,7 @@ function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
 function get_correction_functions_from_ref(hObject,handles)
 
 offset = handles.offset;
-polynom_order  = 12;
+polynom_order  = handles.polynom_order;
 
 [SX,SY,n_channels,~,st] = size(handles.ref_img);
 
@@ -853,9 +841,11 @@ for channel = 1:n_channels
             % calculate normalized profile
             prof = u - offset;    
             % smooth
-            smooth_scale = 10;
-            prof = imopen(prof,strel('disk',smooth_scale,0));
-            prof = gsderiv(prof,smooth_scale,0);        
+                smooth_scale = 10;
+                prof = imopen(prof,strel('disk',smooth_scale,0));
+            if get(handles.clean_reference,'Value')
+                prof = gsderiv(prof,smooth_scale,0);
+            end
             [xmax,ymax] = find(prof==max(prof(:)));
             prof = prof/prof(xmax(1),ymax(1));
             handles.p_xy{channel} = prof;
@@ -900,7 +890,9 @@ for channel = 1:n_channels
     % smooth
     smooth_scale = 3;    
     prof = imopen(prof,strel('disk',smooth_scale,0));
-    prof = gsderiv(prof,smooth_scale,0);
+    if get(handles.clean_reference,'Value')
+        prof = gsderiv(prof,smooth_scale,0);
+    end
 
     [xmax,ymax] = find(prof==max(prof(:)));
     prof = prof/prof(xmax(1),ymax(1));
@@ -935,12 +927,14 @@ legend(AXES,LEGEND);
 
 % --- Executes on selection change in image_type.
 function image_type_Callback(hObject, eventdata, handles)
-% hObject    handle to image_type (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns image_type contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from image_type
+    if 2==get(hObject,'Value') % Optosplit
+        flag = 'On';
+    else
+        flag = 'Off';
+    end
+    set(handles.setup_Optosplit_registration,'Enable',flag);
+    set(handles.setup_Optosplit_registration,'Visible',flag);    
+    guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1187,10 +1181,12 @@ ymax = zeros(sc,1);
 for channel = 1:sc
             prof = ref(:,:,channel,1,1);
             % calculate normalized profile
-            % smooth
-            smooth_scale = 10;
-            prof = imopen(prof,strel('disk',smooth_scale,0));
-            prof = gsderiv(prof,smooth_scale,0);        
+            % smooth            
+                smooth_scale = 10;
+                prof = imopen(prof,strel('disk',smooth_scale,0));
+            if get(handles.clean_reference,'Value')                
+                prof = gsderiv(prof,smooth_scale,0);
+            end
             [xmax(channel),ymax(channel)] = find(prof==max(prof(:)));
             prof = prof/prof(xmax(1),ymax(1));            
 %                 icy_imshow(handles.p_xy{channel},['reference ' num2str(channel)]);
@@ -1228,7 +1224,7 @@ AXES = handles.time_dependence_corr;
 reset(AXES);
 LEGEND = cell(0);
 
-polynom_order = 12;
+polynom_order  = handles.polynom_order;
 %
 for c=1:sc
     handles.Eb{c} = f_data(c,1);
@@ -1370,16 +1366,182 @@ colors = {'r','g','b','k','c'};
 % --------------------------------------------------------------------
 function save_settings_mat_Callback(hObject, eventdata, handles)
 
-%             start_dir = get(handles.src_dir,'String');
-%             [fname, fpath] = uiputfile('*.mat','Save Settings as..',[start_dir filesep 'MicroscopyImageFormatter_settings']);
-%             if fpath == 0; return; end
-%             filespec = fullfile(fpath,fname);
-            %
-            % to do
-            %
+            start_dir = get(handles.src_dir,'String');
+            [fname, fpath] = uiputfile('*.mat','Save Settings as..',[start_dir filesep 'MicroscopyImageFormatter_settings']);
+            if fpath == 0; return; end
+            filespec = fullfile(fpath,fname);
 
+            saved_handles.dst_channels = get(handles.dst_channels,'String');
+            saved_handles.src_channels = get(handles.src_channels,'String');
+            saved_handles.image_type = get(handles.image_type,'Value');
+            %
+            saved_handles.model_1 = get(handles.model_1,'Value');
+            saved_handles.model_2 = get(handles.model_2,'Value');
+            saved_handles.model_3 = get(handles.model_3,'Value');
+            saved_handles.model_4 = get(handles.model_4,'Value');
+            saved_handles.model_5 = get(handles.model_5,'Value');
+            
+            saved_handles.src_dir = get(handles.src_dir,'String');
+            saved_handles.dst_dir = get(handles.dst_dir,'String');
+            saved_handles.ref_image_file = get(handles.ref_image_file,'String');
+            
+            saved_handles.frame_to_show = get(handles.frame_to_show,'Value');
+            saved_handles.show_channel = get(handles.show_channel,'Value');
+            saved_handles.clean_reference = get(handles.clean_reference,'Value');
+
+            saved_handles.Optosplit_registration_roix = handles.Optosplit_registration_roix;
+            saved_handles.Optosplit_registration_roiy1 = handles.Optosplit_registration_roiy1;
+            saved_handles.Optosplit_registration_roiy2 = handles.Optosplit_registration_roiy2;
+            saved_handles.Optosplit_registration_tform = handles.Optosplit_registration_tform;
+            saved_handles.Optosplit_registration_droi_x = handles.Optosplit_registration_droi_x;
+            saved_handles.Optosplit_registration_droi_y = handles.Optosplit_registration_droi_y;
+            saved_handles.umppix = handles.umppix;
+            saved_handles.offset = handles.offset;
+            saved_handles.downsample = handles.downsample;
+            saved_handles.min_per_frame = handles.min_per_frame;
+            saved_handles.polynom_order = handles.polynom_order;
+            saved_handles.raw_image_filename = handles.raw_image_filename;
+            saved_handles.p_xy = handles.p_xy;
+            saved_handles.f_t = handles.f_t;
+            saved_handles.Eb = handles.Eb;
+            
+            save(filespec,'saved_handles');
+            
 % --------------------------------------------------------------------
 function load_settings_mat_Callback(hObject, eventdata, handles)
+            
+           [filename,pathname] = uigetfile({'*.mat','mat files'}, ...
+                'Select settings file',get(handles.src_dir,'String'));
+            if filename == 0, return, end                        
+%try            
+            load([pathname filesep filename]);
+
+            set(handles.dst_channels,'String',saved_handles.dst_channels);
+            set(handles.src_channels,'String',saved_handles.src_channels);
+            
+            set(handles.image_type,'Value',saved_handles.image_type);
+
+            set(handles.model_1,'Value',saved_handles.model_1);
+            set(handles.model_2,'Value',saved_handles.model_2);
+            set(handles.model_3,'Value',saved_handles.model_3);            
+            set(handles.model_4,'Value',saved_handles.model_4);
+            set(handles.model_5,'Value',saved_handles.model_5);            
             %
-            % to do
+            set(handles.src_dir,'String',saved_handles.src_dir);
+            set(handles.dst_dir,'String',saved_handles.dst_dir);
+            set(handles.ref_image_file,'String',saved_handles.ref_image_file);
+            
+            set(handles.frame_to_show,'Value',saved_handles.frame_to_show);
+            set(handles.show_channel,'Value',saved_handles.show_channel);
+            set(handles.clean_reference,'Value',saved_handles.clean_reference);           
+
+            handles.Optosplit_registration_roix = saved_handles.Optosplit_registration_roix;
+            handles.Optosplit_registration_roiy1 = saved_handles.Optosplit_registration_roiy1;
+            handles.Optosplit_registration_roiy2 = saved_handles.Optosplit_registration_roiy2;
+            handles.Optosplit_registration_tform = saved_handles.Optosplit_registration_tform;
+            handles.Optosplit_registration_droi_x = saved_handles.Optosplit_registration_droi_x;
+            handles.Optosplit_registration_droi_y = saved_handles.Optosplit_registration_droi_y;
+                handles.umppix = saved_handles.umppix;
+                handles.offset = saved_handles.offset;
+                handles.downsample = saved_handles.downsample;
+                handles.min_per_frame = saved_handles.min_per_frame;
+                handles.polynom_order = saved_handles.polynom_order;
+            handles.raw_image_filename = saved_handles.raw_image_filename;
+            handles.p_xy = saved_handles.p_xy;
+            handles.f_t = saved_handles.f_t;
+            handles.Eb = saved_handles.Eb;
+                        
+            set(handles.umppix_edit,'String',num2str(handles.umppix));
+            set(handles.offset_edit,'String',num2str(handles.offset));
+            set(handles.downsample_edit,'String',num2str(handles.downsample));
+            set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
+            set(handles.t_dep_fitting_poly_order,'String',num2str(handles.polynom_order));
+            
+            if 2 == get(handles.image_type,'Value')
+                flag = 'On';
+            else
+                flag = 'Off';                
+            end
+                set(handles.setup_Optosplit_registration,'Enable',flag);
+                set(handles.setup_Optosplit_registration,'Visible',flag);
+
+            show_corrections_temporal_dependencies(handles); 
             %
+            % clean images
+            handles.ref_img = [];
+            handles.raw_img = [];
+            handles.corrected_img = [];
+            %
+            cla(handles.image_raw,'reset');
+            cla(handles.image_corrected,'reset');
+            
+            guidata(hObject,handles);
+                                  
+% catch
+%      disp('error when loading mat setups');
+% end
+
+% --------------------------------------------------------------------
+function show_corrections_temporal_dependencies(handles)            
+
+if isempty(handles.f_t), return, end
+
+colors = {'r','g','b','k','c'};
+AXES = handles.time_dependence_corr;
+reset(AXES);
+
+n_channels = numel(handles.Eb);
+LEGEND = cell(n_channels,1);
+
+for channel = 1:n_channels
+
+    intensity_fit = handles.f_t{channel};
+    head_val = handles.Eb{channel};
+    %
+    intensity = intensity_fit*head_val;
+    %
+    st = length(intensity_fit);
+    frms = (1:st)';        
+    taxis = (frms-1)*handles.min_per_frame/60;    
+    semilogy(AXES,taxis,intensity,[colors{channel} '.-'],'linewidth',3);
+    hold(AXES,'on');
+    LEGEND{channel} = num2str(channel);
+           
+end
+
+hold(AXES,'off');
+    xlabel(AXES,'time [h]','fontsize',8);
+    ylabel(AXES,'offset-subtracted mean ref. intensity','fontsize',8);
+    grid(AXES,'on');
+legend(AXES,LEGEND);
+
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
