@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 12-Mar-2021 11:49:41
+% Last Modified by GUIDE v2.5 16-Mar-2021 09:29:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -62,20 +62,22 @@ handles.Optosplit_registration_droi_x = [];
 handles.Optosplit_registration_droi_y = [];
 
 % HARDCODED - OPTOSPLIT
-    set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
-
-    this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
-    set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
-    set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
-    set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
-
-    % values
-    handles.umppix = 0.68;
-    handles.offset = 100;
-    handles.downsample = 1;
-    handles.min_per_frame = 5;
-    src_channels = '12';
-    dst_channels = '12';
+%     set(handles.image_type,'Value',2); % 'Optosplit 2 channels' 
+% 
+%     this_dir = 'X:\working\fogim\users\Yuriy Alexandrov\For_Jon_Jan_27_2021';
+%     set(handles.src_dir,'String',[this_dir filesep 'Alm236_P4_1']);
+%     set(handles.dst_dir,'String',[this_dir filesep 'Alm236_P4_1_formatted']);
+%     set(handles.ref_image_file,'String',[this_dir filesep 'Alm236_P4_1' filesep 'ALM236_P4_1_MMStack_C-9 - added as no.00029.ome.tif']);
+% 
+%     % values
+%     handles.umppix = 0.68;
+%     handles.offset = 100;
+%     handles.downsample = 1;
+%     handles.min_per_frame = 5;
+%     src_channels = '12';
+%     dst_channels = '12';
+%     set(handles.setup_Optosplit_registration,'Enable','On');
+%     set(handles.setup_Optosplit_registration,'Visible','On');
 % HARDCODED - OPTOSPLIT
 
 % % HARDCODED - NIKON
@@ -92,26 +94,29 @@ handles.Optosplit_registration_droi_y = [];
 %     handles.min_per_frame = 5;
 %     src_channels = '1234';
 %     dst_channels = '124';
+%     set(handles.setup_Optosplit_registration,'Enable','Off');
+%     set(handles.setup_Optosplit_registration,'Visible','Off');
 % % HARDCODED - NIKON
 
 
 % %HARDCODED - NIKON another dataset!
-%     set(handles.image_type,'Value',1); % 'Nikon' 
-%     image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210307_KV01.9_PC9_LTTL2\Kv01.9';
-%     image_dir = 'c:\users\alexany\tmp';
-%     dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
-%     set(handles.src_dir,'String',image_dir);
-%     set(handles.dst_dir,'String',dst_dir);
-%     set(handles.ref_image_file,'String',[image_dir filesep 'KV01.9_MMStack_D-4_.ome.tif']);
-%     values
-%     handles.umppix = 0.650;
-%     handles.offset = 190; % !!!
-%     handles.downsample = 1;
-%     handles.min_per_frame = 5;
-%     src_channels = '1234';
-%     dst_channels = '124';
+    set(handles.image_type,'Value',1); % 'Nikon' 
+    %image_dir = 'X:\inputs\sahaie\karishma_yuriy\20210307_KV01.9_PC9_LTTL2\Kv01.9';
+    image_dir = 'c:\users\alexany\tmp';
+    dst_dir = 'c:\users\alexany\tmp\Formatter_Nikon_test';
+    set(handles.src_dir,'String',image_dir);
+    set(handles.dst_dir,'String',dst_dir);
+    set(handles.ref_image_file,'String',[image_dir filesep 'KV01.9_MMStack_D-4_.ome.tif']);
+    % values
+    handles.umppix = 0.650;
+    handles.offset = 190; % !!!
+    handles.downsample = 1;
+    handles.min_per_frame = 5;
+    src_channels = '1234';
+    dst_channels = '124';
+    set(handles.setup_Optosplit_registration,'Enable','Off');
+    set(handles.setup_Optosplit_registration,'Visible','Off');
 % %HARDCODED - NIKON
-
 
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 set(handles.offset_edit,'String',num2str(handles.offset));
@@ -125,6 +130,8 @@ set(handles.show_channel,'String',{'1','2','3','4','5','All'});
 handles.ref_img = [];   
 handles.raw_img = [];   
 handles.corrected_img = [];  
+
+handles.raw_image_filename = [];
 
 handles.p_xy = cell(0);
 handles.f_t = cell(0);
@@ -494,6 +501,8 @@ function load_image_Callback(hObject, eventdata, handles)
             v = load_microscopy_image(handles,full_path_to_file);
             if isempty(v), return, end
             %
+            handles.raw_image_filename = filename;
+            %
             handles.raw_img = v;
             guidata(hObject,handles);          
             %
@@ -505,7 +514,7 @@ function load_image_Callback(hObject, eventdata, handles)
 function recalculate_corrections_Callback(hObject, eventdata, handles)
 % applies pre-calculated corrections to the loaded image
 %
-if isempty(handles.ref_img), return, end
+if isempty(handles.raw_img), return, end
 
 [SX,SY,n_channels,~,st] = size(handles.raw_img);
 handles.corrected_img = zeros(size(handles.raw_img));
@@ -577,7 +586,7 @@ function show_channel_Callback(hObject, eventdata, handles)
         show_image(handles,'corrected_img','image_corrected',[]);
 
 % --- Executes during object creation, after setting all properties.
-function show_channel_CreateFcn(hObject, eventdata, handles)
+function show_channel_CreateFcn(hObject, eventdata, ~)
 % hObject    handle to show_channel (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -612,8 +621,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in do_them_all.
-function do_them_all_Callback(hObject, eventdata, handles)
+% --- Executes on button press in process_images.
+function process_images_Callback(hObject, eventdata, handles)
 
 [filenames,pathname] = uigetfile('*.tif','Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
 if isempty(filenames), return, end       
@@ -829,7 +838,6 @@ polynom_order  = 12;
 
 [SX,SY,n_channels,~,st] = size(handles.ref_img);
 
-colors = {'r','g','b','g','c'};
 colors = {'r','g','b','k','c'};
 AXES = handles.time_dependence_corr;
 reset(AXES);
@@ -1111,44 +1119,7 @@ function setup_Optosplit_registration_Callback(hObject, eventdata, handles)
     set(handles.dst_channels,'String','12');    
     guidata(hObject,handles);
 
-
-% --------------------------------------------------------------------
-function save_settings_Callback(hObject, eventdata, handles)
-
-%             start_dir = get(handles.src_dir,'String');
-%             [fname, fpath] = uiputfile('*.mat','Save Settings as..',[start_dir filesep 'MicroscopyImageFormatter_settings']);
-%             if fpath == 0; return; end
-%             filespec = fullfile(fpath,fname);
-            %
-            % to do
-            %
-            if isempty(handles.raw_img),return,end
-            %
-            [sx,sy,sc,~,st] = size(handles.raw_img);
-            %
-            S = round(handles.umppix*8);
-            K = 2.5;
-            t = 0.2;
-            %
-            in = handles.raw_img;
-            out = in;
-            for c=1:sc
-                parfor f=1:st
-                   u = squeeze(in(:,:,c,1,f));
-                   nth = nonlinear_tophat(u,S,K)-1;
-                    nth(nth<t)=0;
-                    nth = bwmorph(nth,'clean');
-                   out(:,:,c,1,f) = nth;
-                end
-            end
-            handles.sgm = out;
-            icy_imshow(handles.sgm);
-            %
-            % guide(hObject,handles);
-            %
-            % loop over models
-            
-
+           
 % --------------------------------------------------------------------
 function derive_corrections_from_data_Callback(hObject, eventdata, handles)
 
@@ -1252,7 +1223,6 @@ st = size(img_acc{1},5);
 
 f_data = squeeze(min(f_data,[],1));
 %
-colors = {'r','g','b','g','c'};
 colors = {'r','g','b','k','c'};
 AXES = handles.time_dependence_corr;
 reset(AXES);
@@ -1285,3 +1255,131 @@ hold(AXES,'off');
     grid(AXES,'on');
 legend(AXES,LEGEND);
 
+
+% --------------------------------------------------------------------
+function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, handles)
+            %
+            if isempty(handles.raw_img),return,end
+            %
+            [sx,sy,sc,~,st] = size(handles.raw_img);
+            %
+            S = round(handles.umppix*8);
+            K = 2.5;
+            t = 0.2;
+            %
+            in = handles.raw_img;
+            out = in;
+            %
+            hw = waitbar(0,'segmenting frames.. ');
+            for c=1:sc
+                parfor f=1:st
+                    u = squeeze(in(:,:,c,1,f));
+                    nth = nonlinear_tophat(u,S,K)-1;
+                    nth(nth<t)=0;
+                    nth = bwmorph(nth,'clean');
+                   out(:,:,c,1,f) = nth;
+                end
+                if ~isempty(hw), waitbar(c/sc,hw); end
+            end
+            if ~isempty(hw), delete(hw), drawnow; end            
+            %icy_imshow(out);
+            %
+            macc = cell(sc,4);
+ 
+            offset = handles.offset;
+            
+                hw = waitbar(0,'gathering data for correction models.. ');
+                for m=1:4                     
+                    corrimg = zeros(size(handles.raw_img));                    
+                    for c=1:sc 
+                            %
+                            Eb = handles.Eb{c};
+                            p_xy  = handles.p_xy{c};
+                            f_t = handles.f_t{c};
+                            %
+                            parfor f = 1:st
+                                I = squeeze(in(:,:,c,1,f)) - offset;
+                                EO = [];
+                                switch m
+                                    case 1 % 'additive (1)'         % f(t) acts only on background
+                                        EO = I - Eb*f_t(f)*p_xy;
+                                    case 2 % 'multiplicative (1)'   
+                                        EO = I./p_xy - Eb*f_t(f);                
+                                    case 3 % 'additive (2)'         % f(t) acts on everyhting
+                                        EO = I/f_t(f) - Eb*p_xy;                
+                                    case 4 % 'multiplicative (2)'   
+                                        EO = I./( f_t(f)*p_xy ) - Eb;
+                                end
+                                EO(EO<0)=0;
+                                corrimg(:,:,c,1,f) = EO;
+                            end
+                    end                    
+                                        
+                    parfor c=1:sc                        
+                        for f=1:st
+                            vals = corrimg(:,:,c,1,f);
+                            labs = out(:,:,c,1,f);
+                            %
+                            % over pixels
+                             sample = vals(labs>0);
+                             macc{c,m} = [macc{c,m}; sample];
+                            % over pixels
+                            %
+                            % over objects
+%                             labs(labs>0)=1;
+%                             labs = bwlabel(labs);
+%                             for L=1:max(labs(:))    
+%                                 s = vals(labs==L);
+%                                 macc{c,m} = [macc{c,m}; mean(s(:))];
+%                             end
+                            % over objects
+                        end                        
+                    end
+                if ~isempty(hw), waitbar(m/4,hw); end                    
+                end
+                if ~isempty(hw), delete(hw), drawnow; end
+                %
+
+colors = {'r','g','b','k','c'};
+                for c=1:sc
+                    figure('units','normalized','outerposition',[0 0 1 1],'name',[handles.raw_image_filename ', channel: ' num2str(c)]);
+                    ax=gca;
+                    [N,EDGES] = histcounts(macc{c,1},'Normalization','pdf');
+                    plot(ax,EDGES(1:numel(N)),N,[colors{1} '.-'],'linewidth',2);                                                                               
+                    hold(ax,'on')
+                    [N,EDGES] = histcounts(macc{c,2},'Normalization','pdf');
+                    plot(ax,EDGES(1:numel(N)),N,[colors{2} '.-'],'linewidth',2);                                                                               
+                    hold(ax,'on')
+                    [N,EDGES] = histcounts(macc{c,3},'Normalization','pdf');
+                    plot(ax,EDGES(1:numel(N)),N,[colors{3} '.-'],'linewidth',2);                                                                               
+                    hold(ax,'on')
+                    [N,EDGES] = histcounts(macc{c,4},'Normalization','pdf');
+                    plot(ax,EDGES(1:numel(N)),N,[colors{4} '.-'],'linewidth',2);                                                                               
+                    hold(ax,'off'); 
+                    grid(ax,'on');
+                    xlabel(ax,['intensity, channel ' num2str(c)]);
+                    ylabel(ax,'pdf');
+                    legend(ax,{ ...
+                        ['additive (1)' ' kurtosis ' num2str(kurtosis(macc{c,1}-3)) ' std ' num2str(std(macc{c,1}))], ...
+                        ['multiplicative (1)' ' kurtosis ' num2str(kurtosis(macc{c,2}-3)) ' std ' num2str(std(macc{c,2}))], ...
+                        ['additive (2)' ' kurtosis ' num2str(kurtosis(macc{c,3}-3)) ' std ' num2str(std(macc{c,3}))], ...
+                        ['multiplicative (2)' ' kurtosis ' num2str(kurtosis(macc{c,4}-3)) ' std ' num2str(std(macc{c,4}))]});
+                end
+
+
+% --------------------------------------------------------------------
+function save_settings_mat_Callback(hObject, eventdata, handles)
+
+%             start_dir = get(handles.src_dir,'String');
+%             [fname, fpath] = uiputfile('*.mat','Save Settings as..',[start_dir filesep 'MicroscopyImageFormatter_settings']);
+%             if fpath == 0; return; end
+%             filespec = fullfile(fpath,fname);
+            %
+            % to do
+            %
+
+% --------------------------------------------------------------------
+function load_settings_mat_Callback(hObject, eventdata, handles)
+            %
+            % to do
+            %
