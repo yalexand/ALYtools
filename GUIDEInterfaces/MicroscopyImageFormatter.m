@@ -1271,7 +1271,7 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
             %
             [sx,sy,sc,~,st] = size(handles.raw_img);
             %
-            S = round(handles.umppix*8);
+            S = round(handles.umppix*8/handles.downsample);
             K = 2.5;
             t = 0.2;
             %
