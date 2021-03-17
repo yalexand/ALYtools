@@ -84,6 +84,11 @@ set(handles.dst_channels,'String',dst_channels);
 set(handles.t_dep_fitting_poly_order,'String',num2str(handles.polynom_order));
 set(handles.clean_reference,'Value',1);
 
+set(handles.image_raw,'XTick',[]);
+set(handles.image_raw,'YTick',[]);
+set(handles.image_corrected,'XTick',[]);
+set(handles.image_corrected,'YTick',[]);
+
 set(handles.show_channel,'String',{'1','2','3','4','5','All'});
 
 handles.ref_img = [];
