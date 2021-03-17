@@ -713,21 +713,29 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
             frame = 1;
             set(handles.frame_to_show,'String',num2str(frame))
         end
-        
+                        
         s = get(handles.show_channel,'String');
         ind = get(handles.show_channel,'Value');
         current_channel_to_show = str2num(s{ind});
-        
-        img = single(image(:,:,current_channel_to_show,1,frame));
         %
-        t = mean(img(:)) + 1.65*std(img(:));
-        img(img>t) = t;
-        %
-        imshow(uint8(map(img,0,255)), 'Parent', ax);
-        
-        if ~isempty(TITLE)
-            title(ax,TITLE);
+        % safety
+        n_channels = size(image,3);
+        if current_channel_to_show > n_channels
+            set(handles.show_channel,'Value',1);
+            set(handles.show_channel,'String',s(1:n_channels));
+            current_channel_to_show = 1;
         end
+        %        
+            img = single(image(:,:,current_channel_to_show,1,frame));
+            %
+            t = mean(img(:)) + 1.65*std(img(:));
+            img(img>t) = t;
+            %
+            imshow(uint8(map(img,0,255)), 'Parent', ax);
+
+            if ~isempty(TITLE)
+                title(ax,TITLE);
+            end
     
 %--------------------------------------------------------------
 function v = load_Optosplit_image(handles,full_path_to_image)
