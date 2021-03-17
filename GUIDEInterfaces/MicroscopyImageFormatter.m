@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 16-Mar-2021 19:39:00
+% Last Modified by GUIDE v2.5 17-Mar-2021 08:18:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -98,6 +98,18 @@ handles.Eb = cell(0);
 
 % Choose default command line output for MicroscopyImageFormatter
 handles.output = hObject;
+
+handles.model_icon = cell(4,1);
+[~,~,handles.model_icon{1}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model1.tif']);
+[~,~,handles.model_icon{2}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model2.tif']);
+[~,~,handles.model_icon{3}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model3.tif']);
+[~,~,handles.model_icon{4}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model4.tif']);
+
+imshow(handles.model_icon{1}, 'Parent', handles.icon_1);
+imshow(handles.model_icon{1}, 'Parent', handles.icon_2);
+imshow(handles.model_icon{1}, 'Parent', handles.icon_3);
+imshow(handles.model_icon{1}, 'Parent', handles.icon_4);
+imshow(handles.model_icon{1}, 'Parent', handles.icon_5);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -326,13 +338,8 @@ end
 
 % --- Executes on selection change in model_1.
 function model_1_Callback(hObject, eventdata, handles)
-% hObject    handle to model_1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns model_1 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from model_1
-
+    imshow(handles.model_icon{get(hObject,'Value')}, 'Parent', handles.icon_1);
+    guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
 function model_1_CreateFcn(hObject, eventdata, handles)
@@ -349,12 +356,8 @@ end
 
 % --- Executes on selection change in model_2.
 function model_2_Callback(hObject, eventdata, handles)
-% hObject    handle to model_2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns model_2 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from model_2
+    imshow(handles.model_icon{get(hObject,'Value')}, 'Parent', handles.icon_2);
+    guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -372,12 +375,8 @@ end
 
 % --- Executes on selection change in model_3.
 function model_3_Callback(hObject, eventdata, handles)
-% hObject    handle to model_3 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns model_3 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from model_3
+    imshow(handles.model_icon{get(hObject,'Value')}, 'Parent', handles.icon_3);
+    guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -395,12 +394,8 @@ end
 
 % --- Executes on selection change in model_4.
 function model_4_Callback(hObject, eventdata, handles)
-% hObject    handle to model_4 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns model_4 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from model_4
+    imshow(handles.model_icon{get(hObject,'Value')}, 'Parent', handles.icon_4);
+    guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -418,12 +413,8 @@ end
 
 % --- Executes on selection change in model_5.
 function model_5_Callback(hObject, eventdata, handles)
-% hObject    handle to model_5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns model_5 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from model_5
+    imshow(handles.model_icon{get(hObject,'Value')}, 'Parent', handles.icon_5);
+    guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -782,7 +773,7 @@ end
 % --- Executes on button press in set_src_dir.
 function set_src_dir_Callback(hObject, eventdata, handles)
 directoryname = uigetdir(pwd,'Pick SRC Directory');
-if isempty(directoryname), return, end
+if 0==directoryname, return, end
 if isfolder(directoryname) 
     set(handles.src_dir,'String',directoryname);
     guidata(hObject,handles);
@@ -791,7 +782,7 @@ end
 % --- Executes on button press in set_dst_dir.
 function set_dst_dir_Callback(hObject, eventdata, handles)
 directoryname = uigetdir(pwd,'Pick DST Directory');
-if isempty(directoryname), return, end
+if 0==directoryname, return, end
 if isfolder(directoryname) 
     set(handles.dst_dir,'String',directoryname);
     guidata(hObject,handles);
@@ -1433,7 +1424,12 @@ function load_settings_mat_Callback(hObject, eventdata, handles)
             set(handles.model_2,'Value',saved_handles.model_2);
             set(handles.model_3,'Value',saved_handles.model_3);            
             set(handles.model_4,'Value',saved_handles.model_4);
-            set(handles.model_5,'Value',saved_handles.model_5);            
+            set(handles.model_5,'Value',saved_handles.model_5); 
+            model_1_Callback(handles.model_1, eventdata, handles);
+            model_2_Callback(handles.model_2, eventdata, handles);
+            model_3_Callback(handles.model_3, eventdata, handles);
+            model_4_Callback(handles.model_4, eventdata, handles);
+            model_5_Callback(handles.model_5, eventdata, handles);            
             %
             set(handles.src_dir,'String',saved_handles.src_dir);
             set(handles.dst_dir,'String',saved_handles.dst_dir);
