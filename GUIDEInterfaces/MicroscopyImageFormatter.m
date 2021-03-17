@@ -1425,7 +1425,7 @@ function load_settings_mat_Callback(hObject, eventdata, handles)
            [filename,pathname] = uigetfile({'*.mat','mat files'}, ...
                 'Select settings file',get(handles.src_dir,'String'));
             if filename == 0, return, end                        
-%try            
+try            
             load([pathname filesep filename]);
 
             set(handles.dst_channels,'String',saved_handles.dst_channels);
@@ -1491,12 +1491,16 @@ function load_settings_mat_Callback(hObject, eventdata, handles)
             %
             cla(handles.image_raw,'reset');
             cla(handles.image_corrected,'reset');
+                set(handles.image_raw,'XTick',[]);
+                set(handles.image_raw,'YTick',[]);
+                set(handles.image_corrected,'XTick',[]);
+                set(handles.image_corrected,'YTick',[]);            
             
             guidata(hObject,handles);
                                   
-% catch
-%      disp('error when loading mat setups');
-% end
+catch
+     disp('error when loading mat setups');
+end
 
 % --------------------------------------------------------------------
 function show_corrections_temporal_dependencies(handles)            
