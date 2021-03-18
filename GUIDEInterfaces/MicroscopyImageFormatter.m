@@ -116,6 +116,12 @@ imshow(handles.model_icon{1}, 'Parent', handles.icon_3);
 imshow(handles.model_icon{1}, 'Parent', handles.icon_4);
 imshow(handles.model_icon{1}, 'Parent', handles.icon_5);
 
+bckg_color = get(handles.figure1,'Color');
+    R = bckg_color(1)*ones(size(handles.model_icon{1}));
+    G = bckg_color(2)*ones(size(handles.model_icon{1}));
+    B = bckg_color(3)*ones(size(handles.model_icon{1}));    
+handles.dummy = cat(3,R,G,B);
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -325,6 +331,7 @@ else
             cla(handles.image_raw,'reset');
             cla(handles.image_corrected,'reset');    
 end
+setup_model_controls_visibility(handles);
 guidata(hObject,handles);
     
 
@@ -686,6 +693,7 @@ function v = load_microscopy_image(handles,full_path_to_file)
         case 'Nikon'
             v = load_Nikon_image(handles,full_path_to_file);
     end
+    setup_model_controls_visibility(handles);
 
 
 % --- Executes on button press in load_ref.
@@ -765,6 +773,11 @@ end
         s = get(handles.dst_channels,'String');
             nch1 = int64(str2num(s(1)));
             nch2 = int64(str2num(s(2)));
+    %
+    if length(s)>2
+        s = s(1:2);
+        set(handles.dst_channels,'String',s);
+    end
     %
     for f=1:st
         u = single(squeeze(I(:,:,1,1,f)));
@@ -1496,6 +1509,8 @@ try
                 set(handles.image_corrected,'XTick',[]);
                 set(handles.image_corrected,'YTick',[]);            
             
+            setup_model_controls_visibility(handles);
+                
             guidata(hObject,handles);
                                   
 catch
@@ -1542,3 +1557,41 @@ function File_Callback(hObject, eventdata, handles)
 % hObject    handle to File (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% --------------------------------------------------------------------
+function setup_model_controls_visibility(handles)
+
+    text_item = {'text12','text13','text14','text15','text16'};
+    popup_item = {'model_1','model_2','model_3','model_4','model_5'};
+    icon_item = {'icon_1','icon_2','icon_3','icon_4','icon_5'};
+    %     
+    L = length(get(handles.dst_channels,'String'));
+    %
+    for m=1:5
+            flag = 'On';
+        if m>L
+            flag = 'Off';
+        end
+        set(eval(['handles.' text_item{m}]),'Visible',flag);
+        set(eval(['handles.' popup_item{m}]),'Visible',flag);
+        set(eval(['handles.' popup_item{m}]),'Enable',flag);
+        if strcmp('Off',flag)
+            imshow(handles.dummy,'Parent',eval(['handles.' icon_item{m}]));
+        else
+            imshow(handles.model_icon{1},'Parent',eval(['handles.' icon_item{m}]));
+        end
+    end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
