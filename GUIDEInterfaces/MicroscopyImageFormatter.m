@@ -741,8 +741,8 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
         %        
             img = single(image(:,:,current_channel_to_show,1,frame));
             %
-            t = mean(img(:)) + 1.65*std(img(:));
-            img(img>t) = t;
+             t = quantile(img(:),0.999);
+             img(img>t) = t;
             %
             imshow(uint8(map(img,0,255)), 'Parent', ax);
 
@@ -1165,11 +1165,12 @@ for k=1:numel(filenames)
         continue;
     end
     img_acc{k} = raw_img;
+    [k numel(filenames)]
 end
 
 img_data = [];
 for k=1:numel(filenames)
-    img_data = cat(5,img_data,img_acc{k});
+    img_data = cat(5,img_data,single(img_acc{k}));
     size(img_data)
 end
 
