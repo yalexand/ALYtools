@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 17-Mar-2021 08:18:05
+% Last Modified by GUIDE v2.5 22-Mar-2021 16:00:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -91,6 +91,9 @@ set(handles.image_corrected,'YTick',[]);
 
 set(handles.show_channel,'String',{'1','2','3','4','5','All'});
 
+set(handles.compensate_CMHF,'Value',1);
+handles.f_CMHF_t = ones(100000,1); % :) should be enough..
+
 handles.ref_img = [];
 handles.raw_img = [];
 handles.corrected_img = [];
@@ -100,9 +103,6 @@ handles.raw_image_filename = [];
 handles.p_xy = cell(0);
 handles.f_t = cell(0);
 handles.Eb = cell(0);
-
-% Choose default command line output for MicroscopyImageFormatter
-handles.output = hObject;
 
 handles.model_icon = cell(4,1);
 [~,~,handles.model_icon{1}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model1.tif']);
@@ -121,6 +121,9 @@ bckg_color = get(handles.figure1,'Color');
     G = bckg_color(2)*ones(size(handles.model_icon{1}));
     B = bckg_color(3)*ones(size(handles.model_icon{1}));    
 handles.dummy = cat(3,R,G,B);
+
+% Choose default command line output for MicroscopyImageFormatter
+handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
@@ -521,10 +524,17 @@ for c = 1:n_channels
     Eb = handles.Eb{c};
     p_xy  = handles.p_xy{c};
     f_t = handles.f_t{c};
-    %
+            %
+            if 1==get(handles.compensate_CMHF,'Value')
+                f_CMHF_t = handles.f_CMHF_t;
+            else
+                f_CMHF_t = ones(size(handles.f_CMHF_t));
+            end            
+            %
     hw = waitbar(0,['introducing corrections to channel ' num2str(c)]);
     for f = 1:st
         I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset;
+        I = I/f_CMHF_t(f);
         switch model
             case 'additive (1)'         % f(t) acts only on background
                 EO = I - Eb*f_t(f)*p_xy;
@@ -648,9 +658,16 @@ for k=1:numel(filenames)
             p_xy  = handles.p_xy{c};
             f_t = handles.f_t{c};
             %
+            if 1==get(handles.compensate_CMHF,'Value')
+                f_CMHF_t = handles.f_CMHF_t;
+            else
+                f_CMHF_t = ones(size(handles.f_CMHF_t));
+            end            
+            %
             hw = waitbar(0,['introducing corrections to channel ' num2str(c)]);
             for f = 1:st
                 I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset;
+                I = I/f_CMHF_t(f);
                 switch model
                     case 'additive (1)'         % f(t) acts only on background
                         EO = I - Eb*f_t(f)*p_xy;
@@ -832,6 +849,7 @@ function send_raw_to_Icy_Callback(hObject, eventdata, handles)
 % --- Executes on button press in send_corrected_to_Icy.
 function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
     send_image_to_Icy(handles.corrected_img,'corrected');
+        
 
 %-------------------------------------------------------------- 
     function send_image_to_Icy(img,title)    
@@ -902,7 +920,7 @@ for channel = 1:n_channels
     ry = w:SY-w;
 
     parfor f=1:st
-        intensity(f) = mean(ref(rx,ry,f),'All') - offset;
+        intensity(f) = median(ref(rx,ry,f),'All') - offset;
     end
 
     frms = (1:st)';
@@ -945,6 +963,24 @@ for channel = 1:n_channels
     end
         
 end
+
+% define CMHF correction (Common Multiplicative HF)
+    w = 40; 
+    rx = w:SX-w;
+    ry = w:SY-w;
+        ref = squeeze(sum(handles.ref_img,3)) - n_channels*offset;
+        parfor f=1:st
+            intensity(f) = median(ref(rx,ry,f),'All');
+        end
+    frms = (1:st)';
+    p = polyfit(frms,intensity,polynom_order);
+    intensity_fit = polyval(p,frms);
+    handles.f_CMHF_t = intensity./intensity_fit; % one needs to divide by this after offset subtraction, to introduce correction    
+    %
+%     taxis = (frms-1)*handles.min_per_frame/60;
+%     figure(22);semilogy(taxis,intensity,'b.-',taxis,intensity_fit,'r.-');grid(gca,'on'); 
+%     figure(23);semilogy(taxis,intensity./intensity_fit,'k.-');grid(gca,'on'); 
+      %
 
 guidata(hObject,handles);
 
@@ -1315,6 +1351,12 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
  
             offset = handles.offset;
             
+            if 1==get(handles.compensate_CMHF,'Value')
+                f_CMHF_t = handles.f_CMHF_t;
+            else
+                f_CMHF_t = ones(size(handles.f_CMHF_t));
+            end
+            
                 hw = waitbar(0,'gathering data for correction models.. ');
                 for m=1:4                     
                     corrimg = zeros(size(handles.raw_img));                    
@@ -1326,6 +1368,7 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                             %
                             parfor f = 1:st
                                 I = squeeze(in(:,:,c,1,f)) - offset;
+                                I = I/f_CMHF_t(f);
                                 EO = [];
                                 switch m
                                     case 1 % 'additive (1)'         % f(t) acts only on background
@@ -1436,6 +1479,9 @@ function save_settings_mat_Callback(hObject, eventdata, handles)
             saved_handles.f_t = handles.f_t;
             saved_handles.Eb = handles.Eb;
             
+            saved_handles.compensate_CMHF = get(handles.compensate_CMHF,'Value');
+            saved_handles.f_CMHF_t = handles.f_CMHF_t;
+                        
             save(filespec,'saved_handles');
             
 % --------------------------------------------------------------------
@@ -1514,7 +1560,10 @@ try
                 set(handles.image_raw,'YTick',[]);
                 set(handles.image_corrected,'XTick',[]);
                 set(handles.image_corrected,'YTick',[]);            
-            
+
+            set(handles.compensate_CMHF,'Value',saved_handles.compensate_CMHF);
+            handles.f_CMHF_t = saved_handles.f_CMHF_t;                
+                
             setup_model_controls_visibility(handles);
                 
             guidata(hObject,handles);
@@ -1588,16 +1637,58 @@ function setup_model_controls_visibility(handles)
         end
     end
 
+% --- Executes on button press in compensate_CMHF.
+function compensate_CMHF_Callback(hObject, eventdata, handles)
+% hObject    handle to compensate_CMHF (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of compensate_CMHF
 
 
+% --------------------------------------------------------------------
+function show_CMHF_correction_on_REF_Callback(hObject, eventdata, handles)
 
+if isempty(handles.ref_img), return, end
 
+offset = handles.offset;
 
+[SX,SY,n_channels,~,st] = size(handles.ref_img);
 
+colors = {'r','g','b','k','c'};
+figure;
+AXES = gca; 
+reset(AXES);
+LEGEND = cell(0);
 
+    frms = (1:st)';
+    taxis = (frms-1)*handles.min_per_frame/60;    
 
+for channel = 1:n_channels
+        
+    ref = squeeze(handles.ref_img(:,:,channel,1,:));
+    
+    intensity = zeros(st,1);
 
+    w = 40; % exclude noisy pixels?
+    rx = w:SX-w;
+    ry = w:SY-w;
 
+    parfor f=1:st
+        intensity(f) = median(ref(rx,ry,f),'All') - offset;
+    end
+   
+    f_CMHF_t = handles.f_CMHF_t;  
+    intensity_CMHF_corrected = intensity./f_CMHF_t;
 
+    semilogy(AXES,taxis,intensity,[colors{channel} '.-'],taxis,intensity(1)*handles.f_t{channel},'k:',taxis,intensity_CMHF_corrected,'m:','linewidth',2);
+    hold(AXES,'on');
+    LEGEND = [LEGEND num2str(channel) [num2str(channel) ' fit'] [num2str(channel) ' CMHF corrected']];
+                   
+end
 
-
+hold(AXES,'off');
+    xlabel(AXES,'time [h]','fontsize',8);
+    ylabel(AXES,'offset-subtracted mean ref. intensity','fontsize',8);
+    grid(AXES,'on');
+legend(AXES,LEGEND);
