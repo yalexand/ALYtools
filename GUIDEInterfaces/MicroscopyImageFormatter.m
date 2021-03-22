@@ -824,25 +824,30 @@ function set_ref_image_file_Callback(hObject, eventdata, handles)
     set(handles.ref_image_file,'String',full_path_to_example);
     guidata(hObject,handles);
 
+    
 % --- Executes on button press in send_raw_to_Icy.
 function send_raw_to_Icy_Callback(hObject, eventdata, handles)
-    if isempty(handles.raw_img),return, end
-    try
-        icy_imshow(uint16(handles.raw_img));
-    catch
-        disp('cannot send image to Icy');
-    end
-
+    send_image_to_Icy(handles.raw_img,'raw');
 
 % --- Executes on button press in send_corrected_to_Icy.
 function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
-    if isempty(handles.corrected_img),return, end
-    try
-        icy_imshow(uint16(handles.corrected_img));
-    catch
-        disp('cannot send image to Icy');
-    end
+    send_image_to_Icy(handles.corrected_img,'corrected');
 
+%-------------------------------------------------------------- 
+    function send_image_to_Icy(img,title)    
+    if isempty(img),return, end
+    if ~ischar(title)
+        title = '';
+    end
+    try
+        icy_imshow(uint16(img),title);
+    catch
+        disp('cannot send whole image to Icy, send first 20 frames');
+        img = img(:,:,:,:,1:20);
+        icy_imshow(uint16(img),title);
+    end
+        
+    
 %-------------------------------------------------------------- 
 function get_correction_functions_from_ref(hObject,handles)
 
