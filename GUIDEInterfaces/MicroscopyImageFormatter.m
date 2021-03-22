@@ -73,7 +73,7 @@ handles.Optosplit_registration_droi_y = [];
     dst_channels = '12345';
     set(handles.setup_Optosplit_registration,'Enable','Off');
     set(handles.setup_Optosplit_registration,'Visible','Off');
-    handles.polynom_order = 12;
+    handles.polynom_order = 9;
 
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 set(handles.offset_edit,'String',num2str(handles.offset));
@@ -920,7 +920,7 @@ for channel = 1:n_channels
     ry = w:SY-w;
 
     parfor f=1:st
-        intensity(f) = median(ref(rx,ry,f),'All') - offset;
+        intensity(f) = mean(ref(rx,ry,f),'All') - offset;
     end
 
     frms = (1:st)';
@@ -970,7 +970,7 @@ end
     ry = w:SY-w;
         ref = squeeze(sum(handles.ref_img,3)) - n_channels*offset;
         parfor f=1:st
-            intensity(f) = median(ref(rx,ry,f),'All');
+            intensity(f) = mean(ref(rx,ry,f),'All');
         end
     frms = (1:st)';
     p = polyfit(frms,intensity,polynom_order);
@@ -1278,7 +1278,7 @@ st = size(img_acc{1},5);
             parfor f=1:st
                 u_f = u(:,:,c,1,f);
                 sample = u_f(rx,ry,1);
-                f_data(k,c,f) = median(sample(:)) - offset;
+                f_data(k,c,f) = mean(sample(:)) - offset;
                 f
             end
         end
@@ -1675,7 +1675,7 @@ for channel = 1:n_channels
     ry = w:SY-w;
 
     parfor f=1:st
-        intensity(f) = median(ref(rx,ry,f),'All') - offset;
+        intensity(f) = mean(ref(rx,ry,f),'All') - offset;
     end
    
     f_CMHF_t = handles.f_CMHF_t;  
