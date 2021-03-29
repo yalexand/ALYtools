@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 22-Mar-2021 16:00:40
+% Last Modified by GUIDE v2.5 29-Mar-2021 11:17:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -121,6 +121,14 @@ bckg_color = get(handles.figure1,'Color');
     G = bckg_color(2)*ones(size(handles.model_icon{1}));
     B = bckg_color(3)*ones(size(handles.model_icon{1}));    
 handles.dummy = cat(3,R,G,B);
+
+handles.W = []; % cross-talk matrix
+handles.g = []; % g factor rendering intensities in the same units
+set(handles.cross,'Visible','off');
+set(handles.talk,'Visible','off');
+set(handles.correction,'Visible','off');
+set(handles.unset_spectral_cross_talk_correction,'Enable','off');
+set(handles.unset_spectral_cross_talk_correction,'Visible','off');
 
 % Choose default command line output for MicroscopyImageFormatter
 handles.output = hObject;
@@ -550,8 +558,12 @@ for c = 1:n_channels
         if ~isempty(hw), waitbar(f/st,hw); end
     end
     if ~isempty(hw), delete(hw), drawnow; end
-    %    
 end
+%
+if ~isempty(handles.W)
+    handles.corrected_img = introduce_cross_talk_corrections(handles.corrected_img,handles);
+end
+%
 guidata(hObject,handles);
 
 show_image(handles,'corrected_img','image_corrected',[]);
@@ -685,6 +697,10 @@ for k=1:numel(filenames)
             if ~isempty(hw), delete(hw), drawnow; end
         end
         %            
+        if ~isempty(handles.W)
+           handles.corrected_img = introduce_cross_talk_corrections(handles.corrected_img,handles);
+        end        
+        %
         guidata(hObject,handles);
         
         show_image(handles,'corrected_img','image_corrected',filenames{k});
@@ -1383,8 +1399,12 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                                 EO(EO<0)=0;
                                 corrimg(:,:,c,1,f) = EO;
                             end
-                    end                    
-                                        
+                    end 
+                    %
+                    if ~isempty(handles.W)
+                        corrimg = introduce_cross_talk_corrections(corrimg,handles);
+                    end
+                    %                                        
                     parfor c=1:sc                        
                         for f=1:st
                             vals = corrimg(:,:,c,1,f);
@@ -1481,7 +1501,10 @@ function save_settings_mat_Callback(hObject, eventdata, handles)
             
             saved_handles.compensate_CMHF = get(handles.compensate_CMHF,'Value');
             saved_handles.f_CMHF_t = handles.f_CMHF_t;
-                        
+
+            saved_handles.W = handles.W;
+            saved_handles.g = handles.g;
+                                                            
             save(filespec,'saved_handles');
             
 % --------------------------------------------------------------------
@@ -1566,6 +1589,21 @@ try
                 
             setup_model_controls_visibility(handles);
                 
+            if isfield(saved_handles,'W') && ~isempty(saved_handles.W)
+                handles.W = saved_handles.W;
+                handles.g = saved_handles.g;
+                cross_talk_correction_flag = 'on';
+            else
+                handles.W = [];
+                handles.g = [];
+                cross_talk_correction_flag = 'off';                
+            end
+                set(handles.cross,'Visible',cross_talk_correction_flag);
+                set(handles.talk,'Visible',cross_talk_correction_flag);
+                set(handles.correction,'Visible',cross_talk_correction_flag);
+                set(handles.unset_spectral_cross_talk_correction,'Enable',cross_talk_correction_flag);
+                set(handles.unset_spectral_cross_talk_correction,'Visible',cross_talk_correction_flag);
+                        
             guidata(hObject,handles);
                                   
 catch
@@ -1692,3 +1730,104 @@ hold(AXES,'off');
     ylabel(AXES,'offset-subtracted mean ref. intensity','fontsize',8);
     grid(AXES,'on');
 legend(AXES,LEGEND);
+
+
+% --------------------------------------------------------------------
+function setup_spectral_cross_talk_correction_Callback(hObject, eventdata, handles)
+
+           [filename,pathname] = uigetfile({'*.mat','mat files'}, ...
+                'Select spectral cross talk matrix mat file',get(handles.src_dir,'String'));
+            if filename == 0, return, end 
+try
+    load([pathname filesep filename]);
+    if ~( exist('W','var') && isnumeric(W) && size(W,1)==size(W,2) && size(W,1)==length(get(handles.dst_channels,'String')) )
+        disp('wrong or incompatible object was loaded for cross talk matrix, cannot set it up');
+        return, 
+    end
+    
+    if ~( exist('g','var') && isnumeric(g) && length(g)==length(get(handles.dst_channels,'String')) )
+        disp('wrong or incompatible object was loaded for g factor, cannot set it up');
+        return, 
+    end
+    if ~iscolumn(g), g=g'; end
+    
+    if sum(W(:)>=0) ~= size(W,1)*size(W,1)
+        disp('entries in the cross talk matrix must be non-negative, cannot set it up');
+        return,
+    end
+    
+    % this is done immediately before usage (but, good to remember)
+    %     for k=1:size(W,1)
+    %         W(:,k) = W(:,k)/norm(W(:,k),1);
+    %     end
+    
+    handles.W = W;
+    handles.g = g;
+    
+    set(handles.cross,'Visible','on');
+    set(handles.talk,'Visible','on');
+    set(handles.correction,'Visible','on');
+    set(handles.unset_spectral_cross_talk_correction,'Enable','on');
+    set(handles.unset_spectral_cross_talk_correction,'Visible','on');
+    %
+    guidata(hObject,handles);
+catch 
+    disp('error when trying to setup cross-talk matrix');
+end
+
+% --------------------------------------------------------------------
+function unset_spectral_cross_talk_correction_Callback(hObject, eventdata, handles)
+handles.W = []; % cross-talk matrix
+handles.g = []; % g factors for channels
+set(handles.cross,'Visible','off');
+set(handles.talk,'Visible','off');
+set(handles.correction,'Visible','off');
+set(handles.unset_spectral_cross_talk_correction,'Enable','off');
+set(handles.unset_spectral_cross_talk_correction,'Visible','off');
+guidata(hObject,handles);
+
+% --------------------------------------------------------------------
+function img_corr = introduce_cross_talk_corrections(img,handles)
+    W = handles.W;
+    g = handles.g;
+    img_corr = img;
+    if isempty(W), return, end
+    %
+    [sx,sy,sc,~,st] = size(img);
+    %
+    % columns of W must sum up to 1
+    for c=1:sc
+        W(:,c) = W(:,c)/norm(W(:,c),1);
+    end
+    %
+    Winv = eye(sc)/W;
+    
+    tic
+    parfor x=1:sx
+        for y=1:sy
+            for f=1:st
+                v_corr = Winv*( squeeze(img(x,y,:,1,f)).*g ) ;
+                v_corr(v_corr<0)=0;
+                img_corr(x,y,:,1,f) = v_corr;
+            end
+        end
+        x
+    end
+    toc/60
+
+% this is about 1.5 times slower :(
+%     tic
+%     img_corr2 = img;
+%     for row=1:sc
+%         img_row = zeros(sx,sy,1,1,st);
+%         parfor col=1:sc
+%             img_row = img_row + img(:,:,col,1,:)*g(col)*Winv(row,col);
+%         end
+%         img_corr2(:,:,row,1,:) = img_row;
+%     end
+%     toc/60
+    
+    
+    
+    
+    
