@@ -60,6 +60,11 @@ handles.Optosplit_registration_roiy2 = [];
 handles.Optosplit_registration_tform = [];
 handles.Optosplit_registration_droi_x = [];
 handles.Optosplit_registration_droi_y = [];
+handles.Optosplit_registration_a3 = 270; %degrees
+handles.Optosplit_registration_f3 = 1/1.8; 
+handles.Optosplit_registration_tform3 = [];
+handles.Optosplit_registration_roi3x = [];
+handles.Optosplit_registration_roi3y = [];
 
     set(handles.src_dir,'String',['c:' filesep]);
     set(handles.dst_dir,'String',['c:' filesep]);
@@ -722,7 +727,7 @@ function v = load_microscopy_image(handles,full_path_to_file)
         case 'Optosplit 2 channels'                      
             v = load_Optosplit_image(handles,full_path_to_file);
         case 'Optosplit 3 channels'
-            v = [];  % to do 
+            v = load_Optosplit_image_3(handles,full_path_to_file);
         case 'Nikon'
             v = load_Nikon_image(handles,full_path_to_file);
     end
@@ -920,7 +925,9 @@ for channel = 1:n_channels
             rx = (xmax-ds):(xmax+ds);
             ry = (ymax-ds):(ymax+ds);    
             rx(rx<1)=[];    
-            ry(ry<1)=[];           
+            ry(ry<1)=[];
+            rx(rx>size(ref,1))=[];
+            ry(ry>size(ref,2))=[];            
             %
             sample = ref(rx,ry,1);
             Eb = mean(sample(:)) - offset;                                
@@ -1009,7 +1016,7 @@ legend(AXES,LEGEND);
 
 % --- Executes on selection change in image_type.
 function image_type_Callback(hObject, eventdata, handles)
-    if 2==get(hObject,'Value') % Optosplit
+    if ismember(get(hObject,'Value'),[2 3]) % Optosplit
         flag = 'On';
     else
         flag = 'Off';
@@ -1183,18 +1190,35 @@ function setup_Optosplit_registration_Callback(hObject, eventdata, handles)
             if filename == 0, return, end
             full_path_to_example =  [pathname filesep filename];           
     %
-    [handles.Optosplit_registration_roix, ...
-    handles.Optosplit_registration_roiy1, ...
-    handles.Optosplit_registration_roiy2, ...
-    handles.Optosplit_registration_tform, ...
-    handles.Optosplit_registration_droi_x, ...
-    handles.Optosplit_registration_droi_y] = get_Optosplit_registration_parameters(full_path_to_example);
-    %
-    set(handles.show_channel,'String',{'1','2'});
-    set(handles.src_channels,'String','12');
-    set(handles.dst_channels,'String','12');    
+    image_type = get(handles.image_type,'Value');
+    switch image_type
+        case 2 % 2-channel Optosplit
+            [handles.Optosplit_registration_roix, ...
+            handles.Optosplit_registration_roiy1, ...
+            handles.Optosplit_registration_roiy2, ...
+            handles.Optosplit_registration_tform, ...
+            handles.Optosplit_registration_droi_x, ...
+            handles.Optosplit_registration_droi_y] = get_Optosplit_registration_parameters(full_path_to_example);
+            %
+            set(handles.show_channel,'String',{'1','2'});
+            set(handles.src_channels,'String','12');
+            set(handles.dst_channels,'String','12');    
+        case 3 % 3-channel Optosplit
+            [handles.Optosplit_registration_roix, ...
+            handles.Optosplit_registration_roiy1, ...
+            handles.Optosplit_registration_roiy2, ...
+            handles.Optosplit_registration_tform, ...
+            handles.Optosplit_registration_droi_x, ...
+            handles.Optosplit_registration_droi_y, ...
+            handles.Optosplit_registration_tform3, ...
+            handles.Optosplit_registration_roi3x, ...
+            handles.Optosplit_registration_roi3y] = get_Optosplit_3_registration_parameters(full_path_to_example,handles);
+            %
+            set(handles.show_channel,'String',{'1','2','3'});
+            set(handles.src_channels,'String','123');
+            set(handles.dst_channels,'String','123');                
+    end
     guidata(hObject,handles);
-
            
 % --------------------------------------------------------------------
 function derive_corrections_from_data_Callback(hObject, eventdata, handles)
@@ -1284,13 +1308,15 @@ st = size(img_acc{1},5);
     for k=1:size(img_acc,1)  
         k
         for c=1:sc
+            %            
+            u = img_acc{k};            
             ds = 10;
             rx = (xmax(c)-ds):(xmax(c)+ds);
             ry = (ymax(c)-ds):(ymax(c)+ds);    
-            rx(rx<1)=[];    
-            ry(ry<1)=[];           
-            %            
-            u = img_acc{k};
+            rx(rx<1)=[];
+            ry(ry<1)=[];
+            rx(rx>size(u,1))=[];
+            ry(ry>size(u,2))=[];
             parfor f=1:st
                 u_f = u(:,:,c,1,f);
                 sample = u_f(rx,ry,1);
@@ -1504,6 +1530,12 @@ function save_settings_mat_Callback(hObject, eventdata, handles)
 
             saved_handles.W = handles.W;
             saved_handles.g = handles.g;
+            
+            saved_handles.Optosplit_registration_a3 = handles.Optosplit_registration_a3;
+            saved_handles.Optosplit_registration_f3 = handles.Optosplit_registration_f3; 
+            saved_handles.Optosplit_registration_tform3 = handles.Optosplit_registration_tform3;
+            saved_handles.Optosplit_registration_roi3x = handles.Optosplit_registration_roi3x;
+            saved_handles.Optosplit_registration_roi3y = handles.Optosplit_registration_roi3y;
                                                             
             save(filespec,'saved_handles');
             
@@ -1562,7 +1594,7 @@ try
             set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
             set(handles.t_dep_fitting_poly_order,'String',num2str(handles.polynom_order));
             
-            if 2 == get(handles.image_type,'Value')
+            if ismember(get(handles.image_type,'Value'),[2 3]) % Optosplit
                 flag = 'On';
             else
                 flag = 'Off';                
@@ -1604,6 +1636,14 @@ try
                 set(handles.unset_spectral_cross_talk_correction,'Enable',cross_talk_correction_flag);
                 set(handles.unset_spectral_cross_talk_correction,'Visible',cross_talk_correction_flag);
                         
+            guidata(hObject,handles);
+            
+            handles.Optosplit_registration_a3 = saved_handles.Optosplit_registration_a3;
+            handles.Optosplit_registration_f3 = saved_handles.Optosplit_registration_f3; 
+            handles.Optosplit_registration_tform3 = saved_handles.Optosplit_registration_tform3;
+            handles.Optosplit_registration_roi3x = saved_handles.Optosplit_registration_roi3x;
+            handles.Optosplit_registration_roi3y = saved_handles.Optosplit_registration_roi3y;
+            
             guidata(hObject,handles);
                                   
 catch
@@ -1828,6 +1868,188 @@ function img_corr = introduce_cross_talk_corrections(img,handles)
 %     toc/60
     
     
+%--------------------------------------------------------------
+function [roix,roiy1,roiy2,tform,droi_x,droi_y,tform3,roi3x,roi3y] = get_Optosplit_3_registration_parameters(full_path_to_file,handles)
+
+roix=[];roiy1=[];roiy2=[];tform=[];droi_x=[];droi_y=[];tform3=[];roi3x=[];roi3y=[];
+ 
+[~,~,Ifull] = bfopen_v(full_path_to_file);
+[SX,SY,~,~,~] = size(Ifull);
+
+I3 = squeeze(Ifull(:,:,1,1));
+I = squeeze(Ifull(:,:,1,2));
+
+[SX,SY] = size(I);
+
+u = squeeze(sum(single(I),5));
+
+D = 10;
+YC = round(SY/2);
+roiy1 = D:(YC-D);
+roiy2 = (YC+D):(SY-D);
+roix = D:(SX-D);
+u1 = u(roix,roiy1);
+    deltax = 0; % to debug 
+    deltay = 0;
+u2 = u(roix+deltax,roiy2+deltay);
+
+u1 = u1/mean(u1(:));
+u2 = u2/mean(u2(:));
+
+     fixed = u1+1;
+     warped = u2+1;
+     
+     fixed_plus = fixed + gsderiv(fixed,2,0);
+     warped_plus = warped + gsderiv(warped,2,0);
+     
+     [optimizer, metric] = imregconfig('multimodal');
+     tform = imregtform(warped_plus,fixed_plus,'rigid', optimizer, metric);
+     % can visualize at this stage
+     registered = imwarp(warped,tform,'OutputView',imref2d(size(fixed)));    
+      
+     tform.T
+    
+    % finding diminished ROIs
+     z=registered>0;
+     S = FindLargestSquares(z);
+     [C, H, W, M] = FindLargestRectangles(z,[0 0 1]);
+     % icy_imshow(z+M);
+     [~, pos] = max(C(:));
+     [r, c] = ind2sub(size(S), pos);
+     droi_y = c:W(r,c);
+     droi_x = r:H(r,c);
+     
+%      fixed = fixed(droi_x,droi_y);
+%      registered = registered(droi_x,droi_y);      
+%      iv = zeros(size(fixed,1),size(fixed,2),2,1,1);            
+%      iv(:,:,1,1,1) = fixed;
+%      iv(:,:,2,1,1) = registered;        
+%      icy_imshow(uint16(iv));
+
+% 3-rd channel
+     u3 = double(I3);
+        %      f3 = 1/1.8; 
+        %      a3 = 270;
+        a3 = handles.Optosplit_registration_a3;
+        f3 = handles.Optosplit_registration_f3; % essentially, hardcoded
+     u3 = imresize(u3,f3);
+     u3 = imrotate(u3,a3);
+%     icy_imshow(fixed);
+%     icy_imshow(u3);
+               
+     warped = u3;
+     
+     warped = warped+1;
+     fixed = fixed+1;
+     
+     fixed_plus = fixed; % + gsderiv(fixed,2,0);
+     warped_plus = warped; % + gsderiv(warped,2,0);
+             
+     [optimizer, metric] = imregconfig('multimodal');     
+%         optimizer.InitialRadius = 0.009;
+         optimizer.Epsilon = 1.5e-4;
+         %optimizer.GrowthFactor = 1.01;
+         optimizer.MaximumIterations = 600;     
+          
+     tform3 = imregtform(warped_plus,fixed_plus,'affine', optimizer, metric);
+     % can visualize at this stage
+     registered = imwarp(warped,tform3,'OutputView',imref2d(size(fixed)));    
+     
+     z=registered>0;
+     S = FindLargestSquares(z);
+     [C, H, W, M] = FindLargestRectangles(z,[0 0 1]);
+     % icy_imshow(z+M);
+     [~, pos] = max(C(:));
+     [r, c] = ind2sub(size(S), pos);
+     roi3y = c:W(r,c);
+     roi3x = r:H(r,c);
+     
+     fixed = fixed(roi3x,roi3y);
+     registered = registered(roi3x,roi3y);          
+     iv = zeros(size(fixed,1),size(fixed,2),2,1,1);            
+     iv(:,:,1,1,1) = fixed;
+     iv(:,:,2,1,1) = registered;        
+     %icy_imshow(uint16(iv));    
+     figure;imagesc(uint8(map(fixed + 2*registered,0,255)));daspect(gca,[1 1 1]);
+
+
+%--------------------------------------------------------------
+function v = load_Optosplit_image_3(handles,full_path_to_image)
+
+% v = [];
+% 
+roix = handles.Optosplit_registration_roix;
+roiy1 = handles.Optosplit_registration_roiy1;
+roiy2 = handles.Optosplit_registration_roiy2;
+tform = handles.Optosplit_registration_tform;
+droi_x = handles.Optosplit_registration_droi_x;
+droi_y = handles.Optosplit_registration_droi_y;
+tform3 = handles.Optosplit_registration_tform3; 
+roi3x = handles.Optosplit_registration_roi3x; 
+roi3y = handles.Optosplit_registration_roi3y;
+a3 = handles.Optosplit_registration_a3; 
+f3 = handles.Optosplit_registration_f3;
+
+if isempty(roix) || isempty(tform3)
+    disp('cannot load Optosplit image - registration not set up');
+    return;
+end
+
+[~,~,Ifull] = bfopen_v(full_path_to_image);
+[SX,SY,sc,sz,st3] = size(Ifull);
+
+if sc~=1
+    I3 = Ifull(:,:,1,:,:);
+    I =  Ifull(:,:,2,:,:);
+elseif sz~=1
+    I3 = Ifull(:,:,:,1,:);
+    I =  Ifull(:,:,:,2,:);    
+else
+    I3 = Ifull(:,:,:,:,1:2:st3);
+    I = Ifull(:,:,:,:,1+(1:2:st3));
+end
+    [SX,SY,~,~,st] = size(I);
+%icy_imshow(I3);
+%icy_imshow(I);
+
+        s = get(handles.dst_channels,'String');
+            nch1 = int64(str2num(s(1)));
+            nch2 = int64(str2num(s(2)));
+            nch3 = int64(str2num(s(3)));            
+    %
+    if length(s)~=3
+        s = s(1:3);
+        set(handles.dst_channels,'String',s);
+    end
+    %
+    v = [];
+    %
+    for f=1:st
+        u = single(squeeze(I(:,:,1,1,f)));
+        u1 = u(roix,roiy1);
+        u2 = u(roix,roiy2);
+        
+        u2_reg = imwarp(u2,tform,'OutputView',imref2d(size(u1)));
+        
+        u1 = u1(droi_x,droi_y);
+        u2 = u2_reg(droi_x,droi_y);
+        
+        u3 = single(squeeze((I3(:,:,1,1,f))));
+        u3 = imresize(u3,f3);
+        u3 = imrotate(u3,a3);        
+        u3_reg = imwarp(u3,tform3,'OutputView',imref2d(size(u1)));
+        u1 = u1(roi3x,roi3y);
+        u2 = u2(roi3x,roi3y);
+        u3 = u3_reg(roi3x,roi3y);
+        
+        if isempty(v)
+            v = zeros(size(u1,1),size(u1,2),3,1,st);
+        end
+        v(:,:,nch1,1,f) = u1;
+        v(:,:,nch2,1,f) = u2;
+        v(:,:,nch3,1,f) = u3;
+    end
+    %
     
     
     
