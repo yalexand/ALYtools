@@ -1096,7 +1096,7 @@ function [roix,roiy1,roiy2,tform,droi_x,droi_y] = get_Optosplit_registration_par
 % every frame side to side
 [~,~,I] = bfopen_v(full_path_to_file);
 
-[SX,SY,~,~,~] = size(I);
+[SX,SY,~,~,st] = size(I);
 
 u = squeeze(sum(single(I),5));
 
@@ -1120,32 +1120,52 @@ u2 = u2/mean(u2(:));
      warped_plus = warped + gsderiv(warped,2,0);
      
      [optimizer, metric] = imregconfig('multimodal');
-     tform = imregtform(warped_plus,fixed_plus,'translation', optimizer, metric);
-     % can visualize at this stage
-     % registered = imwarp(warped,tform,'OutputView',imref2d(size(fixed)));    
-         
-     dy = round(tform.T(3,1));
-     dx = round(tform.T(3,2));
-     disp([dx dy]);
-    
-    % design of diminished ROIs
-    roi_x = 1:size(u1,1);
-    droi_x = roi_x;
-    if dx>=0
-        droi_x = (dx+2):roi_x(end);
-    elseif dx<0
-        droi_x = 1:(roi_x(end)-abs(dx)-2);
-    end
-    %
-    roi_y = 1:size(u1,2);
-    droi_y = roi_y;
-    if dy>=0
-        droi_y = (dy+2):roi_y(end);
-    elseif dy<0
-        droi_y = 1:(roi_y(end)-abs(dy)-2);
-    end
-    %
-        
+     optimizer.MaximumIterations = 600;
+     
+     translation_only = false;
+     if translation_only
+         tform = imregtform(warped_plus,fixed_plus,'translation', optimizer, metric);
+         % can visualize at this stage
+         % registered = imwarp(warped,tform,'OutputView',imref2d(size(fixed)));    
+
+         dy = round(tform.T(3,1));
+         dx = round(tform.T(3,2));
+         disp([dx dy]);
+
+        % design of diminished ROIs
+        roi_x = 1:size(u1,1);
+        droi_x = roi_x;
+        if dx>=0
+            droi_x = (dx+2):roi_x(end);
+        elseif dx<0
+            droi_x = 1:(roi_x(end)-abs(dx)-2);
+        end
+        %
+        roi_y = 1:size(u1,2);
+        droi_y = roi_y;
+        if dy>=0
+            droi_y = (dy+2):roi_y(end);
+        elseif dy<0
+            droi_y = 1:(roi_y(end)-abs(dy)-2);
+        end
+     else
+         tform = imregtform(warped_plus,fixed_plus,'rigid', optimizer, metric);         
+         % can visualize at this stage
+         registered = imwarp(warped,tform,'OutputView',imref2d(size(fixed)));    
+         %
+         tform.T
+         %
+        % finding diminished ROIs
+         z=registered>0;
+         S = FindLargestSquares(z);
+         [C, H, W, M] = FindLargestRectangles(z,[0 0 1]);
+         % icy_imshow(z+M);
+         [~, pos] = max(C(:));
+         [r, c] = ind2sub(size(S), pos);
+         droi_y = c:W(r,c);
+         droi_x = r:H(r,c);         
+     end                 
+%   
 % visualize
 %     fixed = fixed(droi_x,droi_y);
 %     warped = warped(droi_x,droi_y);
@@ -1172,8 +1192,8 @@ u2 = u2/mean(u2(:));
 %         v(:,:,1,1,f) = u1_;
 %         v(:,:,2,1,f) = u2_;            
 %     end
-%     icy_imshow(uint16(v),['dx = ' num2str(dx) ', dy = ' num2str(dy)]);
-
+%     %icy_imshow(uint16(v),['dx = ' num2str(dx) ', dy = ' num2str(dy)]);
+%     icy_imshow(uint16(v));
 
 % --------------------------------------------------------------------
 function Untitled_1_Callback(hObject, eventdata, handles)
