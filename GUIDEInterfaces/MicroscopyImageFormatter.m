@@ -52,7 +52,7 @@ function MicroscopyImageFormatter_OpeningFcn(hObject, eventdata, handles, vararg
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to MicroscopyImageFormatter (see VARARGIN)
 
-set(handles.image_type,'String',{'Nikon','Optosplit 2 channels','Optosplit 3 channels'});
+set(handles.image_type,'String',{'Generic','Optosplit 2 channels','Optosplit 3 channels'});
 
 handles.Optosplit_registration_roix = [];
 handles.Optosplit_registration_roiy1 = [];
@@ -728,8 +728,8 @@ function v = load_microscopy_image(handles,full_path_to_file)
             v = load_Optosplit_image(handles,full_path_to_file);
         case 'Optosplit 3 channels'
             v = load_Optosplit_image_3(handles,full_path_to_file);
-        case 'Nikon'
-            v = load_Nikon_image(handles,full_path_to_file);
+        case 'Generic'
+            v = load_Generic_image(handles,full_path_to_file);
     end
     setup_model_controls_visibility(handles);
 
@@ -1039,7 +1039,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 %--------------------------------------------------------------
-function v = load_Nikon_image(handles,full_path_to_file)
+function v = load_Generic_image(handles,full_path_to_file)
 v = [];
 
 if ~isfile(full_path_to_file), return, end
