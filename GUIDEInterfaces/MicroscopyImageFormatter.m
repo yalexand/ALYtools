@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 29-Mar-2021 11:17:09
+% Last Modified by GUIDE v2.5 20-Apr-2021 16:04:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -71,7 +71,8 @@ handles.Optosplit_registration_roi3y = [];
     set(handles.ref_image_file,'String','xxx');
     % values
     handles.umppix = 0.650;
-    handles.offset = 0; % !!!
+    handles.offset = 0; 
+    handles.offset3 = 0; % used for 3-channel Optosplit
     handles.downsample = 1;
     handles.min_per_frame = 5;
     src_channels = '12345';
@@ -79,9 +80,12 @@ handles.Optosplit_registration_roi3y = [];
     set(handles.setup_Optosplit_registration,'Enable','Off');
     set(handles.setup_Optosplit_registration,'Visible','Off');
     handles.polynom_order = 9;
-
+    set(handles.offset3_edit,'Enable','Off');
+    set(handles.offset3_edit,'Visible','Off');
+    
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 set(handles.offset_edit,'String',num2str(handles.offset));
+set(handles.offset3_edit,'String',num2str(handles.offset3));
 set(handles.downsample_edit,'String',num2str(handles.downsample));
 set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
 set(handles.src_channels,'String',src_channels);
@@ -520,6 +524,11 @@ if isempty(handles.raw_img), return, end
 handles.corrected_img = zeros(size(handles.raw_img));
 for c = 1:n_channels
     
+    offset = handles.offset;
+    if 3==c && 3==get(handles.image_type,'Value')
+        offset = handles.offset3;
+    end
+    
     s = get(handles.model_1,'String'); % all the same
     switch c
         case 1
@@ -546,7 +555,7 @@ for c = 1:n_channels
             %
     hw = waitbar(0,['introducing corrections to channel ' num2str(c)]);
     for f = 1:st
-        I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset;
+        I = squeeze(handles.raw_img(:,:,c,1,f)) - offset;
         I = I/f_CMHF_t(f);
         switch model
             case 'additive (1)'         % f(t) acts only on background
@@ -731,8 +740,8 @@ function v = load_microscopy_image(handles,full_path_to_file)
         case 'Generic'
             v = load_Generic_image(handles,full_path_to_file);
     end
+    %
     setup_model_controls_visibility(handles);
-
 
 % --- Executes on button press in load_ref.
 function load_ref_Callback(hObject, eventdata, handles)
@@ -890,7 +899,6 @@ function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------- 
 function get_correction_functions_from_ref(hObject,handles)
 
-offset = handles.offset;
 polynom_order  = handles.polynom_order;
 
 [SX,SY,n_channels,~,st] = size(handles.ref_img);
@@ -902,6 +910,11 @@ LEGEND = cell(0);
 
 for channel = 1:n_channels
 
+    offset = handles.offset;
+    if 3==channel && 3==get(handles.image_type,'Value')
+        offset = handles.offset3;
+    end
+            
     if size(handles.ref_img,5)==1 % specific case when no t-dependence is available
         handles.f_t{channel} = ones(100000,1); % :) should be enough..      
         %handles.p_xy{channel} = ones(size(handles.ref_img(),1),size(handles.ref_img(),2));
@@ -991,7 +1004,13 @@ end
     w = 40; 
     rx = w:SX-w;
     ry = w:SY-w;
-        ref = squeeze(sum(handles.ref_img,3)) - n_channels*offset;
+    
+        if 3~=get(handles.image_type,'Value')
+            ref = squeeze(sum(handles.ref_img,3)) - n_channels*handles.offset;
+        else % Optosplit with differnt camera on 3-th channel
+            ref = squeeze(sum(handles.ref_img,3)) - 2*handles.offset - handles.offset3;
+        end
+        
         parfor f=1:st
             intensity(f) = mean(ref(rx,ry,f),'All');
         end
@@ -1022,9 +1041,25 @@ function image_type_Callback(hObject, eventdata, handles)
         flag = 'Off';
     end
     set(handles.setup_Optosplit_registration,'Enable',flag);
-    set(handles.setup_Optosplit_registration,'Visible',flag);    
+    set(handles.setup_Optosplit_registration,'Visible',flag);        
+    %
+    if 3==get(handles.image_type,'Value')
+        flag3 = 'On';
+    else
+        flag3 = 'Off';
+    end        
+    set(handles.offset3_edit,'Enable',flag3);
+    set(handles.offset3_edit,'Visible',flag3);
+                
+    if 1==get(hObject,'Value')
+        downsample_flag = 'On';      
+    else
+        downsample_flag = 'Off';
+        handles.downsample = 1;
+    end        
+    set(handles.downsample_edit,'String',num2str(handles.downsample));
+    set(handles.downsample_edit,'Enable',downsample_flag);
     guidata(hObject,handles);
-
 
 % --- Executes during object creation, after setting all properties.
 function image_type_CreateFcn(hObject, eventdata, handles)
@@ -1252,8 +1287,6 @@ if ischar(filenames)
     filenames = {filenames};
 end
 
-offset = handles.offset;
-
 % % WHY parfor IS IT SO UNSTABLE? 
 img_acc = cell(numel(filenames),1);
 %parfor k=1:numel(filenames)
@@ -1277,8 +1310,13 @@ end
 
 [sx,sy,sc,~,~] = size(img_data);
 %
-img_data = img_data - offset;
-% ??
+        if 3~=get(handles.image_type,'Value')
+            img_data = img_data - handles.offset;
+        else % Optosplit with differnt camera on 3-th channel
+            img_data(:,:,1:2,:,:) = img_data(:,:,1:2,:,:) - handles.offset;
+            img_data(:,:,3,:,:) = img_data(:,:,3,:,:) - handles.offset3;
+        end
+
 t = quantile(img_data(:),0.99);
 img_data(img_data>t)=t;
 
@@ -1328,6 +1366,11 @@ st = size(img_acc{1},5);
     for k=1:size(img_acc,1)  
         k
         for c=1:sc
+            %
+            offset = handles.offset;
+            if 3==c && 3==get(handles.image_type,'Value')
+                offset = handles.offset3;
+            end
             %            
             u = img_acc{k};            
             ds = 10;
@@ -1410,9 +1453,7 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
             %icy_imshow(out);
             %
             macc = cell(sc,4);
- 
-            offset = handles.offset;
-            
+             
             if 1==get(handles.compensate_CMHF,'Value')
                 f_CMHF_t = handles.f_CMHF_t;
             else
@@ -1423,6 +1464,10 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                 for m=1:4                     
                     corrimg = zeros(size(handles.raw_img));                    
                     for c=1:sc 
+                            offset = handles.offset;
+                            if 3==c && 3==get(handles.image_type,'Value')
+                                offset = handles.offset3;
+                            end                        
                             %
                             Eb = handles.Eb{c};
                             p_xy  = handles.p_xy{c};
@@ -1537,6 +1582,7 @@ function save_settings_mat_Callback(hObject, eventdata, handles)
             saved_handles.Optosplit_registration_droi_y = handles.Optosplit_registration_droi_y;
             saved_handles.umppix = handles.umppix;
             saved_handles.offset = handles.offset;
+            saved_handles.offset3 = handles.offset3;
             saved_handles.downsample = handles.downsample;
             saved_handles.min_per_frame = handles.min_per_frame;
             saved_handles.polynom_order = handles.polynom_order;
@@ -1600,6 +1646,7 @@ try
             handles.Optosplit_registration_droi_y = saved_handles.Optosplit_registration_droi_y;
                 handles.umppix = saved_handles.umppix;
                 handles.offset = saved_handles.offset;
+                handles.offset3 = saved_handles.offset3;
                 handles.downsample = saved_handles.downsample;
                 handles.min_per_frame = saved_handles.min_per_frame;
                 handles.polynom_order = saved_handles.polynom_order;
@@ -1610,6 +1657,7 @@ try
                         
             set(handles.umppix_edit,'String',num2str(handles.umppix));
             set(handles.offset_edit,'String',num2str(handles.offset));
+            set(handles.offset3_edit,'String',num2str(handles.offset3));            
             set(handles.downsample_edit,'String',num2str(handles.downsample));
             set(handles.min_per_frame_edit,'String',num2str(handles.min_per_frame));
             set(handles.t_dep_fitting_poly_order,'String',num2str(handles.polynom_order));
@@ -1617,11 +1665,28 @@ try
             if ismember(get(handles.image_type,'Value'),[2 3]) % Optosplit
                 flag = 'On';
             else
-                flag = 'Off';                
+                flag = 'Off';
             end
-                set(handles.setup_Optosplit_registration,'Enable',flag);
-                set(handles.setup_Optosplit_registration,'Visible',flag);
-
+            set(handles.setup_Optosplit_registration,'Enable',flag);
+            set(handles.setup_Optosplit_registration,'Visible',flag);
+                
+            if 3==get(handles.image_type,'Value')
+                set(handles.offset3_edit,'Enable','On');
+                set(handles.offset3_edit,'Visible','On');
+            else
+                set(handles.offset3_edit,'Enable','Off');
+                set(handles.offset3_edit,'Visible','Off');                
+            end
+                
+           if 1==get(handles.image_type,'Value')
+                downsample_flag = 'On';      
+            else
+                downsample_flag = 'Off';
+                handles.downsample = 1;
+            end        
+            set(handles.downsample_edit,'String',num2str(handles.downsample));
+            set(handles.downsample_edit,'Enable',downsample_flag);            
+                        
             show_corrections_temporal_dependencies(handles); 
             %
             % clean images
@@ -2070,6 +2135,25 @@ end
         v(:,:,nch3,1,f) = u3;
     end
     %
-    
-    
-    
+
+function offset3_edit_Callback(hObject, eventdata, handles)
+    v = str2double(get(hObject,'String'));
+    if ~isempty(v) && v>0 
+        handles.offset3 = v;        
+    else
+        set(hObject,'String',num2str(handles.offset3));
+    end
+    guidata(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function offset3_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to offset3_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
