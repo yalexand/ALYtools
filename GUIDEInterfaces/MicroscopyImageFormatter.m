@@ -1814,8 +1814,6 @@ function show_CMHF_correction_on_REF_Callback(hObject, eventdata, handles)
 
 if isempty(handles.ref_img), return, end
 
-offset = handles.offset;
-
 [SX,SY,n_channels,~,st] = size(handles.ref_img);
 
 colors = {'r','g','b','k','c'};
@@ -1828,7 +1826,12 @@ LEGEND = cell(0);
     taxis = (frms-1)*handles.min_per_frame/60;    
 
 for channel = 1:n_channels
-        
+
+    offset = handles.offset;
+    if 3==channel && 3==get(handles.image_type,'Value')
+        offset = handles.offset3;
+    end    
+    
     ref = squeeze(handles.ref_img(:,:,channel,1,:));
     
     intensity = zeros(st,1);
