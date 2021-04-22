@@ -1520,7 +1520,49 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                 end
                 if ~isempty(hw), delete(hw), drawnow; end
                 %
-
+                % original
+                orgacc = cell(1,sc);
+                    orgimg = zeros(size(handles.raw_img));                    
+                    for c=1:sc 
+                            offset = handles.offset;
+                            if 3==c && 3==get(handles.image_type,'Value')
+                                offset = handles.offset3;
+                            end                        
+                            %
+                            parfor f = 1:st
+                                I = squeeze(in(:,:,c,1,f)) - offset;
+                                I = I/f_CMHF_t(f);
+                                I(I<0)=0;
+                                orgimg(:,:,c,1,f) = I;
+                            end
+                    end 
+                    %
+                    if ~isempty(handles.W)
+                        orgimg = introduce_cross_talk_corrections(orgimg,handles);
+                    end
+                    %                                        
+                    parfor c=1:sc                        
+                        for f=1:st
+                            vals = orgimg(:,:,c,1,f);
+                            labs = out(:,:,c,1,f);
+                            %
+                            % over pixels
+                             sample = vals(labs>0);
+                             orgacc{c} = [orgacc{c}; sample];
+                            % over pixels
+                            %
+                            % over objects
+%                             labs(labs>0)=1;
+%                             labs = bwlabel(labs);
+%                             for L=1:max(labs(:))    
+%                                 s = vals(labs==L);
+%                                 macc{c,m} = [macc{c,m}; mean(s(:))];
+%                             end
+                            % over objects
+                        end                        
+                    end                
+                % original
+                %
 colors = {'r','g','b','k','c'};
                 for c=1:sc
                     figure('units','normalized','outerposition',[0 0 1 1],'name',[handles.raw_image_filename ', channel: ' num2str(c)]);
@@ -1538,15 +1580,23 @@ colors = {'r','g','b','k','c'};
                     plot(ax,EDGES(1:numel(N)),N,[colors{4} '.-'],'linewidth',2);                                                                               
                     hold(ax,'off'); 
                     grid(ax,'on');
+                    
+                    hold(ax,'on')
+                    [N,EDGES] = histcounts(orgacc{c},'Normalization','pdf');
+                    plot(ax,EDGES(1:numel(N)),N,[colors{5} ':'],'linewidth',2);
+                    hold(ax,'off'); 
+                    grid(ax,'on');
+                                                            
                     xlabel(ax,['intensity, channel ' num2str(c)]);
                     ylabel(ax,'pdf');
                     legend(ax,{ ...
                         ['additive (1)' ' kurtosis ' num2str(kurtosis(macc{c,1}-3)) ' std ' num2str(std(macc{c,1}))], ...
                         ['multiplicative (1)' ' kurtosis ' num2str(kurtosis(macc{c,2}-3)) ' std ' num2str(std(macc{c,2}))], ...
                         ['additive (2)' ' kurtosis ' num2str(kurtosis(macc{c,3}-3)) ' std ' num2str(std(macc{c,3}))], ...
-                        ['multiplicative (2)' ' kurtosis ' num2str(kurtosis(macc{c,4}-3)) ' std ' num2str(std(macc{c,4}))]});
+                        ['multiplicative (2)' ' kurtosis ' num2str(kurtosis(macc{c,4}-3)) ' std ' num2str(std(macc{c,4}))], ...
+                        ['non-corrected' ' kurtosis ' num2str(kurtosis(orgacc{c}-3)) ' std ' num2str(std(orgacc{c}))], ...
+                        });
                 end
-
 
 % --------------------------------------------------------------------
 function save_settings_mat_Callback(hObject, eventdata, handles)
