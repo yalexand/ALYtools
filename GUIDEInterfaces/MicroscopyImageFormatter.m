@@ -916,7 +916,7 @@ for channel = 1:n_channels
     end
             
     if size(handles.ref_img,5)==1 % specific case when no t-dependence is available
-        handles.f_t{channel} = ones(100000,1); % :) should be enough..      
+        handles.f_t{channel} = ones(100000,1); % :) should be enough.. 
         %handles.p_xy{channel} = ones(size(handles.ref_img(),1),size(handles.ref_img(),2));
         %handles.Eb{channel} = 0;                        
             u = handles.ref_img(:,:,channel,1,1);
@@ -1001,6 +1001,7 @@ for channel = 1:n_channels
 end
 
 % define CMHF correction (Common Multiplicative HF)
+if 1~= st
     w = 40; 
     rx = w:SX-w;
     ry = w:SY-w;
@@ -1023,6 +1024,9 @@ end
 %     figure(22);semilogy(taxis,intensity,'b.-',taxis,intensity_fit,'r.-');grid(gca,'on'); 
 %     figure(23);semilogy(taxis,intensity./intensity_fit,'k.-');grid(gca,'on'); 
       %
+else
+    handles.f_CMHF_t = ones(100000,1);
+end
 
 guidata(hObject,handles);
 
