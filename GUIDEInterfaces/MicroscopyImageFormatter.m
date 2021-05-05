@@ -956,7 +956,8 @@ for channel = 1:n_channels
     ry = w:SY-w;
 
     parfor f=1:st
-        intensity(f) = mean(ref(rx,ry,f),'All') - offset;
+        sample = ref(rx,ry,f);
+        intensity(f) = mean(sample(:)) - offset;
     end
 
     frms = (1:st)';
@@ -1013,7 +1014,8 @@ if 1~= st
         end
         
         parfor f=1:st
-            intensity(f) = mean(ref(rx,ry,f),'All');
+            sample = ref(rx,ry,f);
+            intensity(f) = mean(sample(:));
         end
     frms = (1:st)';
     p = polyfit(frms,intensity,polynom_order);
@@ -1895,7 +1897,8 @@ for channel = 1:n_channels
     ry = w:SY-w;
 
     parfor f=1:st
-        intensity(f) = mean(ref(rx,ry,f),'All') - offset;
+        sample = ref(rx,ry,f);
+        intensity(f) = mean(sample(:)) - offset;
     end
    
     f_CMHF_t = handles.f_CMHF_t;  
