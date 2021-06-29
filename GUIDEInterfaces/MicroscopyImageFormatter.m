@@ -728,6 +728,7 @@ for k=1:numel(filenames)
         end
         bfsave(uint16(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
 end
+disp([pathname ' - completed!']);
 
 %--------------------------------------------------------------
 function v = load_microscopy_image(handles,full_path_to_file)
@@ -845,7 +846,9 @@ end
 
 % --- Executes on button press in set_src_dir.
 function set_src_dir_Callback(hObject, eventdata, handles)
-directoryname = uigetdir(pwd,'Pick SRC Directory');
+start_dir = get(handles.src_dir,'String');
+if ~isfolder(start_dir), start_dir = pwd; end   
+directoryname = uigetdir(start_dir,'Pick SRC Directory');
 if 0==directoryname, return, end
 if isfolder(directoryname) 
     set(handles.src_dir,'String',directoryname);
@@ -854,7 +857,9 @@ end
 
 % --- Executes on button press in set_dst_dir.
 function set_dst_dir_Callback(hObject, eventdata, handles)
-directoryname = uigetdir(pwd,'Pick DST Directory');
+start_dir = get(handles.dst_dir,'String');
+if ~isfolder(start_dir), start_dir = pwd; end   
+directoryname = uigetdir(start_dir,'Pick DST Directory');
 if 0==directoryname, return, end
 if isfolder(directoryname) 
     set(handles.dst_dir,'String',directoryname);
@@ -1428,7 +1433,7 @@ hold(AXES,'off');
     ylabel(AXES,'offset-subtracted mean ref. intensity','fontsize',8);
     grid(AXES,'on');
 legend(AXES,LEGEND);
-
+disp([pathname ' : calculating correction objects, - completed!']);
 
 % --------------------------------------------------------------------
 function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, handles)
