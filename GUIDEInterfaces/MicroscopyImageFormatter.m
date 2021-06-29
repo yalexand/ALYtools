@@ -1340,6 +1340,7 @@ for c=1:sc
         parfor y=1:sy
             s = img_data(x,y,c,1,:);
             t = quantile(s,0.01); % take minimum value
+            if t<0, t=0; end
             ref_c(x,y)=t;
         end
     end
