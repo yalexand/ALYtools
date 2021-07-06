@@ -312,9 +312,9 @@ classdef ALYtools_data_controller < handle
             AI_Powered_2D_SMLM_Reconstruction_max_sigma = 7; % pixel
             %
             % presuming 22 um/pix
-            OPT_ZFish_Embryo_channel_body      = 3; % blue, all-out, SYTOX
+            OPT_ZFish_Embryo_channel_body      = 1; % blue, all-out, SYTOX
             OPT_ZFish_Embryo_channel_rostral   = 2; % green, head, OTX2
-            OPT_ZFish_Embryo_channel_posterior = 1; % red, tail, MyoD
+            OPT_ZFish_Embryo_channel_posterior = 3; % red, tail, MyoD
             % segmentation
             OPT_ZFish_Embryo_sgm_primary_scale     = 16; % microns
             OPT_ZFish_Embryo_sgm_K21               = 2; % scale ratio 2:1
