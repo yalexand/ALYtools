@@ -15,8 +15,7 @@ Set of various Bioimaging analysis applications written in Matlab
 # Overview
 
 ALYtools widely uses Open Source code designed by other researchers. Original license sections are always kept. If third-party software is used in code supporting scientific publications, references are provided. 
-Software uses Bioformats for I/O, Icy for visualization and Excel for quantification outputs; it can be run headless on HPC, and in batch processing mode.
-"ALYtools.m" is the "Dispatcher"-style GUI used to switch between different "Problems". Majority of "Problems" are short attempts or exercises aimed at analyzing Biomicroscopy data.
+"ALYtools.m" is the "Dispatcher"-style GUI providing switching between different "Problems". Majority of "Problems" are short attempts or exercises aimed at analyzing Biomicroscopy data.
 Several applications were reported in the literature, and some are mentioned below.
 
 # System Requirements
@@ -40,7 +39,7 @@ When first running under Win10, ALYtools tries to find Icy directory; that can t
 
 CIDR ("collagen induced DDR1 redistribution") is the texture characterization method reported in the article
 https://www.nature.com/articles/s41598-019-53176-4
-Briefly, the algorithm counts average number of zero-crossings along random line profile on a segmented "patch" on the LF-subtracted texture image. "TestData" CIDR folder contains 2 images with different textures (rough and fine) acquired with SIM microscopy. Demo is run with default ALYtools options.
+Briefly, the algorithm counts average number of zero-crossings along random line profile on a segmented "patch" on the LF-subtracted texture image. "TestData\CIDR" folder contains 2 images with different textures (rough and fine) acquired with SIM microscopy. Demo is run with default ALYtools options.
 
 # ic_OPTtools
 
