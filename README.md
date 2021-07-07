@@ -14,12 +14,10 @@ Set of various Bioimaging analysis applications written in Matlab
 
 # Overview
 
-ALYtools massively uses Open Source code designed by other researchers. 
-References are not kept systematically, but License section should cover all.  
-If you find any of ALYtools solutions/ideas worth using, - please take without reference either.
-Software uses Bioformats for image I/O, Icy for visualization and Excel format for quantification outputs; it can be run headless on HPC, and in batch processing mode.
-"ALYtools.m" is the "Dispatcher"-style GUI capable of switching between different (unrelated) image analysis "Problems". Majority of "Problems" are short attempts or exercises aimed at analyzing Biomicroscopy data.
-Several applications have proved to be useful; some of them were reported in the literature, and some are mentioned below.
+ALYtools widely uses Open Source code designed by other researchers. Original license sections are always kept. If third-party software is used in code supporting scientific publications, references are provided. 
+Software uses Bioformats for I/O, Icy for visualization and Excel for quantification outputs; it can be run headless on HPC, and in batch processing mode.
+"ALYtools.m" is the "Dispatcher"-style GUI used to switch between different "Problems". Majority of "Problems" are short attempts or exercises aimed at analyzing Biomicroscopy data.
+Several applications were reported in the literature, and some are mentioned below.
 
 # System Requirements
 
@@ -27,22 +25,22 @@ Several applications have proved to be useful; some of them were reported in the
 ALYtools applications require at least Matlab 2018a and Toolboxes, and Icy (http://icy.bioimageanalysis.org/).
 They can be run under Windows 10, Mac OSX, and RedHat and CentOS linux.
 ## Hardware
-Hardware requirements depend on "Problem", but in most cases average 2020-ish desktop specs suffice. NVIDIA GPU may be optionally used.
+Hardware requirements depend on "Problem", but in most cases average desktop specs suffice. NVIDIA GPU may be optionally used.
 
 # Installation and Running
 
-Nothing specific is needed beyond "git clone" or equivalent option from GUI. To use Icy visualization, one needs installing Icy with 2 plugins: "matlabcommuncator" and "matlabxserver". Icy should be installed somewhere on C:\ in common folder (not "Program Files").
+Nothing specific is needed beyond "git clone" or equivalent option from GUI. To use Icy visualization, one needs installing Icy with 2 plugins: "matlabcommuncator" and "matlabxserver". Icy should be installed somewhere on C:\ in a folder with open r/w access.
 When first running under Win10, ALYtools tries to find Icy directory; that can take couple of minutes. In general, it is better to run Icy first for all software mentioned below.
 
 # Demo
 
-In the "TestData" directory, one can find collection of Demo images, - a folder for "Problem". Not all "Problems" are covered (some demand too many images).
+"TestData" directory contains a collection of Demo images, - a folder per "Problem". Not all "Problems" are covered (some demand too many images).
 
 # CIDR Problem
 
 CIDR ("collagen induced DDR1 redistribution") is the texture characterization method reported in the article
 https://www.nature.com/articles/s41598-019-53176-4
-Briefly, the algorithm counts average number of zero-crossings along random line profile on a segmented "patch" on the LF-subtracted texture image. "TestData" folder contains 2 images with different textures (rough and fine) acquired with SIM microscopy. Demo is run with default ALYtools options.
+Briefly, the algorithm counts average number of zero-crossings along random line profile on a segmented "patch" on the LF-subtracted texture image. "TestData" CIDR folder contains 2 images with different textures (rough and fine) acquired with SIM microscopy. Demo is run with default ALYtools options.
 
 # ic_OPTtools
 
@@ -69,21 +67,4 @@ MicroscopyImageFormatter is the application providing the model-based intensity 
 Detailed user guide will be added soon.
 
 # License
-This project is covered under GNU General Public License as published by the Free Software Foundation.
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
+Original ALYtools code is covered by MIT license. Code involving third party designs under GPL v2, is covered by that license.
