@@ -316,12 +316,12 @@ classdef ALYtools_data_controller < handle
             OPT_ZFish_Embryo_channel_rostral   = 2; % green, head, OTX2
             OPT_ZFish_Embryo_channel_posterior = 3; % red, tail, MyoD
             % segmentation
-            OPT_ZFish_Embryo_sgm_primary_scale     = 16; % microns
+            OPT_ZFish_Embryo_sgm_primary_scale     = 17; % microns
             OPT_ZFish_Embryo_sgm_K21               = 2; % scale ratio 2:1
             OPT_ZFish_Embryo_sgm_K31               = 6; % scale ratio 3:1
             OPT_ZFish_Embryo_sgm_a1                = .0; %
             OPT_ZFish_Embryo_sgm_t                 = .9; %
-            OPT_ZFish_Embryo_sgm_min_vol           = 13824000; % um3            
+            OPT_ZFish_Embryo_sgm_min_vol           = 1757500; % um3            
             
             % SIFNE % SMLM Image Filament Network Extractor
             SIFNE_LFT_OFT_Radius_of_Filter = 10; % pixels

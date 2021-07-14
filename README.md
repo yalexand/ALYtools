@@ -54,7 +54,7 @@ This application was used in the article "Smad4 controls signaling robustness an
 - run Matlab file ALYtools.m
 - choose "Settings->Problem->OPT_ZFish_Embryo"
 - use "File->Load Single" to load the multi-channel OPT image "..your_path\ALYtools\TestData\ZFish_Embryo\WT_2.ome.tif" 
-- click on Settings->Microns per pixel and enter 6.0
+- click on Settings->Microns per pixel and enter 6.5
 - click "Analysis->Run Current"
 ```
 The input image contains 2 embryos. Results of analysis (quantification xls file and 2 images, one per embryo) will be saved in newly created directory with name consisting of "ALYtools Analysis" prefix, and time stamp postfix.  
