@@ -72,7 +72,7 @@ function handles = setup_menu(obj,handles)
     menu_settings = uimenu(obj.window,'Label','Settings');        
     handles.menu_settings_microns_per_pixel = uimenu(menu_settings,'Label',['Microns per pixel = ' num2str(microns_per_pixel)]);                
     
-    handles.menu_settings_problem = uimenu(menu_settings,'Label',['Problem = ' problem],'Separator','on');                
+    handles.menu_settings_problem = uimenu(menu_settings,'Label',['Application = ' problem],'Separator','on');                
     handles.menu_settings_problem_FungusDependentGranuleRelease = uimenu(handles.menu_settings_problem,'Label','Fungus Dependent Granule Release','Separator','on');
     handles.menu_settings_problem_CIDR = uimenu(handles.menu_settings_problem,'Label','CIDR','Separator','on');
     handles.menu_settings_problem_TTO = uimenu(handles.menu_settings_problem,'Label','TTO','Separator','on');
@@ -90,7 +90,7 @@ function handles = setup_menu(obj,handles)
     handles.menu_settings_problem_OPT_ZFish_Embryo = uimenu(handles.menu_settings_problem,'Label','OPT_ZFish_Embryo','Separator','on');
     handles.menu_settings_problem_SIFNE = uimenu(handles.menu_settings_problem,'Label','SIFNE','Separator','on');
     
-    handles.menu_settings_problem_dependent = uimenu(menu_settings,'Label','Problem-Specific','Separator','on');                    
+    handles.menu_settings_problem_dependent = uimenu(menu_settings,'Label','Application-Specific','Separator','on');                    
     handles.menu_settings_general = uimenu(menu_settings,'Label','General','Separator','on');                        
     handles.menu_settings_save = uimenu(menu_settings,'Label','Save Settings as...','Separator','on');
     handles.menu_settings_load = uimenu(menu_settings,'Label','Load Settings');
