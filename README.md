@@ -28,7 +28,7 @@ Hardware requirements depend on "Application", but in most cases average desktop
 
 # Installation and Running
 
-Nothing specific is needed beyond "git clone" or equivalent option from GUI. To use Icy visualization, one needs installing Icy with 2 plugins: "matlabcommuncator" and "matlabxserver". Icy should be installed somewhere on C:\ in a folder with open r/w access.
+Nothing specific is needed beyond "git clone" or equivalent option from GUI. Typical install  time on a “normal” desktop computer is 2 min. To use Icy visualization, one needs installing Icy with 2 plugins: "matlabcommuncator" and "matlabxserver". Icy should be installed somewhere on C:\ in a folder with open r/w access.
 When first running under Win10, ALYtools tries to find Icy directory; that can take couple of minutes. In general, it is better to run Icy first for all software mentioned below.
 
 # Demo
@@ -57,7 +57,8 @@ This application was used in the article "Smad4 controls signaling robustness an
 - click on Settings->Microns per pixel and enter 6.5
 - click "Analysis->Run Current"
 ```
-The input image contains 2 embryos. Results of analysis (quantification xls file and 2 images, one per embryo) will be saved in newly created directory with name consisting of "ALYtools Analysis" prefix, and time stamp postfix.  
+The input image contains 2 embryos. Results of analysis (quantification xls file and 2 images, one per embryo) will be saved in newly created directory with name consisting of "ALYtools Analysis" prefix, and time stamp postfix.
+Expected run time for OPT_ZFish_Embryo demo on “normal” desktop computer is 3 min.
 
 
 # MicroscopyImageFormatter

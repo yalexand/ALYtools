@@ -105,7 +105,7 @@ classdef ALYtools_menu_controller < handle
             
             obj.data_controller.menu_controller = obj;    
             
-            set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);
+            set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);
                        
             % automatically start Icy
             try
@@ -235,7 +235,7 @@ classdef ALYtools_menu_controller < handle
            end
             if filename == 0, return, end;   
             
-           if ismember(obj.data_controller.problem,{'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'})
+           if ismember(obj.data_controller.application,{'per_image_TCSPC_FLIM','per_image_TCSPC_FLIM_PHASOR'})
                     errordlg('no data loaded - with per_image_TCSPC, use "Load Multiple" only');
                     return;
             end                        
@@ -307,110 +307,110 @@ classdef ALYtools_menu_controller < handle
         
     function menu_settings_problem_FungusDependentGranuleRelease_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'Fungus Dependent Granule Release']);
-         obj.data_controller.problem = 'Fungus Dependent Granule Release';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);
+         obj.data_controller.application = 'Fungus Dependent Granule Release';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);
     end
     function menu_settings_problem_CIDR_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'CIDR']);        
-         obj.data_controller.problem = 'CIDR';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'CIDR';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end
     function menu_settings_problem_TTO_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'TTO']);        
-         obj.data_controller.problem = 'TTO';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'TTO';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end
     function menu_settings_problem_PR_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'PR']);        
-         obj.data_controller.problem = 'PR';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'PR';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end
     function menu_settings_problem_HL1_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'HL1']);        
-         obj.data_controller.problem = 'HL1';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'HL1';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end        
     function menu_settings_problem_NucCyt_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'NucCyt']);        
-         obj.data_controller.problem = 'NucCyt'; 
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'NucCyt'; 
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end            
     function menu_settings_problem_MPHG_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'MPHG']);        
-         obj.data_controller.problem = 'MPHG';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'MPHG';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end                
     function menu_settings_problem_Sparks_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'Sparks']);        
-         obj.data_controller.problem = 'Sparks';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'Sparks';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end                    
     function menu_settings_problem_Experimental_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'Experimental']);        
-         obj.data_controller.problem = 'Experimental';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'Experimental';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end            
     function menu_settings_problem_per_image_TCSPC_FLIM_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'per_image_TCSPC_FLIM']);        
-         obj.data_controller.problem = 'per_image_TCSPC_FLIM';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'per_image_TCSPC_FLIM';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end 
     function menu_settings_problem_per_image_TCSPC_FLIM_PHASOR_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'per_image_TCSPC_FLIM_PHASOR']);        
-         obj.data_controller.problem = 'per_image_TCSPC_FLIM_PHASOR';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'per_image_TCSPC_FLIM_PHASOR';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end         
      function menu_settings_problem_t_dependent_Nuclei_ratio_FRET_callback(obj, ~, ~) 
          if isempty(strfind(version('-java'),'1.8')), errordlg('please switch to Java 1.8 to enable TrackMate - can not continue'); end %#ok<*CPROPLC>
          set(obj.menu_settings_problem,'Label',['Application = ' 't_dependent_Nuclei_ratio_FRET']);        
-         obj.data_controller.problem = 't_dependent_Nuclei_ratio_FRET';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 't_dependent_Nuclei_ratio_FRET';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
      end                        
     function menu_settings_problem_Image_Tiling_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'Image_Tiling']);        
-         obj.data_controller.problem = 'Image_Tiling';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'Image_Tiling';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end             
     function menu_settings_prblm_AI_Powered_2D_SMLM_Reconstruction_callback(obj, ~, ~) 
          set(obj.menu_settings_problem,'Label',['Application = ' 'AI_Powered_2D_SMLM_Reconstruction']);        
-         obj.data_controller.problem = 'AI_Powered_2D_SMLM_Reconstruction';
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'AI_Powered_2D_SMLM_Reconstruction';
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end
     function menu_settings_problem_OPT_ZFish_Embryo_callback(obj, ~, ~) 
-         obj.data_controller.problem = 'OPT_ZFish_Embryo';        
-         set(obj.menu_settings_problem,'Label',['Application = ' obj.data_controller.problem]);        
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'OPT_ZFish_Embryo';        
+         set(obj.menu_settings_problem,'Label',['Application = ' obj.data_controller.application]);        
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end
     function menu_settings_problem_SIFNE_callback(obj, ~, ~) 
-         obj.data_controller.problem = 'SIFNE';        
-         set(obj.menu_settings_problem,'Label',['Application = ' obj.data_controller.problem]);        
-         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);         
+         obj.data_controller.application = 'SIFNE';        
+         set(obj.menu_settings_problem,'Label',['Application = ' obj.data_controller.application]);        
+         set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);         
     end    
            
     %------------------------------------------------------------------                        
     function menu_settings_problem_dependent_callback(obj, ~, ~)
         
-        if strcmp(obj.data_controller.problem,'Fungus Dependent Granule Release')
+        if strcmp(obj.data_controller.application,'Fungus Dependent Granule Release')
              Granule_Fungus_Cells_Problem_Specific_settings(obj.data_controller);
-        elseif strcmp(obj.data_controller.problem,'TTO')
+        elseif strcmp(obj.data_controller.application,'TTO')
              TTO_Problem_Specific_settings(obj.data_controller);
-        elseif strcmp(obj.data_controller.problem,'CIDR')
+        elseif strcmp(obj.data_controller.application,'CIDR')
              CIDR_Problem_Specific_settings(obj.data_controller);
-        elseif strcmp(obj.data_controller.problem,'PR')
+        elseif strcmp(obj.data_controller.application,'PR')
              PR_Problem_Specific_settings(obj.data_controller); 
-        elseif strcmp(obj.data_controller.problem,'HL1')
+        elseif strcmp(obj.data_controller.application,'HL1')
              HL1_Problem_Specific_settings(obj.data_controller);                 
-        elseif strcmp(obj.data_controller.problem,'NucCyt')
+        elseif strcmp(obj.data_controller.application,'NucCyt')
              NucCyt_Problem_Specific_settings(obj.data_controller);                              
-        elseif strcmp(obj.data_controller.problem,'MPHG')
+        elseif strcmp(obj.data_controller.application,'MPHG')
              MPHG_Problem_Specific_settings(obj.data_controller);                                           
-        elseif strcmp(obj.data_controller.problem,'per_image_TCSPC_FLIM') || strcmp(obj.data_controller.problem,'per_image_TCSPC_FLIM_PHASOR') 
+        elseif strcmp(obj.data_controller.application,'per_image_TCSPC_FLIM') || strcmp(obj.data_controller.application,'per_image_TCSPC_FLIM_PHASOR') 
              per_image_TCSPC_FLIM_Problem_Specific_settings(obj.data_controller);                                                        
-        elseif strcmp(obj.data_controller.problem,'Image_Tiling')
+        elseif strcmp(obj.data_controller.application,'Image_Tiling')
              ImageTiling_Problem_Specific_settings(obj.data_controller);                                                                
-        elseif strcmp(obj.data_controller.problem,'AI_Powered_2D_SMLM_Reconstruction')
+        elseif strcmp(obj.data_controller.application,'AI_Powered_2D_SMLM_Reconstruction')
              AI_Powered_2d_SMLM_reconstruction_settings(obj.data_controller);  
-       elseif strcmp(obj.data_controller.problem,'OPT_ZFish_Embryo')
+       elseif strcmp(obj.data_controller.application,'OPT_ZFish_Embryo')
              OPT_ZFish_Embryo_Specific_settings(obj.data_controller);               
         end
                                 
@@ -479,8 +479,8 @@ classdef ALYtools_menu_controller < handle
              try
                 obj.data_controller.load_settings(filespec);
                 set(obj.menu_settings_microns_per_pixel,'Label',['Microns per pixel ' num2str(obj.data_controller.microns_per_pixel)]);
-                set(obj.menu_settings_problem,'Label',['Application = ' obj.data_controller.problem]);
-                set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.problem]);
+                set(obj.menu_settings_problem,'Label',['Application = ' obj.data_controller.application]);
+                set(obj.window,'Name',['ALYtools ' obj.version ' : ' obj.data_controller.application]);
              catch
                 errordlg('Error while trying to load settings file');
              end

@@ -30,7 +30,7 @@ function perform_AI_Powered_2d_SMLM_reconstruction_headless()
     bfUpgradeCheck;
 
     dc = ALYtools_data_controller(true,[]);
-    dc.problem = 'AI_Powered_2D_SMLM_Reconstruction';
+    dc.application = 'AI_Powered_2D_SMLM_Reconstruction';
     % NB - all settings should be properly specified in xml file
                    
     t_start = tic;

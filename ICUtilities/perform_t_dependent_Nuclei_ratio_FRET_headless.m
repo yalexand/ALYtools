@@ -15,7 +15,7 @@ end
 tic
 
 dc = ALYtools_data_controller(true,[]);
-dc.problem = 't_dependent_Nuclei_ratio_FRET';
+dc.application = 't_dependent_Nuclei_ratio_FRET';
 
 if isfile(full_settings_file_name)
     try

@@ -7,7 +7,7 @@ function load_segmentation(obj, ~, ~)
     num_seg_files = numel(files);                        
     seg_names_list = {files.name}; 
     
-            switch obj.problem
+            switch obj.application
 
                 case 'Fungus Dependent Granule Release'                    
                 case 'CIDR'                    

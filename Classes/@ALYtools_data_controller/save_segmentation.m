@@ -3,7 +3,7 @@ function save_segmentation(obj, ~, ~)
     directoryname = uigetdir(obj.DefaultDirectory);
     if isnumeric(directoryname) || isempty(directoryname), return, end;
     %
-            switch obj.problem
+            switch obj.application
 
                 case 'Fungus Dependent Granule Release'                    
                 case 'CIDR'                    

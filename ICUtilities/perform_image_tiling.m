@@ -7,7 +7,7 @@ end
 tic
 
 dc = ALYtools_data_controller(true,[]);
-dc.problem = 'Image_Tiling';
+dc.application = 'Image_Tiling';
 
 Extension = in_Extension; %'ome.tif';
 

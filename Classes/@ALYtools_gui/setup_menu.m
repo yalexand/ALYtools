@@ -25,7 +25,7 @@ function handles = setup_menu(obj,handles)
            
         
     microns_per_pixel = handles.data_controller.microns_per_pixel;
-    problem = handles.data_controller.problem;
+    problem = handles.data_controller.application;
         
     %================================= file
 

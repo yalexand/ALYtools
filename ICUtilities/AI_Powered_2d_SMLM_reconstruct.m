@@ -25,7 +25,7 @@ function AI_Powered_2d_SMLM_reconstruct(SRC_FILE_NAME,DST_DIR_NAME,settings_fnam
             java.lang.System.setProperty('javax.xml.transform.TransformerFactory', 'com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl');   
        
     dc = ALYtools_data_controller(true,[]);
-    dc.problem = 'AI_Powered_2D_SMLM_Reconstruction';
+    dc.application = 'AI_Powered_2D_SMLM_Reconstruction';
     % NB - all settings should be properly specified in xml file
     
     try

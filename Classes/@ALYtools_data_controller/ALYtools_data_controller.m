@@ -36,7 +36,7 @@ classdef ALYtools_data_controller < handle
         %
         imgdata = [];
         
-        problem = 'Fungus Dependent Granule Release';
+        application = 'Fungus Dependent Granule Release';
         
         scene_axes = [];
         
@@ -548,7 +548,7 @@ classdef ALYtools_data_controller < handle
             
             [sX,sY,sZ,sC,sT] = size(I);
             
-            switch obj.problem 
+            switch obj.application 
                  case 'Fungus Dependent Granule Release'
                      if sC~=3
                          errordlg('3 channel image is expected, can not load'),
@@ -649,7 +649,7 @@ classdef ALYtools_data_controller < handle
 
             [~,~,~,sC,sT] = size(obj.imgdata);
             
-            switch obj.problem
+            switch obj.application
                 
                 case 'Fungus Dependent Granule Release'
                     I = double(obj.imgdata);
@@ -808,7 +808,7 @@ classdef ALYtools_data_controller < handle
 
             if isempty(obj.imgdata), errordlg('no data!'), return, end;
             
-            switch obj.problem
+            switch obj.application
 
                 case 'Fungus Dependent Granule Release'                    
                      obj.save_Fungus_Dependent_Granule_Release_segmentation_setups;
@@ -942,7 +942,7 @@ classdef ALYtools_data_controller < handle
 
             if isempty(obj.imgdata), errordlg('no data!'), return, end
             
-            switch obj.problem
+            switch obj.application
                 
                 case 'Fungus Dependent Granule Release' 
                     [datas, captions, table_names, fig] = obj.analyze_Fungus_Dependent_Granule_Release;
@@ -982,7 +982,7 @@ classdef ALYtools_data_controller < handle
             timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');
             dirname = [obj.RootDirectory filesep ['ALYtools Analysis ' timestamp]];
             %%%%
-            if strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET') % special case where lot of data are saved
+            if strcmp(obj.application,'t_dependent_Nuclei_ratio_FRET') % special case where lot of data are saved
                 mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
                 fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dirname);                
             end
@@ -991,8 +991,8 @@ classdef ALYtools_data_controller < handle
                 mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
             end                   
                     %  
-                    if strcmp(obj.problem,'Fungus Dependent Granule Release') || ...
-                       strcmp(obj.problem,'SIFNE') % several tables
+                    if strcmp(obj.application,'Fungus Dependent Granule Release') || ...
+                       strcmp(obj.application,'SIFNE') % several tables
                         if obj.save_analysis_output_as_xls && ~isempty(datas)
                             xlsname = [dirname filesep obj.current_filename '_analysis_data.xls']; 
                             for k=1:numel(datas)
@@ -1003,18 +1003,18 @@ classdef ALYtools_data_controller < handle
                                 end
                             end                                        
                         end
-                    elseif strcmp(obj.problem,'CIDR') || strcmp(obj.problem,'TTO') ... 
-                            || strcmp(obj.problem,'PR') || strcmp(obj.problem,'NucCyt') ...
-                            || strcmp(obj.problem,'MPHG') || strcmp(obj.problem,'Experimental') ...
-                            || strcmp(obj.problem,'Sparks') || strcmp(obj.problem,'per_image_TCSPC_FLIM') ... 
-                            || strcmp(obj.problem,'Image_Tiling') ...
-                            || strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction') ...
-                            || strcmp(obj.problem,'OPT_ZFish_Embryo')                        
+                    elseif strcmp(obj.application,'CIDR') || strcmp(obj.application,'TTO') ... 
+                            || strcmp(obj.application,'PR') || strcmp(obj.application,'NucCyt') ...
+                            || strcmp(obj.application,'MPHG') || strcmp(obj.application,'Experimental') ...
+                            || strcmp(obj.application,'Sparks') || strcmp(obj.application,'per_image_TCSPC_FLIM') ... 
+                            || strcmp(obj.application,'Image_Tiling') ...
+                            || strcmp(obj.application,'AI_Powered_2D_SMLM_Reconstruction') ...
+                            || strcmp(obj.application,'OPT_ZFish_Embryo')                        
                         if obj.save_analysis_output_as_xls && ~isempty(datas)
                             if ~isempty(obj.current_filename)
-                                xlsname = [dirname filesep '_' obj.problem '_' obj.current_filename '_analysis_data.xls'];
+                                xlsname = [dirname filesep '_' obj.application '_' obj.current_filename '_analysis_data.xls'];
                             else
-                                xlsname = [dirname filesep obj.problem '_analysis_data.xls'];
+                                xlsname = [dirname filesep obj.application '_analysis_data.xls'];
                             end
                             if ispc
                                 try
@@ -1066,7 +1066,7 @@ classdef ALYtools_data_controller < handle
                     %
                     if obj.send_analysis_output_to_Icy && ~isempty(fig)
                         try
-                            if strcmp(obj.problem,'HL1')
+                            if strcmp(obj.application,'HL1')
                                 icy_imshow(fig.icyvol,[obj.current_filename ' - HL1 results']);                             
                                 icy_imshow(fig.rotvol,[obj.current_filename ' - HL1 dynamics, T = ' num2str(fig.T)]);
                                 if obj.HL1_create_LF_movie
@@ -1075,18 +1075,18 @@ classdef ALYtools_data_controller < handle
                                 if ~isempty(fig.isochrones)
                                     icy_imshow(fig.isochrones,[obj.current_filename ' - HL1 isochrones']);     
                                 end
-                            elseif strcmp(obj.problem,'per_image_TCSPC_FLIM')
+                            elseif strcmp(obj.application,'per_image_TCSPC_FLIM')
                                 % fig is many images so throw them all
 %                                 for k=1:numel(fig)
 %                                     badge = [ char(obj.M_filenames{k}) ' at ' timestamp];
 %                                     icy_imshow(fig{k},badge);
 %                                 end
-                            elseif strcmp(obj.problem,'OPT_ZFish_Embryo')
+                            elseif strcmp(obj.application,'OPT_ZFish_Embryo')
                                 for m=1:numel(fig)
                                     icy_imshow(fig{m},[obj.current_filename '_' num2str(m) '_analysis']);
                                 end                                
                             else
-                                icy_imshow(fig,[obj.current_filename ' ' obj.problem ' analysis']);
+                                icy_imshow(fig,[obj.current_filename ' ' obj.application ' analysis']);
                             end
                         catch
                             errordlg('error occurred when sending data to Icy - some visuals may be missing');
@@ -1094,7 +1094,7 @@ classdef ALYtools_data_controller < handle
                     end
                     %
                     if obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && isnumeric(fig)                   
-                                if strcmp(obj.problem,'HL1')
+                                if strcmp(obj.application,'HL1')
                                     ometiffsavename = [dirname filesep obj.current_filename '_analysis_output.OME.tiff'];
                                     bfsave(fig.icyvol,ometiffsavename,'Compression','LZW','dimensionOrder','XYCTZ');
                                     %
@@ -1114,7 +1114,7 @@ classdef ALYtools_data_controller < handle
                                     ometiffsavename = [dirname filesep obj.current_filename '_analysis_output.OME.tiff'];
                                     bfsave(fig,ometiffsavename,'Compression','LZW','BigTiff',true,'dimensionOrder','XYCTZ');
                                 end
-                    elseif obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && strcmp(obj.problem,'OPT_ZFish_Embryo')
+                    elseif obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && strcmp(obj.application,'OPT_ZFish_Embryo')
                         for m=1:numel(fig)
                             ometiffsavename = [dirname filesep obj.current_filename '_' num2str(m) '_analysis_output.OME.tiff'];
                             bfsave(fig{m},ometiffsavename,'Compression','LZW','dimensionOrder','XYCZT');                            
@@ -1126,14 +1126,14 @@ classdef ALYtools_data_controller < handle
             
             obj.DefaultDirectory = pathname;
             
-            switch obj.problem
+            switch obj.application
                             
                 case {'TTO' 'CIDR' 'PR' 'HL1' 'Experimental' 'NucCyt' 'MPHG' 'Sparks' ...
                         't_dependent_Nuclei_ratio_FRET','AI_Powered_2D_SMLM_Reconstruction','OPT_ZFish_Embryo','SIFNE'}
                     
                     dirname = [];           
                     cmnxlsname = [];
-                    if obj.save_analysis_output_as_OMEtiff || obj.save_analysis_output_as_xls || strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET')
+                    if obj.save_analysis_output_as_OMEtiff || obj.save_analysis_output_as_xls || strcmp(obj.application,'t_dependent_Nuclei_ratio_FRET')
                         timestamp = datestr(now,'yyyy-mm-dd HH-MM-SS');                        
                         mkdir(obj.RootDirectory,['ALYtools Analysis ' timestamp]);
                         dirname = [obj.RootDirectory filesep ['ALYtools Analysis ' timestamp]];
@@ -1160,30 +1160,30 @@ classdef ALYtools_data_controller < handle
                         %
                         success = true; % we are optimists
                         try
-                            if strcmp(obj.problem,'TTO')
+                            if strcmp(obj.application,'TTO')
                                 [data, caption, table_name, fig] = obj.analyze_TTO;
-                            elseif strcmp(obj.problem,'CIDR')
+                            elseif strcmp(obj.application,'CIDR')
                                 [data, caption, table_name, fig] = obj.analyze_CIDR;
-                            elseif strcmp(obj.problem,'PR')
+                            elseif strcmp(obj.application,'PR')
                                 [data, caption, table_name, fig] = obj.analyze_PR;
-                            elseif strcmp(obj.problem,'HL1')
+                            elseif strcmp(obj.application,'HL1')
                                 [data, caption, table_name, fig] = obj.analyze_HL1;
-                            elseif strcmp(obj.problem,'Experimental')
+                            elseif strcmp(obj.application,'Experimental')
                                 [data, caption, table_name, fig] = obj.analyze_Experimental;                                
-                            elseif strcmp(obj.problem,'NucCyt')
+                            elseif strcmp(obj.application,'NucCyt')
                                 [data, caption, table_name, fig] = obj.analyze_NC;
-                            elseif strcmp(obj.problem,'MPHG')
+                            elseif strcmp(obj.application,'MPHG')
                                 [data, caption, table_name, fig] = obj.analyze_MPHG;
-                            elseif strcmp(obj.problem,'Sparks')
+                            elseif strcmp(obj.application,'Sparks')
                                 [data, caption, table_name, fig] = obj.analyze_Sparks;
-                            elseif strcmp(obj.problem,'t_dependent_Nuclei_ratio_FRET')
+                            elseif strcmp(obj.application,'t_dependent_Nuclei_ratio_FRET')
                                 [data, caption, table_name, fig] = obj.analyze_t_dependent_Nuclei_ratio_FRET;
                                 fig = obj.t_dependent_Nuclei_ratio_FRET_postprocess(fig,dirname);
-                            elseif strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction')
+                            elseif strcmp(obj.application,'AI_Powered_2D_SMLM_Reconstruction')
                                 [data, caption, table_name, fig] = obj.analyze_AI_Powered_2D_SMLM_Reconstruction;
-                            elseif strcmp(obj.problem,'OPT_ZFish_Embryo')
+                            elseif strcmp(obj.application,'OPT_ZFish_Embryo')
                                 [data, caption, table_name, fig] = obj.analyze_OPT_ZFish_Embryo;
-                            elseif strcmp(obj.problem,'SIFNE')
+                            elseif strcmp(obj.application,'SIFNE')
                                 [data, caption, table_name, fig] = obj.analyze_SIFNE;                                
                             end
                         catch
@@ -1195,7 +1195,7 @@ classdef ALYtools_data_controller < handle
                             if obj.save_analysis_output_as_xls && ~isempty(data) && ~isempty(caption) && ~isempty(table_name)
                                 xlsname = [dirname filesep obj.current_filename '_analysis_data.xls'];                                
                                 %
-                                if strcmp(obj.problem,'SIFNE')                                    
+                                if strcmp(obj.application,'SIFNE')                                    
                                       for kk=1:numel(data)
                                             if ispc
                                                 xlswrite( xlsname,[caption{kk}; data{kk}],char(table_name{kk}) );
@@ -1262,7 +1262,7 @@ classdef ALYtools_data_controller < handle
                             %
                             if obj.send_analysis_output_to_Icy && ~isempty(fig)
                                 try
-                                    if strcmp(obj.problem,'HL1')
+                                    if strcmp(obj.application,'HL1')
                                         icy_imshow(fig.icyvol,[obj.current_filename ' - HL1 results']);                             
                                         icy_imshow(fig.rotvol,[obj.current_filename ' - HL1 dynamics, T = ' num2str(fig.T)]);
                                         if obj.HL1_create_LF_movie
@@ -1271,19 +1271,19 @@ classdef ALYtools_data_controller < handle
                                         if ~isempty(fig.isochrones)
                                             icy_imshow(fig.isochrones,[obj.current_filename ' - HL1 iscochrones']);
                                         end
-                                    elseif strcmp(obj.problem,'OPT_ZFish_Embryo')
+                                    elseif strcmp(obj.application,'OPT_ZFish_Embryo')
                                         for m=1:numel(fig)
                                             icy_imshow(fig{m},[obj.current_filename '_' num2str(m) '_analysis']);
                                         end                                                                        
                                     else % only 1 image is sent to Icy
-                                        icy_imshow(fig,[obj.current_filename ' ' obj.problem ' analysis']);
+                                        icy_imshow(fig,[obj.current_filename ' ' obj.application ' analysis']);
                                     end
                                 catch
                                 end;
                             end
                             %
                             if obj.save_analysis_output_as_OMEtiff  && ~isempty(fig)   
-                                if strcmp(obj.problem,'HL1')
+                                if strcmp(obj.application,'HL1')
                                     ometiffsavename = [dirname filesep obj.current_filename '_analysis_output.OME.tiff'];
                                     bfsave(fig.icyvol,ometiffsavename,'Compression','LZW','dimensionOrder','XYCTZ');
                                     %
@@ -1299,7 +1299,7 @@ classdef ALYtools_data_controller < handle
                                         bfsave(fig.isochrones,ometiffsavename_isochrones,'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');                                        
                                     end
                                     %
-                                elseif obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && strcmp(obj.problem,'OPT_ZFish_Embryo')
+                                elseif obj.save_analysis_output_as_OMEtiff  && ~isempty(fig) && strcmp(obj.application,'OPT_ZFish_Embryo')
                                     for m=1:numel(fig)
                                         ometiffsavename = [dirname filesep obj.current_filename '_' num2str(m) '_analysis_output.OME.tiff'];
                                         bfsave(fig{m},ometiffsavename,'Compression','LZW','dimensionOrder','XYCZT');                            
@@ -1315,8 +1315,8 @@ classdef ALYtools_data_controller < handle
                     end     
                     
                     if obj.save_analysis_output_as_xls && ~isempty(CMN) && ~isempty(caption) && ~isempty(table_name) && ... % common excel data file
-                            ~strcmp(obj.problem,'AI_Powered_2D_SMLM_Reconstruction') && ...
-                            ~strcmp(obj.problem,'ImageTiling')                            
+                            ~strcmp(obj.application,'AI_Powered_2D_SMLM_Reconstruction') && ...
+                            ~strcmp(obj.application,'ImageTiling')                            
                        if ispc
                         xlswrite( cmnxlsname,CMN );
                        else
@@ -1392,7 +1392,7 @@ classdef ALYtools_data_controller < handle
                             %
                             if obj.send_analysis_output_to_Icy
                                 try
-                                icy_imshow(fig,[obj.current_filename ' ' obj.problem ' analysis']);
+                                icy_imshow(fig,[obj.current_filename ' ' obj.application ' analysis']);
                                 catch
                                 end
                             end
@@ -2190,7 +2190,7 @@ classdef ALYtools_data_controller < handle
                     icyvol = reshape(obj.imgdata,[sX,sY,sC,sZ,sT]);
                    
                     %
-                    if strcmp(obj.problem,'OPT_ZFish_Embryo')
+                    if strcmp(obj.application,'OPT_ZFish_Embryo')
                         f=2;
                         sx=fix(sX/f);sy=fix(sY/f);sz=fix(sZ/f);
                         icyvol=zeros(sx,sy,sC,sz,1);
@@ -2221,7 +2221,7 @@ classdef ALYtools_data_controller < handle
             settings.ALYtools_always_on_top = obj.ALYtools_always_on_top;            
             %
             % problem
-            settings.problem = obj.problem;
+            settings.application = obj.application;
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% granules
             settings.g_scale = obj.g_scale;
             settings.g_threshold = obj.g_threshold;
@@ -2458,7 +2458,14 @@ classdef ALYtools_data_controller < handle
                 obj.ALYtools_always_on_top = settings.ALYtools_always_on_top;
                 %
                 % problem
-                obj.problem = settings.problem;                
+                try
+                    obj.application = settings.application;
+                catch
+                end
+                try
+                    obj.application = settings.problem;
+                catch
+                end                                
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% granules
                 obj.g_scale = settings.g_scale;
                 obj.g_threshold = settings.g_threshold;

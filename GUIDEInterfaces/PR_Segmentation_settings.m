@@ -246,7 +246,7 @@ data_controller = handles.data_controller;
          data_controller.PR_mode = handles.PR_mode;                   
          %
          send_adjustment_to_Icy = true;
-         if strcmp(data_controller.problem,'per_image_TCSPC_FLIM') % parasite
+         if strcmp(data_controller.application,'per_image_TCSPC_FLIM') % parasite
              data_controller.do_per_image_TCSPC_FLIM_Segmentation(send_adjustment_to_Icy);
          else % normal
             data_controller.do_PR_Segmentation(send_adjustment_to_Icy);

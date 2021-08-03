@@ -1,6 +1,6 @@
 % example function showing how to run analysis headless
 % NB - results appear by default in the "pwd" directory
-function ALYtools_headless(SRC_DIR,problem,ext)
+function ALYtools_headless(SRC_DIR,application,ext)
 
     if ~isdir(SRC_DIR)
         disp('input parameters are not valit directory names, can not continue');
@@ -15,7 +15,7 @@ function ALYtools_headless(SRC_DIR,problem,ext)
     bfUpgradeCheck;
 
     dc = ALYtools_data_controller([]);
-    dc.problem = problem;
+    dc.application = application;
                     
     for k=1:numel(dirdata)
             cur_name = dirdata(k).name;
