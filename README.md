@@ -6,16 +6,16 @@ Set of various Bioimaging analysis applications written in Matlab
 - [System Requirements](#system-requirements)
 - [Installation and Running](#installation-and-running)
 - [Demo](#demo)
-- [CIDR Problem](#cidr-problem)
+- [CIDR Application](#cidr-application)
 - [ic_OPTtools](#ic_opttools)
-- [OPT_ZFish_Embryo Problem](#opt_zfish_embryo_problem)
+- [OPT_ZFish_Embryo Application](#opt_zfish_embryo_application)
 - [MicroscopyImageFormatter](#microscopyimageformatter)
 - [License](#license)
 
 # Overview
 
 ALYtools widely uses Open Source code designed by other researchers. Original license sections are always kept. If third-party software is used in code supporting scientific publications, references are provided. 
-"ALYtools.m" is the "Dispatcher"-style GUI providing switching between different "Problems". Majority of "Problems" are short attempts or exercises aimed at analyzing Biomicroscopy data.
+"ALYtools.m" is the "Dispatcher"-style GUI providing switching between different "Applications". Majority of "Applications" are short attempts or exercises aimed at analyzing Biomicroscopy data.
 Several applications were reported in the literature, and some are mentioned below.
 
 # System Requirements
@@ -24,7 +24,7 @@ Several applications were reported in the literature, and some are mentioned bel
 ALYtools applications require at least Matlab 2018a and Toolboxes, and Icy (http://icy.bioimageanalysis.org/).
 They can be run under Windows 10, Mac OSX, and RedHat and CentOS linux.
 ## Hardware
-Hardware requirements depend on "Problem", but in most cases average desktop specs suffice. NVIDIA GPU may be optionally used.
+Hardware requirements depend on "Application", but in most cases average desktop specs suffice. NVIDIA GPU may be optionally used.
 
 # Installation and Running
 
@@ -33,9 +33,9 @@ When first running under Win10, ALYtools tries to find Icy directory; that can t
 
 # Demo
 
-"TestData" directory contains a collection of Demo images, - a folder per "Problem". Not all "Problems" are covered (some demand too many images).
+"TestData" directory contains a collection of Demo images, - a folder per "Application". Not all "Applications" are covered (some demand too many images).
 
-# CIDR Problem
+# CIDR Application
 
 CIDR ("collagen induced DDR1 redistribution") is the texture characterization method reported in the article
 https://www.nature.com/articles/s41598-019-53176-4
@@ -47,12 +47,12 @@ ic_OPTtools is the separate (not part of ALYtools) GUI-ed software for reconstru
 Also, it can deduce and optionally apply simple (translation) axial mismatch correction.
 
 
-# OPT_ZFish_Embryo Problem
+# OPT_ZFish_Embryo Application
 
 This application was used in the article "Smad4 controls signaling robustness and embryo morphogenesis by playing distinct roles in the Nodal and BMP pathways" by Guglielmi et al (in press). In order to run Demo version, - 
 ```
 - run Matlab file ALYtools.m
-- choose "Settings->Problem->OPT_ZFish_Embryo"
+- choose "Settings->Application->OPT_ZFish_Embryo"
 - use "File->Load Single" to load the multi-channel OPT image "..your_path\ALYtools\TestData\ZFish_Embryo\WT_2.ome.tif" 
 - click on Settings->Microns per pixel and enter 6.5
 - click "Analysis->Run Current"
