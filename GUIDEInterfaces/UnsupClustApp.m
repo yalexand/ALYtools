@@ -22,10 +22,10 @@ function varargout = UnsupClustApp(varargin)
 
 % Edit the above text to modify the response to help UnsupClustApp
 
-% Last Modified by GUIDE v2.5 28-Jul-2021 11:31:22
+% Last Modified by GUIDE v2.5 09-Aug-2021 18:33:34
 
 % Begin initialization code - DO NOT EDIT
-gui_Singleton = 0;
+gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @UnsupClustApp_OpeningFcn, ...
@@ -61,6 +61,7 @@ set(handles.number_of_clusters,'String',{'1','2','3','4','5','6','7','auto'});
 set(handles.embedding_method,'String',{'PCA cov','PCA corr','t-SNE'});
 set(handles.clustering_method,'String',{'k-means','k-medoids','hierarchical'});
 set(handles.clusters_view,'String',{'C1,C2','C1,C2,C3'});
+set(handles.manova1_coords,'Value',1);
 %
 set(handles.parameters_table,'CellEditCallback',@parameters_table_callback);
 set(handles.conditions_table,'CellEditCallback',@conditions_table_callback);
@@ -597,26 +598,47 @@ function visualize_feature_space(hObject,handles)
     AX = handles.clusters_axis;
     
     cla(AX,'reset');
-        
-    % CANONICAL COORDINATES
-    [~,~,stats] = manova1(data,handles.IDX);
-    %
+
     clusters_names = get(handles.clusters_names,'Data');
     LEGEND = [];
-    for k=1:handles.n_clusters
-        C_1 = stats.canon(handles.IDX==k,1);
-        C_2 = stats.canon(handles.IDX==k,2);
-        if 0 ~= numel(C_1)
-            if 1== get(handles.clusters_view,'Value')
-                    plot(AX,C_1,C_2,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);            
-            elseif 2== get(handles.clusters_view,'Value') && 3~=get(handles.embedding_method,'Value')
-                    C_3 = stats.canon(handles.IDX==k,3);
-                    plot3(AX,C_1,C_2,C_3,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);
+        
+    switch get(handles.manova1_coords,'Value')
+        case 1
+            % CANONICAL COORDINATES
+            [~,~,stats] = manova1(data,handles.IDX);
+            %
+            for k=1:handles.n_clusters
+                C_1 = stats.canon(handles.IDX==k,1);
+                C_2 = stats.canon(handles.IDX==k,2);
+                if 0 ~= numel(C_1)
+                    if 1== get(handles.clusters_view,'Value')
+                            plot(AX,C_1,C_2,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);            
+                    elseif 2== get(handles.clusters_view,'Value') && 3~=get(handles.embedding_method,'Value')
+                            C_3 = stats.canon(handles.IDX==k,3);
+                            plot3(AX,C_1,C_2,C_3,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);
+                    end
+                hold(AX,'on');
+                LEGEND = [LEGEND; {[num2str(k)  ' : '  clusters_names{k} ' : ' num2str(numel(C_1))]}];
+                end
             end
-        hold(AX,'on');
-        LEGEND = [LEGEND; {[num2str(k)  ' : '  clusters_names{k} ' : ' num2str(numel(C_1))]}];
-        end
+
+        case 0
+            for k=1:handles.n_clusters
+                C_1 = data(handles.IDX==k,1);
+                C_2 = data(handles.IDX==k,2);
+                if 0 ~= numel(C_1)
+                    if 1== get(handles.clusters_view,'Value')
+                            plot(AX,C_1,C_2,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);            
+                    elseif 2== get(handles.clusters_view,'Value') && 3~=get(handles.embedding_method,'Value')
+                            C_3 = data(handles.IDX==k,3);
+                            plot3(AX,C_1,C_2,C_3,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);
+                    end
+                hold(AX,'on');
+                LEGEND = [LEGEND; {[num2str(k)  ' : '  clusters_names{k} ' : ' num2str(numel(C_1))]}];
+                end
+            end    
     end
+
     hold(AX,'off')
 %         xticks(AX,[]);yticks(AX,[]);
 %         set(AX,'XColor','none');
@@ -785,3 +807,12 @@ for k=H:-1:1
        break;
     end
 end
+
+
+% --- Executes on button press in manova1_coords.
+function manova1_coords_Callback(hObject, eventdata, handles)
+% hObject    handle to manova1_coords (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of manova1_coords
