@@ -58,8 +58,8 @@ handles.output = hObject;
 handles.maiden_name = get(handles.figure1,'Name');
 
 set(handles.number_of_clusters,'String',{'1','2','3','4','5','6','7','auto'});
-set(handles.embedding_method,'String',{'PCA cov','PCA corr','t-SNE'});
-set(handles.clustering_method,'String',{'k-means','k-medoids','hierarchical'});
+set(handles.embedding_method,'String',{'PCA cov','PCA corr','t-SNE','none'});
+set(handles.clustering_method,'String',{'k-means','k-medoids','hierarchical','GMM'});
 set(handles.clusters_view,'String',{'C1,C2','C1,C2,C3'});
 set(handles.manova1_coords,'Value',1);
 %
@@ -532,6 +532,7 @@ function calculate_Callback(hObject, eventdata, handles)
             data = U(:,1:truncation);
             % only after PCA...
             data = tsne(data);
+        case 4 % none            
     end
         
     n_clusters = handles.n_clusters;
@@ -551,7 +552,11 @@ function calculate_Callback(hObject, eventdata, handles)
         case 3
             % HIERARCHICAL CLUSTERING
             Z = linkage(data,'ward');
-            IDX = cluster(Z,'Maxclust',n_clusters);
+            IDX = cluster(Z,'Maxclust',n_clusters);                       
+        case 4
+            options = statset('MaxIter',1000); 
+            gmfit = fitgmdist(data,n_clusters,'Options',options);
+            IDX = cluster(gmfit,data);            
     end
     %
     % reassign categories
