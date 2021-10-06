@@ -1427,7 +1427,7 @@ for c=1:sc
     taxis = (frms-1)*handles.min_per_frame/60;    
     semilogy(AXES,taxis,intensity,[colors{c} '.-'],taxis,intensity_fit,'k:','linewidth',3);
     hold(AXES,'on');
-    LEGEND = [LEGEND num2str(channel) 'fit'];
+    LEGEND = [LEGEND num2str(c) 'fit'];
     %
     handles.f_t{c} = f_t;
 end
@@ -1441,9 +1441,9 @@ if 1~= st
     intensity_fit = polyval(p,frms);
     handles.f_CMHF_t = intensity./intensity_fit; % one needs to divide by this after offset subtraction, to introduce correction    
     %
-    taxis = (frms-1)*handles.min_per_frame/60;
-    figure(22);semilogy(taxis,intensity,'b.-',taxis,intensity_fit,'r.-');grid(gca,'on'); 
-    figure(23);semilogy(taxis,intensity./intensity_fit,'k.-');grid(gca,'on'); 
+%     taxis = (frms-1)*handles.min_per_frame/60;
+%     figure(22);semilogy(taxis,intensity,'b.-',taxis,intensity_fit,'r.-');grid(gca,'on'); 
+%     figure(23);semilogy(taxis,intensity./intensity_fit,'k.-');grid(gca,'on'); 
       %
 else
     handles.f_CMHF_t = ones(100000,1);

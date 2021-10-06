@@ -681,7 +681,7 @@ classdef ALYtools_data_controller < handle
             %
             daspect(obj.scene_axes,[1 1 1]);
             set( obj.scene_axes, 'xticklabel', [], 'yticklabel', [] );
-            xlabel(obj.scene_axes,obj.current_filename);
+            xlabel(obj.scene_axes,strrep(obj.current_filename,'_','-'));
             
             if send_original_to_Icy && ~obj.per_image_TCSPC_FLIM_nonimaging 
                 obj.send_original_to_Icy;
