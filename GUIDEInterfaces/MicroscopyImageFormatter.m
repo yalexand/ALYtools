@@ -717,7 +717,7 @@ for k=1:numel(filenames)
         %
         guidata(hObject,handles);
         
-        show_image(handles,'corrected_img','image_corrected',filenames{k});
+        show_image(handles,'corrected_img','image_corrected',strrep(filenames{k},'_','-'));
         show_image(handles,'raw_img','image_raw',[]);
         
         guidata(hObject,handles);        
@@ -756,7 +756,7 @@ function load_ref_Callback(hObject, eventdata, handles)
         guidata(hObject,handles);
         %
         [~,FNAME,FEXT] = fileparts(full_path_to_file);
-        show_image(handles,'raw_img','image_raw',[FNAME FEXT]);
+        show_image(handles,'raw_img','image_raw',[strrep(FNAME,'_','-') FEXT]);
         show_image(handles,'raw_img','image_corrected',[]);
         
         get_correction_functions_from_ref(hObject,handles);
@@ -1289,7 +1289,7 @@ function setup_Optosplit_registration_Callback(hObject, eventdata, handles)
 % --------------------------------------------------------------------
 function derive_corrections_from_data_Callback(hObject, eventdata, handles)
 
-[filenames,pathname] = uigetfile('*.tif','Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
+[filenames,pathname] = uigetfile({'*.tif';'*.tiff'},'Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
 if isempty(filenames), return, end       
 if isnumeric(filenames) && 0==filenames, return, end
 
@@ -1370,10 +1370,12 @@ for channel = 1:sc
 %                 icy_imshow(prof,['derived from data ' num2str(channel)]);            
             handles.p_xy{channel} = prof;
 end
+
+st = size(img_acc{1},5);
 %
 % work on Eb and temporal dependencies
-f_data = zeros(size(img_acc,1),sc,size(img_acc{1},5));
-st = size(img_acc{1},5);
+f_data = zeros(size(img_acc,1),sc,st);
+CMHF_f_data = f_data;
 
     for k=1:size(img_acc,1)  
         k
@@ -1385,7 +1387,7 @@ st = size(img_acc{1},5);
             end
             %            
             u = img_acc{k};            
-            ds = 10;
+            ds = 20;
             rx = (xmax(c)-ds):(xmax(c)+ds);
             ry = (ymax(c)-ds):(ymax(c)+ds);    
             rx(rx<1)=[];
@@ -1395,9 +1397,12 @@ st = size(img_acc{1},5);
             parfor f=1:st
                 u_f = u(:,:,c,1,f);
                 sample = u_f(rx,ry,1);
-                f_data(k,c,f) = mean(sample(:)) - offset;
+                f_data(k,c,f) = min(sample(:)) - offset;
                 f
             end
+            smooth_time = 50;
+            CMHF_f_data(k,c,:) = f_data(k,c,:);
+            f_data(k,c,:) = imopen(f_data(k,c,:),strel('disk',smooth_time,0));
         end
     end
 
@@ -1426,6 +1431,24 @@ for c=1:sc
     %
     handles.f_t{c} = f_t;
 end
+
+%
+% define CMHF correction (Common Multiplicative HF)
+if 1~= st 
+    intensity=sum(squeeze(mean(CMHF_f_data,1)),1)';    
+    frms = (1:st)';
+    p = polyfit(frms,intensity,polynom_order);
+    intensity_fit = polyval(p,frms);
+    handles.f_CMHF_t = intensity./intensity_fit; % one needs to divide by this after offset subtraction, to introduce correction    
+    %
+    taxis = (frms-1)*handles.min_per_frame/60;
+    figure(22);semilogy(taxis,intensity,'b.-',taxis,intensity_fit,'r.-');grid(gca,'on'); 
+    figure(23);semilogy(taxis,intensity./intensity_fit,'k.-');grid(gca,'on'); 
+      %
+else
+    handles.f_CMHF_t = ones(100000,1);
+end
+%
 
 guidata(hObject,handles);
 

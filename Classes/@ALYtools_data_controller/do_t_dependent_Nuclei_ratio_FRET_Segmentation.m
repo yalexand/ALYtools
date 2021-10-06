@@ -40,18 +40,18 @@
                smooth_scale = ceil(4*fac);
                max_hole_size = smooth_scale^2;
                               
-               % mask zeros that may ocprv due to usage of warp transform
-               if 0~=sum(sum((0==ud)))
-                   z = imdilate(ud,strel('disk',S));
-                   s = z(0==ud);
-                   ud(0==ud) = min(s(:))/1.75;
-               end
-               if 0~=sum(sum((0==ua)))
-                   z = imdilate(ua,strel('disk',S));
-                   s = z(0==ua);
-                   ua(0==ua) = min(s(:))/1.75;
-               end               
-               % mask zeros that may ocprv due to usage of warp transform
+               % mask zeros that may occur due to usage of warp transform
+%                if 0~=sum(sum((0==ud)))
+%                    z = imdilate(ud,strel('disk',S));
+%                    s = z(0==ud);
+%                    ud(0==ud) = min(s(:))/1.75;
+%                end
+%                if 0~=sum(sum((0==ua)))
+%                    z = imdilate(ua,strel('disk',S));
+%                    s = z(0==ua);
+%                    ua(0==ua) = min(s(:))/1.75;
+%                end               
+               % mask zeros that may occur due to usage of warp transform
                                              
                K  = 2.5;
                % t = 0.055; % good for multiphoton data
