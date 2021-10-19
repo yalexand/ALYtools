@@ -795,7 +795,7 @@ function show_image(handles,what_to_show,where_to_show,TITLE)
             imshow(uint8(map(img,0,255)), 'Parent', ax);
 
             if ~isempty(TITLE)
-                title(ax,TITLE);
+                title(ax,strrep(TITLE,'_','-'));
             end
     
 %--------------------------------------------------------------
