@@ -22,7 +22,7 @@ function varargout = UnsupClustApp(varargin)
 
 % Edit the above text to modify the response to help UnsupClustApp
 
-% Last Modified by GUIDE v2.5 09-Aug-2021 18:33:34
+% Last Modified by GUIDE v2.5 25-Oct-2021 17:12:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -62,6 +62,7 @@ set(handles.embedding_method,'String',{'PCA cov','PCA corr','t-SNE','none'});
 set(handles.clustering_method,'String',{'k-means','k-medoids','hierarchical','GMM'});
 set(handles.clusters_view,'String',{'C1,C2','C1,C2,C3'});
 set(handles.manova1_coords,'Value',1);
+set(handles.histo_clusters_pool,'Value',0);
 %
 set(handles.parameters_table,'CellEditCallback',@parameters_table_callback);
 set(handles.conditions_table,'CellEditCallback',@conditions_table_callback);
@@ -504,95 +505,101 @@ function calculate_Callback(hObject, eventdata, handles)
     data = handles.acting_data;
     if isempty(data), return, end
 
-    embedding_method = get(handles.embedding_method,'Value');
-    %
-    switch embedding_method 
-        case 1 % PCA
-            % no truncation
-            truncation = size(data,2);
-            V = cov(data);
-            COEFF = pcacov(V);
-            U = data*COEFF;
-            data = U(:,1:truncation);
-        case 2
-            % no truncation
-            truncation = size(data,2);            
-            V = cov(data);
-            SD = sqrt(diag(V));
-            R = V./(SD*SD');
-            COEFF = pcacov(R);                                    
-            U = data*COEFF;
-            data = U(:,1:truncation);
-        case 3
-            % no truncation
-            truncation = size(data,2);
-            V = cov(data);
-            COEFF = pcacov(V);
-            U = data*COEFF;
-            data = U(:,1:truncation);
-            % only after PCA...
-            data = tsne(data);
-        case 4 % none            
-    end
-        
-    n_clusters = handles.n_clusters;
-
-    switch get(handles.clustering_method,'Value')
-        case 1
-            % KMEANS
-            IDX = kmeans(data,n_clusters);
-            % IDX = kmeans(data,n_clusters,'OnlinePhase','on','Distance','correlation');
-            % IDX = kmeans(data,n_clusters,'Replicates',10);
-            % IDX = kmeans(data,n_clusters,'Start','cluster');
-            % IDX = kmeans(data,n_clusters,'OnlinePhase','on','Distance','correlation','Start','cluster','Replicates',10);        
-        case 2
-            % KMEDOIDS
-            IDX = kmedoids(data,n_clusters);
-            %IDX = kmedoids(data,n_clusters,'Algorithm','clara');        
-        case 3
-            % HIERARCHICAL CLUSTERING
-            Z = linkage(data,'ward');
-            IDX = cluster(Z,'Maxclust',n_clusters);                       
-        case 4
-            options = statset('MaxIter',1000); 
-            gmfit = fitgmdist(data,n_clusters,'Options',options);
-            IDX = cluster(gmfit,data);            
-    end
-    %
-    % reassign categories
-    numdata = zeros(1,n_clusters);
-    for k=1:n_clusters
-        numdata(k)=sum(IDX==k);
-    end
-    sorted_numdata = sort(numdata,'descend');
-
-    lut = zeros(1,n_clusters);
-    for k=1:n_clusters
-        for m=1:n_clusters
-            if numdata(k)==sorted_numdata(m)
-                break;
-            end
+    try
+        embedding_method = get(handles.embedding_method,'Value');
+        %
+        switch embedding_method 
+            case 1 % PCA
+                % no truncation
+                truncation = size(data,2);
+                V = cov(data);
+                COEFF = pcacov(V);
+                U = data*COEFF;
+                data = U(:,1:truncation);
+            case 2
+                % no truncation
+                truncation = size(data,2);            
+                V = cov(data);
+                SD = sqrt(diag(V));
+                R = V./(SD*SD');
+                COEFF = pcacov(R);                                    
+                U = data*COEFF;
+                data = U(:,1:truncation);
+            case 3
+                % no truncation
+                truncation = size(data,2);
+                V = cov(data);
+                COEFF = pcacov(V);
+                U = data*COEFF;
+                data = U(:,1:truncation);
+                % only after PCA...
+                data = tsne(data);
+            case 4 % none            
         end
-        lut(k)=m;
+
+        n_clusters = handles.n_clusters;
+
+        switch get(handles.clustering_method,'Value')
+            case 1
+                % KMEANS
+                IDX = kmeans(data,n_clusters);
+                % IDX = kmeans(data,n_clusters,'OnlinePhase','on','Distance','correlation');
+                % IDX = kmeans(data,n_clusters,'Replicates',10);
+                % IDX = kmeans(data,n_clusters,'Start','cluster');
+                % IDX = kmeans(data,n_clusters,'OnlinePhase','on','Distance','correlation','Start','cluster','Replicates',10);        
+            case 2
+                % KMEDOIDS
+                IDX = kmedoids(data,n_clusters);
+                %IDX = kmedoids(data,n_clusters,'Algorithm','clara');        
+            case 3
+                % HIERARCHICAL CLUSTERING
+                Z = linkage(data,'ward');
+                IDX = cluster(Z,'Maxclust',n_clusters);                       
+            case 4
+                options = statset('MaxIter',1000); 
+                gmfit = fitgmdist(data,n_clusters,'Options',options);
+                IDX = cluster(gmfit,data);            
+        end
+        %
+        % reassign categories
+        numdata = zeros(1,n_clusters);
+        for k=1:n_clusters
+            numdata(k)=sum(IDX==k);
+        end
+        sorted_numdata = sort(numdata,'descend');
+
+        lut = zeros(1,n_clusters);
+        for k=1:n_clusters
+            for m=1:n_clusters
+                if numdata(k)==sorted_numdata(m)
+                    break;
+                end
+            end
+            lut(k)=m;
+        end
+        %
+        for k=1:numel(IDX)
+             IDX(k) = lut(IDX(k));
+        end
+        %
+        handles.transformed_data = data;
+        handles.IDX = IDX;
+
+        guidata(hObject, handles);    
+        %
+        visualize_feature_space(hObject,handles);
+        %
+        visualize_histograms(hObject,handles);
+        %
+        visualize_cluster_condition_distribution(hObject,handles);
+        %
+        guidata(hObject, handles);
+        uiresume(handles.figure1); 
+        %
+    catch err
+        display(err.message);
+        errordlg(err.message,'calculate_Callback');
     end
-    %
-    for k=1:numel(IDX)
-         IDX(k) = lut(IDX(k));
-    end
-    %
-    handles.transformed_data = data;
-    handles.IDX = IDX;
-    
-    guidata(hObject, handles);    
-    %
-    visualize_feature_space(hObject,handles);
-    %
-    visualize_histograms(hObject,handles);
-    %
-    visualize_cluster_condition_distribution(hObject,handles);
-    %
-    guidata(hObject, handles);
-    uiresume(handles.figure1);     
 
 % ------------------------------------------------------------------------    
 function visualize_feature_space(hObject,handles)
@@ -607,24 +614,28 @@ function visualize_feature_space(hObject,handles)
     clusters_names = get(handles.clusters_names,'Data');
     LEGEND = [];
         
-    switch get(handles.manova1_coords,'Value')
+    switch get(handles.manova1_coords,'Value')        
         case 1
-            % CANONICAL COORDINATES
-            [~,~,stats] = manova1(data,handles.IDX);
-            %
-            for k=1:handles.n_clusters
-                C_1 = stats.canon(handles.IDX==k,1);
-                C_2 = stats.canon(handles.IDX==k,2);
-                if 0 ~= numel(C_1)
-                    if 1== get(handles.clusters_view,'Value')
-                            plot(AX,C_1,C_2,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);            
-                    elseif 2== get(handles.clusters_view,'Value') && 3~=get(handles.embedding_method,'Value')
-                            C_3 = stats.canon(handles.IDX==k,3);
-                            plot3(AX,C_1,C_2,C_3,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);
-                    end
-                hold(AX,'on');
-                LEGEND = [LEGEND; {[num2str(k)  ' : '  clusters_names{k} ' : ' num2str(numel(C_1))]}];
+            try
+                % CANONICAL COORDINATES
+                [~,~,stats] = manova1(data,handles.IDX);
+                %
+                for k=1:handles.n_clusters
+                    C_1 = stats.canon(handles.IDX==k,1);
+                    C_2 = stats.canon(handles.IDX==k,2);
+                    if 0 ~= numel(C_1)
+                        if 1== get(handles.clusters_view,'Value')
+                                plot(AX,C_1,C_2,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);            
+                        elseif 2== get(handles.clusters_view,'Value') && 3~=get(handles.embedding_method,'Value')
+                                C_3 = stats.canon(handles.IDX==k,3);
+                                plot3(AX,C_1,C_2,C_3,'color',handles.colors(k,:),'marker',handles.markers{k},'linestyle','none','markersize',4,'linewidth',2);
+                        end
+                    hold(AX,'on');
+                    LEGEND = [LEGEND; {[num2str(k)  ' : '  clusters_names{k} ' : ' num2str(numel(C_1))]}];
                 end
+            end
+            catch err
+                disp(err.message);
             end
 
         case 0
@@ -667,17 +678,27 @@ function visualize_histograms(hObject,handles)
     
     AX = handles.histograms;
     
+    if ~get(handles.histo_clusters_pool,'Value')
             for k=1:handles.n_clusters
                 X = handles.acting_data(k==handles.IDX,histo_param_1_index);
-                histogram(AX,X,'facecolor',handles.colors(k,:),'facealpha',.5,'edgecolor','none','normalization','probability');                
+                histogram(AX,X,'facecolor',handles.colors(k,:),'facealpha',.5,'edgecolor','none','normalization','pdf');
                 %[k length(sample)]
                 hold(AX,'on');
             end
             hold(AX,'off');
-            ylabel(AX,'probability');
+            ylabel(AX,'pdf');
             xlabel(AX,acting_parameters{histo_param_1_index});
             grid(AX,'on');
             legend(AX,get(handles.clusters_names,'Data'));
+    else % hsow pooled histo
+            X = handles.acting_data(1:length(handles.IDX),histo_param_1_index);
+            histogram(AX,X,'facecolor','k','facealpha',.5,'edgecolor','none','normalization','pdf');                
+            ylabel(AX,'pdf');
+            xlabel(AX,acting_parameters{histo_param_1_index});
+            grid(AX,'on');
+            legend(AX,'all clusters');        
+    end
+            
                 if get(handles.histo_logscale,'Value')
                     set(AX,'YScale','log');
                 end                 
@@ -821,3 +842,8 @@ function manova1_coords_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of manova1_coords
+
+
+% --- Executes on button press in histo_clusters_pool.
+function histo_clusters_pool_Callback(hObject, eventdata, handles)
+visualize_histograms(hObject,handles);
