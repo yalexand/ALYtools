@@ -64,6 +64,11 @@ Expected run time for OPT_ZFish_Embryo demo on “normal” desktop computer is 3 mi
 # MicroscopyImageFormatter
 
 MicroscopyImageFormatter is the application providing the model-based intensity artefacts correction in multi-channel fluorescence images acquired with time-lapse in Widefield mode. 
+To start from ALYtools folder, one needs to set path first:
+```
+>> addpath_ALYtools
+>> MicroscopyImageFormatter
+```
 Detailed user guide will be added soon.
 
 # License
