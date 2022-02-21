@@ -116,11 +116,23 @@ handles.p_xy = cell(0);
 handles.f_t = cell(0);
 handles.Eb = cell(0);
 
-handles.model_icon = cell(4,1);
+models_string = {'additive (1)', ...
+'multiplicative (1)', ...
+'additive (2)', ...
+'multiplicative (2)', ...
+'unchanged'};
+set(handles.model_1,'String',models_string);
+set(handles.model_2,'String',models_string);
+set(handles.model_3,'String',models_string);
+set(handles.model_4,'String',models_string);
+set(handles.model_5,'String',models_string);
+
+handles.model_icon = cell(5,1);
 [~,~,handles.model_icon{1}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model1.tif']);
 [~,~,handles.model_icon{2}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model2.tif']);
 [~,~,handles.model_icon{3}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model3.tif']);
 [~,~,handles.model_icon{4}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model4.tif']);
+[~,~,handles.model_icon{5}] = bfopen_v([pwd filesep 'GUIDEInterfaces' filesep 'Formatter_model5.tif']);
 
 imshow(handles.model_icon{1}, 'Parent', handles.icon_1);
 imshow(handles.model_icon{1}, 'Parent', handles.icon_2);
@@ -564,6 +576,8 @@ for c = 1:n_channels
                 EO = I/f_t(f) - Eb*p_xy;                
             case 'multiplicative (2)'   
                 EO = I./( f_t(f)*p_xy ) - Eb;
+            case 'unchanged'
+                EO = I*f_CMHF_t(f);
         end
         EO(EO<0)=0;
         handles.corrected_img(:,:,c,1,f) = EO;
@@ -701,6 +715,8 @@ for k=1:numel(filenames)
                         EO = I/f_t(f) - Eb*p_xy;                
                     case 'multiplicative (2)'   
                         EO = I./( f_t(f)*p_xy ) - Eb;
+                    case 'unchanged'
+                        EO = I*f_CMHF_t(f);                        
                 end
                 EO(EO<0)=0;
                 handles.corrected_img(:,:,c,1,f) = EO;
@@ -1501,6 +1517,8 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                                         EO = I/f_t(f) - Eb*p_xy;                
                                     case 4 % 'multiplicative (2)'   
                                         EO = I./( f_t(f)*p_xy ) - Eb;
+                                    case 5 % 'unchanged'   
+                                        EO = I*f_CMHF_t(f);
                                 end
                                 EO(EO<0)=0;
                                 corrimg(:,:,c,1,f) = EO;
