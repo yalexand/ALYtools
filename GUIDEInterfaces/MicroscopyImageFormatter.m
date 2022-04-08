@@ -740,7 +740,12 @@ for k=1:numel(filenames)
         if ~contains(savename,'ome')
             savename = strrep(savename,'.tif','.ome.tif'); % aaaaa....
         end
-        bfsave(uint16(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
+        %
+        if isempty(handles.W)
+            bfsave(uint16(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
+        else
+            bfsave(single(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');            
+        end
 end
 disp([pathname ' - completed!']);
 
@@ -2038,7 +2043,7 @@ function img_corr = introduce_cross_talk_corrections(img,handles)
                 img_corr(x,y,:,1,f) = v_corr;
             end
         end
-        x
+        %x
     end
     toc/60
 %--------------------------------------------------------------
