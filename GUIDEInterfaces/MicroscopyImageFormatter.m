@@ -1995,7 +1995,21 @@ set(handles.unset_spectral_cross_talk_correction,'Enable','off');
 set(handles.unset_spectral_cross_talk_correction,'Visible','off');
 guidata(hObject,handles);
 
-% --------------------------------------------------------------------
+%----------------------------------------------------------------
+%{
+g(k) - is the vector of g-factors, defiend by measuring the reference with known spectrum.
+For the k-th spectral channel, the g(k) is calculated 
+as the ratio of theoretical intensity (expected in k-th channels for this reference), 
+to the experimentally measured in this channel when imaging reference spectrum
+
+W is the cross-talk matrix.
+Columns of W are indexing fluorophores. 
+The k-th column W(k,:) contains relative intensity contributions of k-th fluorophore 
+to measurement channels (indexed by rows). 
+For any column of matrix W, sum of elements equals to 1.
+In applications, intensity contributions used to compose W, should be measured by taking into
+account g-factors
+%}
 function img_corr = introduce_cross_talk_corrections(img,handles)
     W = handles.W;
     g = handles.g;
@@ -2011,11 +2025,15 @@ function img_corr = introduce_cross_talk_corrections(img,handles)
     %
     Winv = eye(sc)/W;
     
+    g = diag(g);
+    g = g/trace(g);
+    
     tic
-    parfor x=1:sx
+    parfor x=1:sx    
         for y=1:sy
             for f=1:st
-                v_corr = Winv*( squeeze(img(x,y,:,1,f)).*g ) ;
+                distorted = squeeze(img(x,y,:,1,f));
+                v_corr = Winv*g*distorted;
                 v_corr(v_corr<0)=0;
                 img_corr(x,y,:,1,f) = v_corr;
             end
@@ -2023,20 +2041,6 @@ function img_corr = introduce_cross_talk_corrections(img,handles)
         x
     end
     toc/60
-
-% this is about 1.5 times slower :(
-%     tic
-%     img_corr2 = img;
-%     for row=1:sc
-%         img_row = zeros(sx,sy,1,1,st);
-%         parfor col=1:sc
-%             img_row = img_row + img(:,:,col,1,:)*g(col)*Winv(row,col);
-%         end
-%         img_corr2(:,:,row,1,:) = img_row;
-%     end
-%     toc/60
-    
-    
 %--------------------------------------------------------------
 function [roix,roiy1,roiy2,tform,droi_x,droi_y,tform3,roi3x,roi3y] = get_Optosplit_3_registration_parameters(full_path_to_file,handles)
 
