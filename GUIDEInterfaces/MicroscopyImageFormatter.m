@@ -706,6 +706,7 @@ for k=1:numel(filenames)
             for f = 1:st
                 I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset(c);
                 I = I/f_CMHF_t(f);
+                unchanged_model_is_present = false; % save "single" in this case
                 switch model
                     case 'additive (1)'         % f(t) acts only on background
                         EO = I - Eb*f_t(f)*p_xy;
@@ -716,7 +717,8 @@ for k=1:numel(filenames)
                     case 'multiplicative (2)'   
                         EO = I./( f_t(f)*p_xy ) - Eb;
                     case 'unchanged'
-                        EO = I*f_CMHF_t(f);                        
+                        EO = I*f_CMHF_t(f);
+                        unchanged_model_is_present = true;                        
                 end
                 EO(EO<0)=0;
                 handles.corrected_img(:,:,c,1,f) = EO;
@@ -741,7 +743,7 @@ for k=1:numel(filenames)
             savename = strrep(savename,'.tif','.ome.tif'); % aaaaa....
         end
         %
-        if isempty(handles.W)
+        if isempty(handles.W) && ~unchanged_model_is_present % can save uint16 if all channels seem standard
             bfsave(uint16(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');
         else
             bfsave(single(handles.corrected_img),[get(handles.dst_dir,'String') filesep savename],'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');            
