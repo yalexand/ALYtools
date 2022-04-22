@@ -37,8 +37,7 @@ When first running under Win10, ALYtools tries to find Icy directory; that can t
 
 # CIDR Application
 
-CIDR ("collagen induced DDR1 redistribution") is the texture characterization method reported in the article
-https://www.nature.com/articles/s41598-019-53176-4
+CIDR ("collagen induced DDR1 redistribution") is the texture characterization method reported in [this article](https://www.nature.com/articles/s41598-019-53176-4).
 Briefly, the algorithm counts average number of zero-crossings along random line profile on a segmented "patch" on the LF-subtracted texture image. "TestData\CIDR" folder contains 2 images with different textures (rough and fine) acquired with SIM microscopy. Demo is run with default ALYtools options.
 
 # ic_OPTtools
@@ -49,7 +48,7 @@ Also, it can deduce and optionally apply simple (translation) axial mismatch cor
 
 # OPT_ZFish_Embryo Application
 
-This application was used in the article "Smad4 controls signaling robustness and embryo morphogenesis by playing distinct roles in the Nodal and BMP pathways" by Guglielmi et al (in press). In order to run Demo version, - 
+The application analyzes 3D embryo morphology by OPT data. It was reported in [this article](https://doi.org/10.1038/s41467-021-26486-3). In order to run Demo version, - 
 ```
 - run Matlab file ALYtools.m
 - choose "Settings->Application->OPT_ZFish_Embryo"
@@ -63,7 +62,7 @@ Expected run time for OPT_ZFish_Embryo demo on “normal” desktop computer is 3 mi
 
 # MicroscopyImageFormatter
 
-[MicroscopyImageFormatter](https://doi.org/10.25418/crick.19626810.v1) is the application providing the model-based intensity artefacts correction in multi-channel fluorescence images acquired with time-lapse in Widefield mode. 
+This application provides model-based intensity artefacts correction in multi-channel fluorescence images acquired with time-lapse in Widefield mode. It was reported in [this work](https://doi.org/10.25418/crick.19626810.v1)  
 To start from ALYtools folder, one needs to set path first:
 ```
 >> addpath_ALYtools
