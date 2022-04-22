@@ -62,7 +62,7 @@ Expected run time for OPT_ZFish_Embryo demo on “normal” desktop computer is 3 mi
 
 # MicroscopyImageFormatter
 
-This application provides model-based intensity artefacts correction in multi-channel fluorescence images acquired with time-lapse in Widefield mode. It was reported in [this work](https://doi.org/10.25418/crick.19626810.v1)  
+This application provides model-based intensity artefacts correction in multi-channel fluorescence images acquired with time-lapse in Widefield mode. It was reported in [this work](https://doi.org/10.25418/crick.19626810.v1).  
 To start from ALYtools folder, one needs to set path first:
 ```
 >> addpath_ALYtools
