@@ -117,7 +117,7 @@ TITLE = strrep([obj.current_filename ' #' num2str(m)],'_',' ');
                 EquivDiameter_k = stats_embr.EquivDiameter(k);
                 Solidity_k = stats_embr.Solidity(k);        
                 %
-                L = stats_embr.PrincipalAxisLength;
+                L = stats_embr.PrincipalAxisLength(k,:);
                 PrincipalAxisLengthRatio_1_k = L(2)/L(1);
                 PrincipalAxisLengthRatio_2_k = L(3)/L(1);
                 %
