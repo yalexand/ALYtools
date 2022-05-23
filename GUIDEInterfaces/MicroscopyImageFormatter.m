@@ -479,7 +479,7 @@ end
 
 function offset_1_edit_Callback(hObject, eventdata, handles)
     v = str2double(get(hObject,'String'));
-    if ~isempty(v) && v>0 
+    if ~isempty(v) && v>=0 
         handles.offset(1) = v;        
     else
         set(hObject,'String',num2str(handles.offset(1)));
@@ -565,7 +565,8 @@ for c = 1:n_channels
             %
     hw = waitbar(0,['introducing corrections to channel ' num2str(c)]);
     for f = 1:st
-        I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset(c);
+        I_unchanged = squeeze(handles.raw_img(:,:,c,1,f));
+        I = I_unchanged - handles.offset(c);
         I = I/f_CMHF_t(f);
         switch model
             case 'additive (1)'         % f(t) acts only on background
@@ -577,9 +578,9 @@ for c = 1:n_channels
             case 'multiplicative (2)'   
                 EO = I./( f_t(f)*p_xy ) - Eb;
             case 'unchanged'
-                EO = I*f_CMHF_t(f);
+                EO = I_unchanged;
         end
-        EO(EO<0)=0;
+        if ~strcmp(model,'unchanged'), EO(EO<0)=0; end
         handles.corrected_img(:,:,c,1,f) = EO;
         if ~isempty(hw), waitbar(f/st,hw); end
     end
@@ -704,7 +705,8 @@ for k=1:numel(filenames)
             %
             hw = waitbar(0,['introducing corrections to channel ' num2str(c)]);
             for f = 1:st
-                I = squeeze(handles.raw_img(:,:,c,1,f)) - handles.offset(c);
+                I_unchanged = squeeze(handles.raw_img(:,:,c,1,f));
+                I = I_unchanged - handles.offset(c);
                 I = I/f_CMHF_t(f);
                 unchanged_model_is_present = false; % save "single" in this case
                 switch model
@@ -717,10 +719,10 @@ for k=1:numel(filenames)
                     case 'multiplicative (2)'   
                         EO = I./( f_t(f)*p_xy ) - Eb;
                     case 'unchanged'
-                        EO = I*f_CMHF_t(f);
+                        EO = I_unchanged;
                         unchanged_model_is_present = true;                        
                 end
-                EO(EO<0)=0;
+                if ~strcmp(model,'unchanged'), EO(EO<0)=0; end
                 handles.corrected_img(:,:,c,1,f) = EO;
                 if ~isempty(hw), waitbar(f/st,hw); end
             end
@@ -1512,7 +1514,8 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                             f_t = handles.f_t{c};
                             %
                             parfor f = 1:st
-                                I = squeeze(in(:,:,c,1,f)) - offset;
+                                I_unchanged = squeeze(in(:,:,c,1,f));
+                                I = I_unchanged - offset;
                                 I = I/f_CMHF_t(f);
                                 EO = [];
                                 switch m
@@ -1525,9 +1528,9 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                                     case 4 % 'multiplicative (2)'   
                                         EO = I./( f_t(f)*p_xy ) - Eb;
                                     case 5 % 'unchanged'   
-                                        EO = I*f_CMHF_t(f);
+                                        EO = I_unchanged;
                                 end
-                                EO(EO<0)=0;
+                                if strcmp(model,'unchanged'), EO(EO<0)=0; end
                                 corrimg(:,:,c,1,f) = EO;
                             end
                     end 
@@ -2250,7 +2253,7 @@ end
 
 function offset_2_edit_Callback(hObject, eventdata, handles)
     v = str2double(get(hObject,'String'));
-    if ~isempty(v) && v>0 
+    if ~isempty(v) && v>=0 
         handles.offset(2) = v;
     else
         set(hObject,'String',num2str(handles.offset(2)));
@@ -2272,7 +2275,7 @@ end
 
 function offset_3_edit_Callback(hObject, eventdata, handles)
     v = str2double(get(hObject,'String'));
-    if ~isempty(v) && v>0 
+    if ~isempty(v) && v>=0 
         handles.offset(3) = v;        
     else
         set(hObject,'String',num2str(handles.offset(3)));
@@ -2297,7 +2300,7 @@ end
 
 function offset_4_edit_Callback(hObject, eventdata, handles)
     v = str2double(get(hObject,'String'));
-    if ~isempty(v) && v>0 
+    if ~isempty(v) && v>=0 
         handles.offset(4) = v;        
     else
         set(hObject,'String',num2str(handles.offset(4)));
@@ -2320,7 +2323,7 @@ end
 
 function offset_5_edit_Callback(hObject, eventdata, handles)
     v = str2double(get(hObject,'String'));
-    if ~isempty(v) && v>0 
+    if ~isempty(v) && v>=0 
         handles.offset(5) = v;
     else
         set(hObject,'String',num2str(handles.offset(5)));
