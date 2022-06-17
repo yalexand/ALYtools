@@ -1377,7 +1377,22 @@ for channel = 1:sc
             if get(handles.clean_reference,'Value')                
                 prof = gsderiv(prof,smooth_scale,0);
             end
-            [xmax(channel),ymax(channel)] = find(prof==max(prof(:)));
+            
+            %[xmax(channel),ymax(channel)] = find(prof==max(prof(:)));
+            maxval = max(prof(:));
+            found = false;
+            for dx=1:sx
+                if found, break, end
+                for dy=1:sy
+                    if maxval==prof(dx,dy)
+                        xmax(channel)=dx;
+                        ymax(channel)=dy;
+                        found = true;
+                        break
+                    end
+                end
+            end
+            %
             prof = prof/prof(xmax(1),ymax(1));            
 %                 icy_imshow(handles.p_xy{channel},['reference ' num2str(channel)]);
 %                 icy_imshow(prof,['derived from data ' num2str(channel)]);            
