@@ -995,19 +995,21 @@ for channel = 1:n_channels
     hold(AXES,'on');
     LEGEND = [LEGEND num2str(channel) 'fit'];
 
-    % calculate normalized profile
-    prof = squeeze(sum(ref(:,:,1:st),3)) - offset;    
+    prof = zeros(SX,SY); 
+    parfor f=1:st
+        prof = prof + (ref(:,:,f) - offset)/f_t(f);
+    end
     % smooth
     smooth_scale = 3;    
     prof = imopen(prof,strel('disk',smooth_scale,0));
+    %
     if get(handles.clean_reference,'Value')
         prof = gsderiv(prof,smooth_scale,0);
-    end
-
+    end       
     [xmax,ymax] = find(prof==max(prof(:)));
     prof = prof/prof(xmax(1),ymax(1));
     %icy_imshow(prof,num2str(channel));
-    
+        
     % calculate Eb    
     ds = 10;
     rx = (xmax-ds):(xmax+ds);
@@ -1015,7 +1017,7 @@ for channel = 1:n_channels
     rx(rx<1)=[];    
     ry(ry<1)=[];           
     %
-    sample = ref(rx,ry,1:3);
+    sample = ref(rx,ry,1:10);
     Eb = mean(sample(:)) - offset;
            
     handles.f_t{channel} = f_t;
