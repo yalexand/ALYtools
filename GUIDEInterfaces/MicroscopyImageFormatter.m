@@ -1017,7 +1017,7 @@ for channel = 1:n_channels
     rx(rx<1)=[];    
     ry(ry<1)=[]; 
     rx(rx>SX)=[];    
-    ry(ry>SY1)=[]; 
+    ry(ry>SY)=[]; 
     %
     sample = ref(rx,ry,1:10);
     Eb = mean(sample(:)) - offset;
