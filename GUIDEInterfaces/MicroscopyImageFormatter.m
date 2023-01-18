@@ -199,7 +199,7 @@ end
 
 function min_per_frame_edit_Callback(hObject, eventdata, handles)
     v = str2double(get(hObject,'String'));
-    if ~isempty(v) && v>0 
+    if ~isempty(v) && v>0   
         handles.min_per_frame = v;        
     else
         set(hObject,'String',num2str(handles.min_per_frame));
@@ -2044,30 +2044,31 @@ function img_corr = introduce_cross_talk_corrections(img,handles)
     g = handles.g;
     img_corr = img;
     if isempty(W), return, end
-    %
+    
     [sx,sy,sc,~,st] = size(img);
     %
     % columns of W must sum up to 1
     for c=1:sc
         W(:,c) = W(:,c)/norm(W(:,c),1);
     end
-    %
+    
     Winv = eye(sc)/W;
     
+    g = g/max(g);
     g = diag(g);
-    g = g/trace(g);
+    
+    corr = Winv*g; % correction matrix
     
     tic
     parfor x=1:sx    
         for y=1:sy
             for f=1:st
                 distorted = squeeze(img(x,y,:,1,f));
-                v_corr = Winv*g*distorted;
+                v_corr = corr*distorted;
                 v_corr(v_corr<0)=0;
                 img_corr(x,y,:,1,f) = v_corr;
             end
         end
-        %x
     end
     toc/60
 %--------------------------------------------------------------
