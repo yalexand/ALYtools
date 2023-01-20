@@ -2367,22 +2367,9 @@ end
 function icy_imshow_p_xy_Callback(hObject, eventdata, handles)
 [~,~,n_channels,~,~] = size(handles.raw_img);
 for c = 1:n_channels        
-    s = get(handles.model_1,'String'); % all the same
-    switch c
-        case 1
-            model = s{get(handles.model_1,'Value')};
-        case 2
-            model = s{get(handles.model_2,'Value')};            
-        case 3
-            model = s{get(handles.model_3,'Value')};            
-        case 4
-            model = s{get(handles.model_4,'Value')};            
-        case 5            
-            model = s{get(handles.model_5,'Value')};            
-    end %switch    
     disp(c);
     try
-        icy_imshow(handles.p_xy{c},['channel ' num2str(c) ' p_xy : ' model]);
+        icy_imshow(handles.p_xy{c},['p_xy : channel ' num2str(c)]);
     catch        
         disp('error - Icy may be not running, or there is no p_xy images');
     end
