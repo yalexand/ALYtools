@@ -1404,37 +1404,83 @@ end
 st = size(img_acc{1},5);
 %
 % work on Eb and temporal dependencies
+% % f_data = zeros(size(img_acc,1),sc,st);
+% % CMHF_f_data = f_data;
+% %     for k=1:size(img_acc,1)  
+% %         k
+% %         for c=1:sc
+% %             %
+% %             offset = handles.offset(c);
+% %             %            
+% %             u = img_acc{k};            
+% %             ds = 20;
+% %             rx = (xmax(c)-ds):(xmax(c)+ds);
+% %             ry = (ymax(c)-ds):(ymax(c)+ds);    
+% %             rx(rx<1)=[];
+% %             ry(ry<1)=[];
+% %             rx(rx>size(u,1))=[];
+% %             ry(ry>size(u,2))=[];
+% %             parfor f=1:st
+% %                 u_f = squeeze(u(:,:,c,1,f));
+% %                 sample = u_f(rx,ry);
+% %                 f_data(k,c,f) = min(sample(:)) - offset;
+% %                 f
+% %             end
+% %             smooth_time = 50;
+% %             CMHF_f_data(k,c,:) = f_data(k,c,:);
+% %             f_data(k,c,:) = imopen(f_data(k,c,:),strel('disk',smooth_time,0));
+% %         end
+% %     end
+% % f_data = squeeze(min(f_data,[],1));
+
+%%%%%%%%%%%% alternative
 f_data = zeros(size(img_acc,1),sc,st);
 CMHF_f_data = f_data;
 
-    for k=1:size(img_acc,1)  
+   for k=1:size(img_acc,1)  
         k
         for c=1:sc
             %
             offset = handles.offset(c);
             %            
             u = img_acc{k};            
-            ds = 20;
+            ds = fix(15/handles.umppix);
             rx = (xmax(c)-ds):(xmax(c)+ds);
             ry = (ymax(c)-ds):(ymax(c)+ds);    
             rx(rx<1)=[];
             ry(ry<1)=[];
             rx(rx>size(u,1))=[];
             ry(ry>size(u,2))=[];
-            parfor f=1:st
-                u_f = u(:,:,c,1,f);
-                sample = u_f(rx,ry,1);
-                f_data(k,c,f) = min(sample(:)) - offset;
+            for f=1:st
+                %
+                df=2;
+                if f+df<st
+                    u_f = squeeze(u(:,:,c,1,f:f+df));
+                else
+                    u_f = squeeze(u(:,:,c,1,st));  
+                end
+                sample = u_f(rx,ry,:) - offset;
+                %                
+                [cnt,vls,~] = histcounts(sample(:),'binmethod','fd');
+                maxpeakcnt = find(cnt==max(cnt));                                  
+                f_data(k,c,f) = vls(maxpeakcnt(1));                                                
                 f
             end
             smooth_time = 50;
             CMHF_f_data(k,c,:) = f_data(k,c,:);
             f_data(k,c,:) = imopen(f_data(k,c,:),strel('disk',smooth_time,0));
         end
-    end
+   end
+f_data = squeeze(mean(f_data,1));   
 
-f_data = squeeze(min(f_data,[],1));
-%
+% for c=1:sc
+% figure;
+% ax=gca;
+% plot(ax,(1:st)',f_data(c,:),'bo');
+% grid(gca,'on');
+% end
+%%%%%%%%%%%%
+
 colors = {'r','g','b','k','c'};
 AXES = handles.time_dependence_corr;
 reset(AXES);
@@ -2375,8 +2421,6 @@ for c = 1:n_channels
     end
 end
 
-    
-    
-    
+
     
     
