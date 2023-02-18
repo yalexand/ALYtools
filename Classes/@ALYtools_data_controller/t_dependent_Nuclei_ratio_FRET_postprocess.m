@@ -102,9 +102,8 @@ b_D = obj.t_dependent_Nuclei_ratio_FRET_b_D;
 %
 E = 1 - tau_FRET/tau_D;
 A = 1/phi*(b_A/b_D)*(t_A/t_D)*(eps_A/eps_D)*(Q_A/Q_D);
-B = b_A*E*Q_A/Q_D; % 1/Q_D correction is in accordance with "no Q_D factor for sensitized emisssion"
-C = b_A*E;
-% then beta_FRET = (Z-A)./(B+Z*C); where Z is FRET ratio calculated with bleed-through corrected intensities
+C = Q_A/Q_D;
+% then beta_FRET = 1/E*(Z-A)./(Z+C); where Z is FRET ratio calculated with bleed-through corrected intensities
 % PARAMETERS USED TO CALCULATE FRET MOLAR FRACTION
 
 % nucleus size
@@ -205,7 +204,7 @@ for k=1:nFovs
                 ID = mean_sample_d - K_AD*mean_sample_a;
                 Z = IA/ID;
                 try
-                    beta_FRET = (Z-A)./(B+Z*C);
+                    beta_FRET = 1/E*(Z-A)./(Z+C); % 2023
                 catch
                     beta_FRET = 0;
                 end
