@@ -181,13 +181,16 @@ for k=1:nFovs
             for n=1:nnucs
                 sample_a = single(ua(L==n));
                 sample_d = single(ud(L==n));
+                excl = sample_a<=0 | sample_d<=0;
+                sample_a(excl)=[];
+                sample_d(excl)=[];
                 %
                 nuc_data(n,1)=length(sample_a(:)); % area
                 nuc_data(n,2)=0;
                 %
                 nuc_data(n,3)=corr(sample_a(:),sample_d(:),'type','Pearson');
-                    mean_sample_a = mean(sample_a(:));
-                    mean_sample_d = mean(sample_d(:));
+                    mean_sample_a = median(sample_a(:));
+                    mean_sample_d = median(sample_d(:));
                 nuc_data(n,4)=mean_sample_a/mean_sample_d;
                 nuc_data(n,5)=mean_sample_a;
                 nuc_data(n,6)=mean_sample_d;
@@ -220,11 +223,11 @@ for k=1:nFovs
                     area_ref_cell = single(uref(LC==cell_lab));
                     nuc_data(n,12) = length(area_ref_cell(:));
                     if ~isempty(sample_ref_cell)
-                        nuc_data(n,13) = mean(sample_ref_cell(:));                        
+                        nuc_data(n,13) = median(sample_ref_cell(:));                        
                     else
-                        nuc_data(n,13) = mean(sample_ref_nuc(:)); %??
+                        nuc_data(n,13) = median(sample_ref_nuc(:)); %??
                     end                        
-                    nuc_data(n,14) = mean(sample_ref_nuc(:));
+                    nuc_data(n,14) = median(sample_ref_nuc(:));
                     nuc_data(n,15) = nuc_data(n,14)/nuc_data(n,13);
                 end 
                 

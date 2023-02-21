@@ -2411,8 +2411,7 @@ end
 
 % --------------------------------------------------------------------
 function icy_imshow_p_xy_Callback(hObject, eventdata, handles)
-[~,~,n_channels,~,~] = size(handles.raw_img);
-for c = 1:n_channels        
+for c = 1:length(handles.p_xy)        
     disp(c);
     try
         icy_imshow(handles.p_xy{c},['p_xy : channel ' num2str(c)]);
