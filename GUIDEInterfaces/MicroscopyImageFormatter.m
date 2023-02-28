@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 19-Jan-2023 13:20:01
+% Last Modified by GUIDE v2.5 27-Feb-2023 17:39:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -2420,6 +2420,57 @@ for c = 1:length(handles.p_xy)
     end
 end
 
+% --------------------------------------------------------------------
+function save_p_xy_Callback(hObject, eventdata, handles)
+%
+if isempty(handles.p_xy), return, end;
+%
+try
+    [sx,sy] = size(handles.p_xy{1});
+    saveimg = zeros(sx,sy,length(handles.p_xy),1,1);
+    for c = 1:length(handles.p_xy)        
+        saveimg(:,:,c,1,1) = handles.p_xy{c};
+    end
+    %
+    start_dir = get(handles.src_dir,'String');
+    [fname, fpath] = uiputfile('*.ome.tiff','Save p_xy as..',[start_dir filesep 'MicroscopyImageFormatter_p_xy']);
+    if fpath == 0; return; end
+    filespec = fullfile(fpath,fname);
+    bfsave(single(saveimg),filespec,'Compression','LZW','BigTiff', true,'dimensionOrder','XYCZT');            
+catch
+    disp('error while trying to save p_xy')
+end
 
-    
-    
+% --------------------------------------------------------------------
+function load_p_xy_Callback(hObject, eventdata, handles)
+%
+[filename,pathname] = uigetfile({'*.ome.tiff;*.ome.tif;*.tiff;*.tif','image files'}, ...
+'Select p_xy image file',get(handles.src_dir,'String'));
+if filename == 0, return, end       
+%
+try
+    [~,~,I] = bfopen_v([pathname filesep filename]);
+    [sx,sy,s1,s2,s3] = size(I);
+    if s2<=5
+        I = reshape(I,[sx,sy,s2,s1,s3]);
+    end
+    [~,~,sc,~,~] = size(I);
+    handles.p_xy = cell(sc,1);        
+    for c = 1:sc
+        handles.p_xy{c} = squeeze(single(I(:,:,c,1,1)));
+    end
+    guidata(hObject,handles);
+catch
+    disp('error while trying to load p_xy')
+end
+
+
+
+
+
+
+
+
+
+
+
