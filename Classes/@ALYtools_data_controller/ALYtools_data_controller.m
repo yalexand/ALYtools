@@ -940,7 +940,7 @@ classdef ALYtools_data_controller < handle
 %-------------------------------------------------------------------------%                                    
         function analyze_current(obj,~,~)        
 
-            if isempty(obj.imgdata), errordlg('no data!'), return, end
+            if isempty(obj.imgdata) && isempty(obj.M_imgdata), errordlg('no data!'), return, end
             
             switch obj.application
                 
@@ -1316,7 +1316,7 @@ classdef ALYtools_data_controller < handle
                     
                     if obj.save_analysis_output_as_xls && ~isempty(CMN) && ~isempty(caption) && ~isempty(table_name) && ... % common excel data file
                             ~strcmp(obj.application,'AI_Powered_2D_SMLM_Reconstruction') && ...
-                            ~strcmp(obj.application,'ImageTiling')                            
+                            ~strcmp(obj.application,'Image_Tiling')                            
                        if ispc
                         xlswrite( cmnxlsname,CMN );
                        else
