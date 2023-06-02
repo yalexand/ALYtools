@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 27-Feb-2023 17:39:40
+% Last Modified by GUIDE v2.5 02-Jun-2023 09:00:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -675,6 +675,17 @@ for k=1:numel(filenames)
         continue;
     end
     
+    Eb_preset = handles.Eb;
+    f_t_preset = handles.f_t;
+    %
+    adjust_Eb_and_f_t_for_FOV = get(handles.adjust_Eb_and_ft_per_FOV,'Value');
+    if adjust_Eb_and_f_t_for_FOV
+        [Eb,f_t,~] = recalculate_Eb_and_f_t_from_raw_FOV(handles);
+        handles.Eb = Eb;
+        handles.f_t = f_t;
+        guidata(hObject,handles);
+    end
+
         [SX,SY,n_channels,~,st] = size(handles.raw_img);
         handles.corrected_img = zeros(size(handles.raw_img));
         for c = 1:n_channels
@@ -738,7 +749,11 @@ for k=1:numel(filenames)
         show_image(handles,'corrected_img','image_corrected',strrep(filenames{k},'_','-'));
         show_image(handles,'raw_img','image_raw',[]);
         
-        guidata(hObject,handles);        
+        if adjust_Eb_and_f_t_for_FOV
+            handles.Eb = Eb_preset;
+            handles.f_t = f_t_preset;
+            guidata(hObject,handles);        
+        end
         
         savename = filenames{k};
         if ~contains(savename,'ome')
@@ -946,7 +961,7 @@ for channel = 1:n_channels
         %handles.Eb{channel} = 0;                        
             u = handles.ref_img(:,:,channel,1,1);
             % calculate normalized profile
-            prof = u - offset;    
+            prof = u - offset;
             % smooth
                 smooth_scale = 10;
                 prof = imopen(prof,strel('disk',smooth_scale,0));
@@ -1025,7 +1040,7 @@ for channel = 1:n_channels
     handles.f_t{channel} = f_t;
     handles.p_xy{channel} = prof;
     handles.Eb{channel} = Eb;
-    
+        
     end
         
 end
@@ -2443,11 +2458,11 @@ end
 
 % --------------------------------------------------------------------
 function load_p_xy_Callback(hObject, eventdata, handles)
-%
+
 [filename,pathname] = uigetfile({'*.ome.tiff;*.ome.tif;*.tiff;*.tif','image files'}, ...
 'Select p_xy image file',get(handles.src_dir,'String'));
 if filename == 0, return, end       
-%
+
 try
     [~,~,I] = bfopen_v([pathname filesep filename]);
     [sx,sy,s1,s2,s3] = size(I);
@@ -2461,16 +2476,74 @@ try
     end
     guidata(hObject,handles);
 catch
-    disp('error while trying to load p_xy')
+    disp('error while trying to load p_xy');
 end
 
+%-------------------------------------------------------------- 
+function [Eb,f_t,f_t_raw] = recalculate_Eb_and_f_t_from_raw_FOV(handles)
+% test code - begin
+% % % [Eb_raw,f_t_fitted,f_t_raw] = recalculate_Eb_and_f_t_from_raw_FOV(handles);
+% % %
+% % % [SX,SY,n_channels,~,st] = size(handles.raw_img);
+% % % figure;
+% % % ax=gca;
+% % % plot(ax,1:st,handles.Eb{1}*handles.f_t{1},'bo-',1:st,Eb_raw{1}*f_t_fitted{1},'r.-',1:st,Eb_raw{1}*f_t_raw{1},'k.-', ... 
+% % %     1:st,handles.Eb{2}*handles.f_t{2},'bo-',1:st,Eb_raw{2}*f_t_fitted{2},'r.-',1:st,Eb_raw{2}*f_t_raw{2},'k.-');
+% % % grid(ax,'on');
+% test code - end
+%
+try
+    [SX,SY,n_channels,~,st] = size(handles.raw_img);
+catch
+    Eb = []; f_t = [];f_t_raw = [];
+    disp('no image loaded, cannot recalculate from raw')
+end
 
+    f_t = handles.f_t;
+    Eb = handles.Eb;
+    f_t_raw = f_t;
 
+for channel = 1:n_channels
+    %
+    offset = handles.offset(channel);
+    % relying on profile
+    prof = handles.p_xy{channel};
+    %
+    % find Eb first
+    I0 = squeeze(handles.raw_img(:,:,channel,1,1)) - offset;
+    mask = I0 > quantile(I0(:),0.02); % 2% quantile
+    I0_mask = I0(mask);
+    prof_mask = prof(mask);
+    I0_v = median(I0_mask(:));
+    prof_v = median(prof_mask(:));    
+    Eb{channel} = I0_v/prof_v;
+    %
+    % find f_t using same methodology
+    raw = squeeze(handles.raw_img(:,:,channel,1,:)) - offset;
+    f_t_cur = f_t{channel};
+    parfor f=1:st
+            If = raw(:,:,f);
+            mask = If > quantile(If(:),0.02); % 2% quantile
+            I0_mask = I0(mask);
+            I0_v = median(I0_mask(:));
+            If_mask = If(mask);
+            If_v = median(If_mask(:));
+            f_t_cur(f) = If_v/I0_v;
+    end      
+    %
+    polynom_order  = handles.polynom_order;
+    intensity = Eb{channel}*f_t_cur;
+    frms = (1:st)';
+    p = polyfit(frms,intensity,polynom_order);
+    intensity_fit = polyval(p,frms);
+    f_t{channel} = intensity_fit/intensity_fit(1);  
+    f_t_raw{channel} = f_t_cur;
+end
 
+% --- Executes on button press in adjust_Eb_and_ft_per_FOV.
+function adjust_Eb_and_ft_per_FOV_Callback(hObject, eventdata, handles)
+% hObject    handle to adjust_Eb_and_ft_per_FOV (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
-
-
-
-
-
-
+% Hint: get(hObject,'Value') returns toggle state of adjust_Eb_and_ft_per_FOV
