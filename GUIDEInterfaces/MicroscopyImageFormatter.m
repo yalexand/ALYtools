@@ -2510,8 +2510,13 @@ for channel = 1:n_channels
     prof = handles.p_xy{channel};
     %
     % find Eb first
-    I0 = squeeze(handles.raw_img(:,:,channel,1,1)) - offset;
-    mask = I0 < quantile(I0(:),0.5); % ?
+    if st>1 % precaution - first frame can be faulty
+        I0 = squeeze(handles.raw_img(:,:,channel,1,2)) - offset; % SECOND FRAME
+    else
+        I0 = squeeze(handles.raw_img(:,:,channel,1,1)) - offset; % FIRST FRAME
+    end
+    
+    mask = I0 < quantile(I0(:),0.05); % ?
     I0_mask = I0(mask);
     prof_mask = prof(mask);
     I0_v = median(I0_mask(:));
@@ -2525,7 +2530,7 @@ for channel = 1:n_channels
     mask0 = mask;
     for f=1:st
             If = raw(:,:,f);
-            mask = If < quantile(If(:),0.5); % ?
+            mask = If < quantile(If(:),0.05); % ?
             mask = mask & mask0;
             %disp([f sum(mask(:))]);
             I0_mask = I0(mask);
@@ -2543,7 +2548,6 @@ for channel = 1:n_channels
     f_t{channel} = intensity_fit/intensity_fit(1);  
     f_t_raw{channel} = f_t_cur;
 end
-
 
 % --- Executes on button press in adjust_Eb_and_ft_per_FOV.
 function adjust_Eb_and_ft_per_FOV_Callback(hObject, eventdata, handles)
