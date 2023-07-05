@@ -659,7 +659,7 @@ end
 % --- Executes on button press in process_images.
 function process_images_Callback(hObject, eventdata, handles)
 
-[filenames,pathname] = uigetfile('*.tif','Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
+[filenames,pathname] = uigetfile('*.tif;*.tiff','Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
 if isempty(filenames), return, end       
 if isnumeric(filenames) && 0==filenames, return, end
 
