@@ -2525,7 +2525,7 @@ for channel = 1:n_channels
     %
     % find f_t using same methodology
     raw = squeeze(handles.raw_img(:,:,channel,1,:)) - offset;
-    f_t_cur = f_t{channel};
+    f_t_cur = f_t{channel}(1:st);
 
     mask0 = mask;
     for f=1:st
