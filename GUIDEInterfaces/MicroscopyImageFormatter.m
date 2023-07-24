@@ -997,7 +997,7 @@ for channel = 1:n_channels
 
     parfor f=1:st
         sample = ref(rx,ry,f);
-        intensity(f) = mean(sample(:)) - offset;
+        intensity(f) = median(sample(:)) - offset;
     end
 
     frms = (1:st)';
@@ -1034,8 +1034,8 @@ for channel = 1:n_channels
     rx(rx>SX)=[];    
     ry(ry>SY)=[]; 
     %
-    sample = ref(rx,ry,1:10);
-    Eb = mean(sample(:)) - offset;
+    sample = ref(rx,ry,1:4);
+    Eb = median(sample(:)) - offset;
            
     handles.f_t{channel} = f_t;
     handles.p_xy{channel} = prof;
