@@ -79,7 +79,7 @@ handles.Optosplit_registration_roi3y = [];
     dst_channels = '12345';
     set(handles.setup_Optosplit_registration,'Enable','Off');
     set(handles.setup_Optosplit_registration,'Visible','Off');
-    handles.polynom_order = 9;    
+    handles.polynom_order = 0.001;    
     
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 
@@ -634,7 +634,7 @@ end
 
 function t_dep_fitting_poly_order_Callback(hObject, eventdata, handles)
     v = int64(str2double(get(hObject,'String')));
-    if ~isempty(v) && isinteger(v) && v>=1 
+    if ~isempty(v) && 0<=v&&v<=1  
         handles.polynom_order = v;        
     else
         set(hObject,'String',num2str(handles.polynom_order));
@@ -942,7 +942,7 @@ function send_corrected_to_Icy_Callback(hObject, eventdata, handles)
 %-------------------------------------------------------------- 
 function get_correction_functions_from_ref(hObject,handles)
 
-polynom_order  = handles.polynom_order;
+spline_smoothing_parameter  = handles.polynom_order;
 
 [SX,SY,n_channels,~,st] = size(handles.ref_img);
 
@@ -1001,8 +1001,7 @@ for channel = 1:n_channels
     end
 
     frms = (1:st)';
-    p = polyfit(frms,intensity,polynom_order);
-    intensity_fit = polyval(p,frms);
+    [intensity_fit,~] = csaps(double(frms),double(intensity),spline_smoothing_parameter,double(frms));
     f_t = intensity_fit/intensity_fit(1);
 
     taxis = (frms-1)*handles.min_per_frame/60;    
@@ -1064,8 +1063,7 @@ if 1~= st
             intensity(f) = mean(sample(:));
         end
     frms = (1:st)';
-    p = polyfit(frms,intensity,polynom_order);
-    intensity_fit = polyval(p,frms);
+    [intensity_fit,~] = csaps(double(frms),double(intensity),spline_smoothing_parameter,double(frms));
     handles.f_CMHF_t = intensity./intensity_fit; % one needs to divide by this after offset subtraction, to introduce correction    
     %
 %     taxis = (frms-1)*handles.min_per_frame/60;
@@ -1501,15 +1499,14 @@ AXES = handles.time_dependence_corr;
 reset(AXES);
 LEGEND = cell(0);
 
-polynom_order  = handles.polynom_order;
+spline_smoothing_parameter = handles.polynom_order;
 %
 for c=1:sc
     handles.Eb{c} = f_data(c,1);
     %
     intensity = f_data(c,:)';
     frms = (1:st)';
-    p = polyfit(frms,intensity,polynom_order);
-    intensity_fit = polyval(p,frms);
+    [intensity_fit,~] = csaps(double(frms),double(intensity),spline_smoothing_parameter,double(frms));
     f_t = intensity_fit/intensity_fit(1);
 
     taxis = (frms-1)*handles.min_per_frame/60;    
@@ -1525,8 +1522,7 @@ end
 if 1~= st 
     intensity=sum(squeeze(mean(CMHF_f_data,1)),1)';    
     frms = (1:st)';
-    p = polyfit(frms,intensity,polynom_order);
-    intensity_fit = polyval(p,frms);
+    [intensity_fit,~] = csaps(double(frms),double(intensity),spline_smoothing_parameter,double(frms));
     handles.f_CMHF_t = intensity./intensity_fit; % one needs to divide by this after offset subtraction, to introduce correction    
     %
 %     taxis = (frms-1)*handles.min_per_frame/60;
@@ -1822,7 +1818,12 @@ try
                 end                
                 handles.downsample = saved_handles.downsample;
                 handles.min_per_frame = saved_handles.min_per_frame;
+
                 handles.polynom_order = saved_handles.polynom_order;
+                if ~(0<=saved_handles.polynom_order&&saved_handles.polynom_order<=1)
+                    handles.polynom_order = 0.001;
+                end
+                
             handles.raw_image_filename = saved_handles.raw_image_filename;
             handles.p_xy = saved_handles.p_xy;
             handles.f_t = saved_handles.f_t;
@@ -2540,11 +2541,10 @@ for channel = 1:n_channels
             f_t_cur(f) = If_v/I0_v;
     end      
     %
-    polynom_order  = handles.polynom_order;
+    spline_smoothing_parameter = handles.polynom_order;
     intensity = Eb{channel}*f_t_cur;
     frms = (1:st)';
-    p = polyfit(frms,intensity,polynom_order);
-    intensity_fit = polyval(p,frms);
+    [intensity_fit,~] = csaps(double(frms),double(intensity),spline_smoothing_parameter,double(frms));
     f_t{channel} = intensity_fit/intensity_fit(1);  
     f_t_raw{channel} = f_t_cur;
 end
