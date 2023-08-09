@@ -1320,7 +1320,9 @@ function setup_Optosplit_registration_Callback(hObject, eventdata, handles)
 % --------------------------------------------------------------------
 function derive_corrections_from_data_Callback(hObject, eventdata, handles)
 
-[filenames,pathname] = uigetfile({'*.tif';'*.tiff'},'Select image files',get(handles.src_dir,'String'),'MultiSelect','on');                
+[filenames,pathname] = uigetfile({'*.ome.tiff;*.ome.tif;*.tiff;*.tif','image files'}, ...
+'Select image file',get(handles.src_dir,'String'),'MultiSelect','on');
+
 if isempty(filenames), return, end       
 if isnumeric(filenames) && 0==filenames, return, end
 
@@ -1408,9 +1410,7 @@ for channel = 1:sc
                 end
             end
             %
-            prof = prof/prof(xmax(1),ymax(1));            
-%                 icy_imshow(handles.p_xy{channel},['reference ' num2str(channel)]);
-%                 icy_imshow(prof,['derived from data ' num2str(channel)]);            
+            prof = prof/prof(xmax(channel),ymax(channel));                      
             handles.p_xy{channel} = prof;
 end
 
