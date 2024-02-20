@@ -1,32 +1,57 @@
-function cell2csv(fileName, cellArray, separator, excelYear, decimal)
+function cell2csv(fileName, cellArray, numericPrecision, delimiter, filePermissions, excelYear, decimal)
 % % Writes cell array content into a *.csv file.
 % % 
-% % CELL2CSV(fileName, cellArray[, separator, excelYear, decimal])
+% % CELL2CSV(fileName, cellArray[, delimiter, excelYear, decimal])
 % %
 % % fileName     = Name of the file to save. [ e.g. 'text.csv' ]
 % % cellArray    = Name of the Cell Array where the data is in
 % % 
 % % optional:
-% % separator    = sign separating the values (default = ',')
+% % numericPrecision = determines the output precision level of numbers using standard precision syntax
+% %                    (eg. '%.12f')
+% % delimiter    = sign separating the values (default = ',')
+% % filePermissions = opens the file fileName in the mode specified by
+% %     filePermissions:
+% %     'r'     open file for reading
+% %     'w'     open file for writing; discard existing contents
+% %     'a'     open or create file for writing; append data to end of file
+% %     'r+'    open (do not create) file for reading and writing
+% %     'w+'    open or create file for reading and writing; discard existing
+% %             contents
+% %     'a+'    open or create file for reading and writing; append data to end of
+% %             file             
+% %     'W'     open file for writing without automatic flushing
+% %     'A'     open file for appending without automatic flushing
 % % excelYear    = depending on the Excel version, the cells are put into
-% %                quotes before they are written to the file. The separator
-% %                is set to semicolon (;)  (default = 1997 which does not change separator to semicolon ;)
-% % decimal      = defines the decimal separator (default = '.')
+% %                quotes before they are written to the file. The delimiter
+% %                is set to semicolon (;)  (default = 1997 which does not change delimiter to semicolon ;)
+% % decimal      = defines the decimal delimiter (default = '.')
 % %
 % %         by Sylvain Fiedler, KA, 2004
 % % updated by Sylvain Fiedler, Metz, 06
 % % fixed the logical-bug, Kaiserslautern, 06/2008, S.Fiedler
-% % added the choice of decimal separator, 11/2010, S.Fiedler
+% % added the choice of decimal delimiter, 11/2010, S.Fiedler
 % % modfiedy and optimized by Jerry Zhu, June, 2014, jerryzhujian9@gmail.com
 % % now works with empty cells, numeric, char, string, row vector, and logical cells. 
 % % row vector such as [1 2 3] will be separated by two spaces, that is "1  2  3"
 % % One array can contain all of them, but only one value per cell.
 % % 2x times faster than Sylvain's codes (8.8s vs. 17.2s):
 % % tic;C={'te','tm';5,[1,2];true,{}};C=repmat(C,[10000,1]);cell2csv([datestr(now,'MMSS') '.csv'],C);toc;
+% % 
+% % Modified and Optimized by Jeremiah Valenzuela, Oct 24, 2019
+% % - Improved performance drastically for network drives and a bit for local drives. Faster
+% %   than writecell()
+% % - Solved escape character issue with the same performance fix
+% % - Added ability to use different file permissions, like append
+% % - Added ability to specify float precision
 
 %% Checking for optional Variables
-if ~exist('separator', 'var')
-    separator = ',';
+if ~exist('delimiter', 'var')
+    delimiter = ',';
+end
+
+if ~exist('filePermissions', 'var')
+    filePermissions = 'w';
 end
 
 if ~exist('excelYear', 'var')
@@ -37,20 +62,23 @@ if ~exist('decimal', 'var')
     decimal = '.';
 end
 
-%% Setting separator for newer excelYears
+%% Setting delimiter for newer excelYears
 if excelYear > 2000
-    separator = ';';
+    delimiter = ';';
 end
 
 % convert cell
 cellArray = cellfun(@StringX, cellArray, 'UniformOutput', false);
 
 %% Write file
-datei = fopen(fileName, 'w');
-[nrows,ncols] = size(cellArray);
-for row = 1:nrows
-    fprintf(datei,[sprintf(['%s' separator],cellArray{row,1:ncols-1}) cellArray{row,ncols} '\n']);
-end    
+datei = fopen(fileName, filePermissions);
+
+% Join cell rows with delimiter and convert to string. This drastically
+% improves performance of writing the file, especially on network drives,
+% and solves any special character issues (like \ and % which are escape
+% characters in fprintf.
+fprintf(datei, '%s\n', string(join(cellArray, delimiter)));
+
 % Closing file
 fclose(datei);
 
@@ -61,7 +89,15 @@ function x = StringX(x)
         x = '';
     % If numeric -> String, e.g. 1, [1 2]
     elseif isnumeric(x) && isrow(x)
-        x = num2str(x);
+        if ~exist('numericPrecision', 'var')
+            x = num2str(x);
+        else
+            if mod(x, 1) % True if decimal
+                x = num2str(x, numericPrecision);
+            else
+                x = num2str(x);
+            end
+        end
         if decimal ~= '.'
             x = strrep(x, '.', decimal);
         end
