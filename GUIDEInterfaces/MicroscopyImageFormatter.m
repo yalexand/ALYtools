@@ -633,7 +633,7 @@ end
 
 
 function t_dep_fitting_poly_order_Callback(hObject, eventdata, handles)
-    v = int64(str2double(get(hObject,'String')));
+    v = str2double(get(hObject,'String'));
     if ~isempty(v) && 0<=v&&v<=1  
         handles.polynom_order = v;        
     else
