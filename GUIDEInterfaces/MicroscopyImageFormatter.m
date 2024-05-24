@@ -1550,9 +1550,9 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
             %
             [sx,sy,sc,~,st] = size(handles.raw_img);
             %
-            S = round(handles.umppix*8/handles.downsample);
+            S = round(handles.umppix*16/handles.downsample);
             K = 2.5;
-            t = 0.2;
+            t = 0.1;
             %
             in = handles.raw_img;
             out = in;
@@ -1569,7 +1569,7 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                 if ~isempty(hw), waitbar(c/sc,hw); end
             end
             if ~isempty(hw), delete(hw), drawnow; end            
-            %icy_imshow(out);
+            %icy_imshow(uint16(out));
             %
             macc = cell(sc,4);
              
