@@ -1606,7 +1606,7 @@ function calculate_intensity_histograms_for_models_Callback(hObject, eventdata, 
                                     case 5 % 'unchanged'   
                                         EO = I_unchanged;
                                 end
-                                if strcmp(model,'unchanged'), EO(EO<0)=0; end
+                                if 5==m, EO(EO<0)=0; end
                                 corrimg(:,:,c,1,f) = EO;
                             end
                     end 
