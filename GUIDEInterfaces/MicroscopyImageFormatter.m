@@ -22,7 +22,7 @@ function varargout = MicroscopyImageFormatter(varargin)
 
 % Edit the above text to modify the response to help MicroscopyImageFormatter
 
-% Last Modified by GUIDE v2.5 02-Jun-2023 09:00:47
+% Last Modified by GUIDE v2.5 31-May-2024 16:12:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -79,7 +79,8 @@ handles.Optosplit_registration_roi3y = [];
     dst_channels = '12345';
     set(handles.setup_Optosplit_registration,'Enable','Off');
     set(handles.setup_Optosplit_registration,'Visible','Off');
-    handles.polynom_order = 0.001;    
+    handles.polynom_order = 0.001; 
+    handles.p_xy_smoothing_parameter_val = 1e-6;
     
 set(handles.umppix_edit,'String',num2str(handles.umppix));
 
@@ -95,6 +96,8 @@ set(handles.src_channels,'String',src_channels);
 set(handles.dst_channels,'String',dst_channels);
 set(handles.t_dep_fitting_poly_order,'String',num2str(handles.polynom_order));
 set(handles.clean_reference,'Value',1);
+set(handles.p_xy_smoothing_parameter,'String',num2str(handles.p_xy_smoothing_parameter_val));
+
 
 set(handles.image_raw,'XTick',[]);
 set(handles.image_raw,'YTick',[]);
@@ -968,6 +971,7 @@ for channel = 1:n_channels
             if get(handles.clean_reference,'Value')
                 prof = gsderiv(prof,smooth_scale,0);
             end
+            prof = csaps_smooth_image(prof,handles.p_xy_smoothing_parameter_val);
             [xmax,ymax] = find(prof==max(prof(:)));
             prof = prof/prof(xmax(1),ymax(1));
             handles.p_xy{channel} = prof;
@@ -1020,6 +1024,7 @@ for channel = 1:n_channels
     if get(handles.clean_reference,'Value')
         prof = gsderiv(prof,smooth_scale,0);
     end       
+    prof = csaps_smooth_image(prof,handles.p_xy_smoothing_parameter_val);
     [xmax,ymax] = find(prof==max(prof(:)));
     prof = prof/prof(xmax(1),ymax(1));
     %icy_imshow(prof,num2str(channel));
@@ -1410,6 +1415,7 @@ for channel = 1:sc
                 end
             end
             %
+            prof = csaps_smooth_image(prof,handles.p_xy_smoothing_parameter_val);
             prof = prof/prof(xmax(channel),ymax(channel));                      
             handles.p_xy{channel} = prof;
 end
@@ -1755,6 +1761,7 @@ function save_settings_mat_Callback(hObject, eventdata, handles)
             saved_handles.p_xy = handles.p_xy;
             saved_handles.f_t = handles.f_t;
             saved_handles.Eb = handles.Eb;
+            saved_handles.p_xy_smoothing_parameter_val = handles.p_xy_smoothing_parameter_val;
             
             saved_handles.compensate_CMHF = get(handles.compensate_CMHF,'Value');
             saved_handles.f_CMHF_t = handles.f_CMHF_t;
@@ -1891,7 +1898,12 @@ try
                 set(handles.correction,'Visible',cross_talk_correction_flag);
                 set(handles.unset_spectral_cross_talk_correction,'Enable',cross_talk_correction_flag);
                 set(handles.unset_spectral_cross_talk_correction,'Visible',cross_talk_correction_flag);
-                        
+                   
+            if isfield(saved_handles,'p_xy_smoothing_parameter_val') 
+                handles.p_xy_smoothing_parameter_val = saved_handles.p_xy_smoothing_parameter_val;
+                set(handles.p_xy_smoothing_parameter,'String',num2str(handles.p_xy_smoothing_parameter_val));
+            end
+
             guidata(hObject,handles);
             
             handles.Optosplit_registration_a3 = saved_handles.Optosplit_registration_a3;
@@ -2556,3 +2568,27 @@ function adjust_Eb_and_ft_per_FOV_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of adjust_Eb_and_ft_per_FOV
+
+
+
+function p_xy_smoothing_parameter_Callback(hObject, eventdata, handles)
+    v = str2double(get(hObject,'String'));
+    if ~isempty(v) && 0<=v&&v<=1  
+        handles.p_xy_smoothing_parameter_val = v;        
+    else
+        set(hObject,'String',num2str(handles.p_xy_smoothing_parameter_val));
+    end
+    guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function p_xy_smoothing_parameter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to p_xy_smoothing_parameter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
